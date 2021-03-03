@@ -1,0 +1,32 @@
+{
+    "copy_intervals" :
+    {
+        "output" : ".logs/{rule}/{wildcards.interval}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.interval}/%j.{rule}.err"
+    },
+    "import_gvcfs" :
+    {
+        "output" : ".logs/{rule}/{wildcards.interval}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.interval}/%j.{rule}.err"
+    },
+    "genotype_gvcfs" :
+    {
+        "output" : ".logs/{rule}/{wildcards.interval}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.interval}/%j.{rule}.err"
+    },
+    "fltr_make_sites_only" :
+    {
+        "output" : ".logs/{rule}/{wildcards.interval}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.interval}/%j.{rule}.err"
+    },
+    "sites_only_gather_vcf" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    },
+    "indels_var_recal" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    }
+}
