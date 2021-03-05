@@ -57,8 +57,8 @@ rule all:
         # step08a - vep final vcf
        #vep_vcf = f"results/vep_final_vcf/joint_genotype.{config['ref']}.vcf.gz"
         # step08b - collect metrics
-        f"results/collect_metrics_on_vcf/joint_genotype.{config['ref']}.variant_calling_detail_metrics",
-        f"results/collect_metrics_on_vcf/joint_genotype.{config['ref']}.variant_calling_summary_metrics",
+       #f"results/collect_metrics_on_vcf/joint_genotype.{config['ref']}.variant_calling_detail_metrics",
+       #f"results/collect_metrics_on_vcf/joint_genotype.{config['ref']}.variant_calling_summary_metrics",
         # step09 - all variants table for af analysis
         all_vars_table = os.path.join(
                 config["var_to_table_dir"],
@@ -74,6 +74,15 @@ rule all:
        #        ref=config["ref"], ext=["gz","gz.tbi"],
        #        u=units.itertuples()
        #)
+
+#include: "rules/input_and_import.smk"
+#include: "rules/genotype.smk"
+#include: "rules/filter.smk"
+#include: "rules/gather.smk"
+#include: "rules/recal.smk"
+#include: "rules/metrics.smk"
+#include: "rules/vep.smk"
+#include: "rules/table.smk"
 
 # THIS RULE ONLY NEEDED TO COPY OVER PREVIOUSLY GENERATED INTERVAL DBS
 #rule copy_intervals:
@@ -100,8 +109,9 @@ rule all:
 
 rule input_list:
     input:
-        gvcfs = expand("gvcf/{u.breed}/{u.dogid}/{u.dogid}.{ref}.g.vcf.gz",
-                ref=config["ref"], u=units.itertuples()
+        gvcfs = expand("{gvcf_dir}/{u.breed}/{u.dogid}/{u.dogid}.{ref}.g.vcf.gz",
+                ref=config["ref"], gvcf_dir=config["gvcf_dir"],
+                u=units.itertuples()
         )
     output:
         gvcf_list = "data/inputs.list"
@@ -207,7 +217,8 @@ rule sites_only_gather_vcf:
         gather_sites_only_vcf = "results/sites_only_gather_vcf/gather.sites_only.vcf.gz",
         gather_sites_only_tbi = "results/sites_only_gather_vcf/gather.sites_only.vcf.gz.tbi"
     params:
-        gatk = config["gatk"],
+        gatk   = config["gatk"],
+        picard = config["picard"]
     resources:
          time   = 240,
          mem_mb = 24000, 
@@ -216,16 +227,26 @@ rule sites_only_gather_vcf:
         vcfs = " --input ".join(map(str,input.sites_only_vcf))
 
         shell(f'''
+            set -e
+
+
             {{params.gatk}} --java-options "-Xmx18g -Xms6g" \
                 GatherVcfsCloud \
                 --ignore-safety-checks \
                 --gather-type BLOCK \
                 --input {vcfs} \
-                --output {{output.gather_sites_only_vcf}}
+                --output results/sites_only_gather_vcf/tmp.vcf.gz
+
+            java -jar {{params.picard}} \
+                SortVcf \
+                I=results/sites_only_gather_vcf/tmp.vcf.gz \
+                O={{output.gather_sites_only_vcf}}
 
             {{params.gatk}} --java-options "-Xmx18g -Xms6g" \
                 IndexFeatureFile \
                 --input {{output.gather_sites_only_vcf}}
+
+            rm -f results/sites_only_gather_vcf/tmp.vcf.gz
         ''')
 
 rule indels_var_recal:
@@ -289,7 +310,7 @@ rule snps_var_recal:
                 VariantRecalibrator \
                     -V {{input.gather_sites_only_vcf}} \
                     -O {{output.snps_recal}} \
-                    --tranches-file {{output.snp_tranches}} \
+                    --tranches-file {{output.snps_tranches}} \
                     --trust-all-polymorphic \
                     -tranche {tranche_values} \
                     -an {an_values} \
@@ -309,23 +330,25 @@ rule apply_recal:
         snps_recal      = "results/recal/snps/snps.recal",
         snps_tranches   = "results/recal/snps/snps.tranches"
     output:
-        recal_vcf       = "results/apply_recal/recal.{interval}.vcf.gz",
-        recal_vcf_index = "results/apply_recal/recal.{interval}.vcf.gz.tbi"
+        recal_vcf       = "results/apply_recal/{interval}/recal.{interval}.vcf.gz",
+        recal_vcf_index = "results/apply_recal/{interval}/recal.{interval}.vcf.gz.tbi"
     params:
         gatk               = config["gatk"],
         indel_filter_level = config["indel_filter_level"],
         snp_filter_level   = config["snp_filter_level"]
     resources:
-         time   = 1080,
+         time   = 30,
          mem_mb = 16000, 
          cpus   = 1
     shell:
         '''
             set -e
 
+            mkdir -p results/apply_recal/{wildcards.interval}/
+
             {params.gatk} --java-options "-Xmx15g -Xms5g" \
                 ApplyVQSR \
-                    -O results/apply_recal/tmp.indel.recalibrated.vcf \
+                    -O results/apply_recal/{wildcards.interval}/tmp.indel.recalibrated.vcf \
                     -V {input.input_vcf} \
                     --recal-file {input.indels_recal} \
                     --tranches-file {input.indels_tranches} \
@@ -336,17 +359,19 @@ rule apply_recal:
             {params.gatk} --java-options "-Xmx15g -Xms5g" \
                 ApplyVQSR \
                     -O {output.recal_vcf} \
-                    -V results/apply_recal/tmp.indel.recalibrated.vcf \
+                    -V results/apply_recal/{wildcards.interval}/tmp.indel.recalibrated.vcf \
                     --recal-file {input.snps_recal} \
                     --tranches-file {input.snps_tranches} \
                     --truth-sensitivity-filter-level {params.snp_filter_level} \
                     --create-output-variant-index true \
                     -mode SNP
+
+            rm -f results/apply_recal/{wildcards.interval}/tmp.indel.recalibrated.vcf
         '''
 
 rule final_gather_vcfs:
     input:
-        recal_vcfs = expand("results/apply_recal/recal.{interval}.vcf.gz", interval=intervals)
+        recal_vcfs = sorted(expand("results/apply_recal/{interval}/recal.{interval}.vcf.gz", interval=intervals))
     output:
         final_vcf       = f"results/final_gather_vcfs/joint_genotype.{config['ref']}.vcf.gz",
         final_vcf_index = f"results/final_gather_vcfs/joint_genotype.{config['ref']}.vcf.gz.tbi"
@@ -392,9 +417,11 @@ rule collect_metrics_on_vcf:
          mem_mb = 22000, 
          cpus   = 8
     run:
-        metrics_prefix = f"joint_genotype.{config['ref']}"
+        metrics_prefix = os.path.splitext(output.detail_metrics)[0]
 
         f'''
+            mkdir -p results/collect_metrics_on_vcf/
+
             {{params.gatk}} --java-options "-Xmx18g -Xms6g" \
                 CollectVariantCallingMetrics \
                     --INPUT {{input.final_vcf}} \
@@ -419,7 +446,7 @@ rule vep_final_vcf:
          cpus   = 12
     run:
         import os
-        out_name = os.path.splitext(input.vep_vcf)[0]    
+        out_name = os.path.splitext(output.vep_vcf)[0] 
 
         shell(f'''
             set +eu
@@ -431,6 +458,7 @@ rule vep_final_vcf:
                 -i {{input.final_vcf}} \
                 --cache \
                 --everything \
+                --force_overwrite \
                 -o {out_name} \
                 --vcf \
                 --no_stats \
