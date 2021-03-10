@@ -23,7 +23,7 @@ for root, dirs, files in os.walk(config["gvcf_dir"]):
 units = pd.DataFrame.from_dict(d, orient="index", columns=["breed"])
 units["dogid"] = units.index
 
-# NOTE: CHANGE THIS TO GENERATE INTERVALS AS PART OF WORKFLWO
+# NOTE: CHANGE THIS TO GENERATE INTERVALS AS PART OF WORKFLOW
 # get intervals
 intervals, = glob_wildcards(os.path.join(config["db_intervals"],"{db_interval}.interval_list"))
 
@@ -125,7 +125,6 @@ rule import_gvcfs:
     input:
         gvcf_list = "data/inputs.list",
         interval  = "/panfs/roc/groups/0/fried255/shared/gatk4_workflow/GoDawgs/Intervals/{interval}.interval_list"
-       #f"{os.path.join(config['db_intervals'],)}"
     output:
         directory("results/import_gvcfs/{interval}")
     params:
@@ -179,9 +178,7 @@ rule genotype_gvcfs:
 
 rule fltr_make_sites_only:
     input:
-       #ival_db  = "results/import_gvcfs/{interval}",
-       #interval = "/panfs/roc/groups/0/fried255/shared/gatk4_workflow/GoDawgs/Intervals/{interval}.interval_list",
-        vcf      = "results/genotype_gvcfs/{interval}/output.vcf.gz"
+        vcf = "results/genotype_gvcfs/{interval}/output.vcf.gz"
     output:
         var_filtrd_vcf = "results/fltr_make_sites_only/{interval}/filtr.{interval}.variant_filtered.vcf.gz",
         sites_only_vcf = "results/fltr_make_sites_only/{interval}/filtr.{interval}.sites_only.variant_filtered.vcf.gz"
@@ -441,7 +438,7 @@ rule vep_final_vcf:
     params:
         conda_vep = config["conda_vep"]
     resources:
-         time   = 1440,
+         time   = 3600,
          mem_mb = 60000, 
          cpus   = 12
     run:
@@ -463,10 +460,11 @@ rule vep_final_vcf:
                 --vcf \
                 --no_stats \
                 --species=canis_familiaris \
+                --fork 4 \
                 --offline \
                 --dont_skip
 
-            bgzip -threads 12 -c {out_name} > {{output.vep_vcf}} &&
+            bgzip --threads 12 -c {out_name} > {{output.vep_vcf}} &&
             tabix -p vcf {{output.vep_vcf}}
         ''')
 
@@ -494,11 +492,7 @@ rule all_var_to_table:
                     -R {params.ref_fasta} \
                     -V {input.vep_vcf} \
                     -F CHROM -F POS -F REF -F ALT -F FILTER -F AF -F HOM-REF -F HET -F HOM-VAR -F NO-CALL -F CSQ \
-                    --showFiltered \
+                    --show-filtered \
                     -O {output.all_vars_table}
         '''
 
-#        bslmm_seeds = expand(
-#                            "results/step02/{{breed}}/{{trait}}/{{metab}}/seeds/BSLMM_10M_seed{seed}.param.txt",
-#                                        seed=[*range(10,60,5)]
-#                                                )
