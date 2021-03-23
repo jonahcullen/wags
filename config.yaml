@@ -8,7 +8,7 @@ db_intervals : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/GoDawgs/Interv
 eval_interval_list : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/intervals/acgt.N1000.interval_list
 
 # GVCF DIR FOR JOINT GENOTYPING
-gvcf_dir : /scratch.global/friedlab_godawgs_snake/gvcf
+gvcf_dir : /scratch.global/friedlab_GOREDO/results
 
 # REFERENCE FILES
 ref_fasta : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/canFam3.fa

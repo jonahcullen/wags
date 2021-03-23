@@ -15,8 +15,8 @@ for root, dirs, files in os.walk(config["gvcf_dir"]):
         if f.endswith(".g.vcf.gz"):
             # get dogid, breed, and absolute path to gvcf
             dogid = f.split(".")[0]
-            breed = root.split("/")[1]
-            gvcf = os.path.join(root,f)
+            breed = root.split("/")[-2]
+           #gvcf = os.path.join(root,f)
             # add to dict
             d[dogid].append(breed)
 
@@ -61,7 +61,7 @@ rule all:
        #f"results/collect_metrics_on_vcf/joint_genotype.{config['ref']}.variant_calling_summary_metrics",
         # step09 - all variants table for af analysis
         all_vars_table = os.path.join(
-                config["var_to_table_dir"],
+                "results/var_to_table/",
                 datetime.today().strftime('%Y%m%d'),
                 f"all.{datetime.today().strftime('%Y%m%d')}.table"
         )
@@ -141,14 +141,14 @@ rule import_gvcfs:
 
             {params.gatk} --java-options "-Xms50g -Xmx50g" \
             GenomicsDBImport \
-                --genomicsdb-workspace-path {output} \
-                --batch-size {params.batch} \
-                -L {input.interval} \
-                --sample-name-map {input.gvcf_list} \
-                --tmp-dir {params.tmp_dir} \
-                --genomicsdb-shared-posixfs-optimizations true \
-                --reader-threads 5 \
-                -ip 500
+            --genomicsdb-workspace-path {output} \
+            --batch-size {params.batch} \
+            -L {input.interval} \
+            --sample-name-map {input.gvcf_list} \
+            --tmp-dir {params.tmp_dir} \
+            --genomicsdb-shared-posixfs-optimizations true \
+            --reader-threads 5 \
+            -ip 500
         '''
 
 rule genotype_gvcfs:
@@ -305,18 +305,18 @@ rule snps_var_recal:
         shell(f'''
             {{params.gatk}} --java-options "-Xmx12g -Xms3g" \
                 VariantRecalibrator \
-                    -V {{input.gather_sites_only_vcf}} \
-                    -O {{output.snps_recal}} \
-                    --tranches-file {{output.snps_tranches}} \
-                    --trust-all-polymorphic \
-                    -tranche {tranche_values} \
-                    -an {an_values} \
-                    -mode SNP \
-                    --max-gaussians 6 \
-                    --resource:illumina,known=true,training=true,truth=true,prior=15.0 {params.illumina_snp_vcf} \
-                    --resource:broad,known=true,training=true,truth=true,prior=10.0 {params.broad_snp_vcf} \
-                    --resource:axelsson,known=false,training=true,truth=true,prior=8.0 {params.axelsson_snp_vcf} \
-                    --resource:dbSNP146,known=true,training=true,truth=true,prior=12.0 {params.dbsnp146_snp_vcf}
+                -V {{input.gather_sites_only_vcf}} \
+                -O {{output.snps_recal}} \
+                --tranches-file {{output.snps_tranches}} \
+                --trust-all-polymorphic \
+                -tranche {tranche_values} \
+                -an {an_values} \
+                -mode SNP \
+                --max-gaussians 6 \
+                --resource:illumina,known=true,training=true,truth=true,prior=15.0 {params.illumina_snp_vcf} \
+                --resource:broad,known=true,training=true,truth=true,prior=10.0 {params.broad_snp_vcf} \
+                --resource:axelsson,known=false,training=true,truth=true,prior=8.0 {params.axelsson_snp_vcf} \
+                --resource:dbSNP146,known=true,training=true,truth=true,prior=12.0 {params.dbsnp146_snp_vcf}
         ''')
 
 rule apply_recal:
@@ -345,23 +345,23 @@ rule apply_recal:
 
             {params.gatk} --java-options "-Xmx15g -Xms5g" \
                 ApplyVQSR \
-                    -O results/apply_recal/{wildcards.interval}/tmp.indel.recalibrated.vcf \
-                    -V {input.input_vcf} \
-                    --recal-file {input.indels_recal} \
-                    --tranches-file {input.indels_tranches} \
-                    --truth-sensitivity-filter-level {params.indel_filter_level} \
-                    --create-output-variant-index true \
-                    -mode INDEL
+                -O results/apply_recal/{wildcards.interval}/tmp.indel.recalibrated.vcf \
+                -V {input.input_vcf} \
+                --recal-file {input.indels_recal} \
+                --tranches-file {input.indels_tranches} \
+                --truth-sensitivity-filter-level {params.indel_filter_level} \
+                --create-output-variant-index true \
+                -mode INDEL
 
             {params.gatk} --java-options "-Xmx15g -Xms5g" \
                 ApplyVQSR \
-                    -O {output.recal_vcf} \
-                    -V results/apply_recal/{wildcards.interval}/tmp.indel.recalibrated.vcf \
-                    --recal-file {input.snps_recal} \
-                    --tranches-file {input.snps_tranches} \
-                    --truth-sensitivity-filter-level {params.snp_filter_level} \
-                    --create-output-variant-index true \
-                    -mode SNP
+                -O {output.recal_vcf} \
+                -V results/apply_recal/{wildcards.interval}/tmp.indel.recalibrated.vcf \
+                --recal-file {input.snps_recal} \
+                --tranches-file {input.snps_tranches} \
+                --truth-sensitivity-filter-level {params.snp_filter_level} \
+                --create-output-variant-index true \
+                -mode SNP
 
             rm -f results/apply_recal/{wildcards.interval}/tmp.indel.recalibrated.vcf
         '''
@@ -421,12 +421,12 @@ rule collect_metrics_on_vcf:
 
             {{params.gatk}} --java-options "-Xmx18g -Xms6g" \
                 CollectVariantCallingMetrics \
-                    --INPUT {{input.final_vcf}} \
-                    --DBSNP {{params.dbsnp146_snp_vcf}} \
-                    --SEQUENCE_DICTIONARY {{params.ref_dict}} \
-                    --OUTPUT {metrics_prefix} \
-                    --THREAD_COUNT 8 \
-                    --TARGET_INTERVALS {{params.eval_interval_list}}
+                --INPUT {{input.final_vcf}} \
+                --DBSNP {{params.dbsnp146_snp_vcf}} \
+                --SEQUENCE_DICTIONARY {{params.ref_dict}} \
+                --OUTPUT {metrics_prefix} \
+                --THREAD_COUNT 8 \
+                --TARGET_INTERVALS {{params.eval_interval_list}}
         '''
 
 rule vep_final_vcf:
@@ -438,7 +438,7 @@ rule vep_final_vcf:
     params:
         conda_vep = config["conda_vep"]
     resources:
-         time   = 3600,
+         time   = 4320,
          mem_mb = 60000, 
          cpus   = 12
     run:
@@ -460,7 +460,6 @@ rule vep_final_vcf:
                 --vcf \
                 --no_stats \
                 --species=canis_familiaris \
-                --fork 4 \
                 --offline \
                 --dont_skip
 
@@ -473,7 +472,7 @@ rule all_var_to_table:
         vep_vcf = f"results/vep_final_vcf/joint_genotype.{config['ref']}.vcf.gz"
     output:
         all_vars_table = os.path.join(
-                config["var_to_table_dir"],
+                "results/var_to_table/",
                 datetime.today().strftime('%Y%m%d'),
                 f"all.{datetime.today().strftime('%Y%m%d')}.table"
         )
@@ -489,10 +488,10 @@ rule all_var_to_table:
         '''
             {params.gatk} \
                 VariantsToTable \
-                    -R {params.ref_fasta} \
-                    -V {input.vep_vcf} \
-                    -F CHROM -F POS -F REF -F ALT -F FILTER -F AF -F HOM-REF -F HET -F HOM-VAR -F NO-CALL -F CSQ \
-                    --show-filtered \
-                    -O {output.all_vars_table}
+                -R {params.ref_fasta} \
+                -V {input.vep_vcf} \
+                -F CHROM -F POS -F REF -F ALT -F FILTER -F AF -F HOM-REF -F HET -F HOM-VAR -F NO-CALL -F CSQ \
+                --show-filtered \
+                -O {output.all_vars_table}
         '''
 
