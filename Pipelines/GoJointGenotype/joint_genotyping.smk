@@ -408,25 +408,26 @@ rule collect_metrics_on_vcf:
         gatk               = config["gatk"],
         dbsnp146_snp_vcf   = config["dbsnp146_snp_vcf"],
         ref_dict           = config["ref_dict"],
-        eval_interval_list = config["eval_interval_list"]
+        eval_interval_list = config["eval_interval_list"],
+        metrics_prefix     = f"results/collect_metrics_on_vcf/joint_genotype.{config['ref']}"
     resources:
          time   = 360,
          mem_mb = 22000, 
          cpus   = 8
-    run:
-        metrics_prefix = os.path.splitext(output.detail_metrics)[0]
+    shell:
+        '''
+            set -e
 
-        f'''
             mkdir -p results/collect_metrics_on_vcf/
 
-            {{params.gatk}} --java-options "-Xmx18g -Xms6g" \
+            {params.gatk} --java-options "-Xmx18g -Xms6g" \
                 CollectVariantCallingMetrics \
-                --INPUT {{input.final_vcf}} \
-                --DBSNP {{params.dbsnp146_snp_vcf}} \
-                --SEQUENCE_DICTIONARY {{params.ref_dict}} \
-                --OUTPUT {metrics_prefix} \
+                --INPUT {input.final_vcf} \
+                --DBSNP {params.dbsnp146_snp_vcf} \
+                --SEQUENCE_DICTIONARY {params.ref_dict} \
+                --OUTPUT {params.metrics_prefix} \
                 --THREAD_COUNT 8 \
-                --TARGET_INTERVALS {{params.eval_interval_list}}
+                --TARGET_INTERVALS {params.eval_interval_list}
         '''
 
 rule vep_final_vcf:
@@ -469,7 +470,8 @@ rule vep_final_vcf:
 
 rule all_var_to_table:
     input:
-        vep_vcf = f"results/vep_final_vcf/joint_genotype.{config['ref']}.vcf.gz"
+        vep_vcf        = f"results/vep_final_vcf/joint_genotype.{config['ref']}.vcf.gz",
+        detail_metrics = f"results/collect_metrics_on_vcf/joint_genotype.{config['ref']}.variant_calling_detail_metrics",
     output:
         all_vars_table = os.path.join(
                 "results/var_to_table/",

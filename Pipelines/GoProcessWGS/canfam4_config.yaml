@@ -1,0 +1,42 @@
+minio_name : s3Fried
+ref : canfam3
+conda_vep : vep98
+gatk : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/gatk-4.1.9.0/gatk
+picard : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/tools/picard.jar
+batch_size : 50
+db_intervals : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/GoDawgs/Intervals
+eval_interval_list : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/intervals/acgt.N1000.interval_list
+
+# GVCF DIR FOR JOINT GENOTYPING
+gvcf_dir : /scratch.global/friedlab_GOREDO/results
+
+# REFERENCE FILES
+ref_fasta : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/canFam3.fa
+ref_fasta_index : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/canFam3.fa.fai
+ref_dict : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/canFam3.dict
+
+# RANDOM PARAMS
+excess_het_threshold : 54.69
+
+# RECAL
+indel_recalibration_tranche_values : ["100.0", "99.95", "99.9", "99.5", "99.0", "97.0", "96.0", "95.0", "94.0", "93.5", "93.0", "92.0", "91.0", "90.0"]
+indel_recalibration_annotation_values : ["FS", "ReadPosRankSum", "MQRankSum", "QD", "SOR", "DP"]
+snp_recalibration_tranche_values : ["100.0", "99.95", "99.9", "99.8", "99.6", "99.5", "99.4", "99.3", "99.0", "98.0", "97.0", "90.0" ]
+snp_recalibration_annotation_values : ["QD", "MQRankSum", "ReadPosRankSum", "FS", "MQ", "SOR", "DP"]
+snp_filter_level : 99.7
+indel_filter_level : 99.7
+
+# RESOURCE FILES
+dbsnp146_indels_vcf : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/dbsnp146.indel.vcf
+dbsnp146_indels_vcf_index : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/dbsnp146.indel.vcf.idx
+dbsnp146_snp_vcf : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/dbsnp146.snp.vcf
+dbsnp146_snp_vcf_index : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/dbsnp146.snp.vcf.idx
+broad_snp_vcf : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/final.broad.snps.vcf
+broad_snp_vcf_index : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/final.broad.snps.vcf.idx
+axelsson_snp_vcf : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/final.axelsson.snps.vcf
+axelsson_snp_vcf_index : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/final.axelsson.snps.vcf.idx
+illumina_snp_vcf : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/illumina.snps.vcf
+illumina_snp_vcf_index : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/illumina.snps.vcf.idx
+
+# AF FREQ
+var_to_table_dir : /panfs/roc/groups/0/fried255/fried255/working/all_dogs
