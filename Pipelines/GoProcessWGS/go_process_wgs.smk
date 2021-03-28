@@ -1,18 +1,16 @@
 import pandas as pd
+import os
 
-def get_fastq(wildcards):
-    '''
-    Get fastq files of given sample-unit.
-    '''
-    fastqs = units.loc[(wildcards.readgroup_name), ["fastq_1", "fastq_2"]].dropna()
-    
-    return {"r1": fastqs.fastq_1, "r2": fastqs.fastq_2}
+include: "src/utils.py"
 
-
-#units = pd.read_table(config["units"], dtype=str).set_index(["sample","time"], drop=False)
 units = pd.read_table(config["units"],dtype=str).set_index("readgroup_name",drop=False)
 #units.index = units.index.set_levels([i.astype(str) for i in units.index.levels])  # enforce str in index
-print(units)
+
+sequence_grouping(config["ref_dict"])
+# get sequence group intervals without unmapped, with unmapped, and hc caller intervals
+intervals, = glob_wildcards(os.path.join("results/seq_group/no_unmap","{interval}.tsv"))
+unmap_intervals, = glob_wildcards(os.path.join("results/seq_group/with_unmap","{interval}.tsv"))
+hc_intervals, = glob_wildcards(os.path.join(config["hc_intervals"],"{hc_interval}.interval_list"))
 
 rule all:
     input:
@@ -29,21 +27,49 @@ rule all:
        #    u=units.itertuples()
        #),
        ## merge bams
-        expand("results/merge_bam_alignment/{u.sample_name}/{u.readgroup_name}.merged.unsorted.bam",
-            u=units.itertuples()
+       #expand("results/merge_bam_alignment/{u.sample_name}/{u.readgroup_name}.{ref}.merged.unsorted.bam",
+       #    u=units.itertuples(),ref=config["ref"]
+       #),
+       ## mark duplicates
+       #expand("results/mark_duplicates/{u.sample_name}.{ref}.aligned.unsorted.duplicates_marked.bam",
+       #    u=units.itertuples(),ref=config["ref"]
+       #),
+       ## sort and fix tags
+       #expand("results/sort_and_fix_tags/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam",
+       #    sample_name=units["sample_name"].values[0],ref=config["ref"]
+       #),
+       ## base recalibrator
+       #expand("results/base_recal/{sample_name}.{ref}.{interval}.recal_data.csv",
+       #    sample_name=units["sample_name"].values[0],ref=config["ref"],
+       #    interval=intervals
+       #),
+       ## gather bqsr reports
+       #expand("results/gather_bqsr_reports/{u.sample_name}.{ref}.recal_data.csv",
+       #    u=units.itertuples(),ref=config["ref"]
+       #),
+       ## apply bqsr
+       #expand("results/apply_bqsr/{sample_name}.{ref}.{interval}.aligned.duplicates_marked.recalibrated.bam",
+       #    sample_name=units["sample_name"].values[0],ref=config["ref"],
+       #    interval=unmap_intervals
+       #),
+       ## gather bams
+       #expand("results/gather_bam_files/{u.sample_name}.{ref}.bam",
+       #    u=units.itertuples(),ref=config["ref"]
+       #),
+       ## doc and flagstat
+       #expand("results/coverage_depth_and_flagstat/{u.sample_name}.{ref}.depthofcoverage.sample_summary",
+       #    u=units.itertuples(),ref=config["ref"]
+       #),
+       ## haplotype caller
+       #expand("results/haplotype_caller/{hc_interval}/{u.sample_name}.{ref}.g.vcf.gz",
+       #    u=units.itertuples(),ref=config["ref"],
+       #    hc_interval=hc_intervals
+       #),
+       ## merge gvcfs
+        expand("results/merge_gvcfs/{u.sample_name}.{ref}.g.vcf.gz",
+            u=units.itertuples(),ref=config["ref"]
         )
 
-
-#expand("results/step01/{breed}/{breed}_snp_infor.Rdat",
-#       #        breed=units.breed.unique()
-
-#rule test:
-#    output:
-#        hello = "results/{sample_name}/{platform_unit}/hello"
-#    shell:
-#        '''
-#            touch {output.hello}        
-#        '''
 
 rule fastqc:
     input:
@@ -69,12 +95,13 @@ rule fastqs_to_ubam:
     output:
         ubam = "results/fastqs_to_ubam/{sample_name}/{readgroup_name}.unmapped.bam"
     params:
+        java_opt  = "-Xms6000m",
         gatk      = config["gatk"],
         ref_fasta = config["ref_fasta"]
+    threads: 6
     resources:
          time   = 360,
-         mem_mb = 12000, 
-         cpus   = 6
+         mem_mb = 12000
     run:
 
         # get fastq meta data for logging in the bam
@@ -84,12 +111,12 @@ rule fastqs_to_ubam:
         platform_name = units.loc[units['readgroup_name'] == wildcards.readgroup_name,'platform_name'].values[0]
         sequencing_center = units.loc[units['readgroup_name'] == wildcards.readgroup_name,'sequencing_center'].values[0]
 
-        f'''
-            {{params.gatk}} --java-options "-Xmx6000m" \
+        shell(f'''
+            {{params.gatk}} --java-options {params.java_opt} \
                 FastqToSam \
                 --FASTQ {{input.r1}} \
                 --FASTQ2 {{input.r2}} \
-                --OUTPUT {output.ubam} \
+                --OUTPUT {{output.ubam}} \
                 --READ_GROUP_NAME {{wildcards.readgroup_name}} \
                 --SAMPLE_NAME {{wildcards.sample_name}} \
                 --LIBRARY_NAME {library_name} \
@@ -97,7 +124,7 @@ rule fastqs_to_ubam:
                 --RUN_DATE {run_date} \
                 --PLATFORM {platform_name} \
                 --SEQUENCING_CENTER {sequencing_center}
-        '''
+        ''')
 
 rule sam_to_fastq_and_bwa_mem:
     input:
@@ -113,11 +140,11 @@ rule sam_to_fastq_and_bwa_mem:
         samtools   = config["samtools"],
         bwa        = config["bwa"],
         bwa_cl     = "mem -K 100000000 -p -v 3 -t 16 -Y",
-        ref_fasta  = config["ref_fasta"]
+        ref_fasta  = config["ref_fasta"],
+    threads: 16
     resources:
          time   = 1440,
-         mem_mb = 32000, 
-         cpus   = 16
+         mem_mb = 24000, 
     shell:
         '''
             set -o pipefail
@@ -143,25 +170,30 @@ rule merge_bam_alignment:
         ubam = "results/fastqs_to_ubam/{sample_name}/{readgroup_name}.unmapped.bam",
         bam  = "results/sam_to_fastq_and_bwa_mem/{sample_name}/{readgroup_name}.aligned.unmerged.bam"
     output:
-        merged_bam = "results/merge_bam_alignment/{sample_name}/{readgroup_name}.merged.unsorted.bam"
+        merged_bam = "results/merge_bam_alignment/{sample_name}/{readgroup_name}.{ref}.merged.unsorted.bam"
     params:
         comp_level = 5,
         java_opt   = "-Xms3000m",
         gatk       = config["gatk"],
         bwa        = config["bwa"],
         bwa_cl     = "mem -K 100000000 -p -v 3 -t 16 -Y",
+        bwa_ver    = "0.7.17-r1188",
         ref_fasta  = config["ref_fasta"]
+    threads: 4
     resources:
-         time   = 1440,
-         mem_mb = 32000, 
-         cpus   = 16
+         time   = 720,
+         mem_mb = 12000
     shell:
+        # DOUBLE CHECK BAM HEADER - UNCLEAR IF BWA_VER WILL EVALUATE AS EXPECTED
+        # BWA_VER=$(/panfs/roc/groups/0/fried255/shared/gatk4_workflow/tools/bwa-0.7.17/bwa 2>&1 | grep -e '^Version' | sed 's/Version: //' 2>&1)
         '''
+            set -e
+            
             # set the bash variable needed for the command-line
             bash_ref_fasta={params.ref_fasta}
-
+            
             # get bwa version
-            BWA_VER=$(/panfs/roc/groups/0/fried255/shared/gatk4_workflow/tools/bwa-0.7.17/bwa 2>&1 | grep -e '^Version' | sed 's/Version: //' 2>&1)
+            # this had to removed as it keep causing an error - unsure why...TROUBLE SHOOT NEED
 
             {params.gatk} --java-options "-Dsamjdk.compression_level={params.comp_level} {params.java_opt}" \
                 MergeBamAlignment \
@@ -182,7 +214,7 @@ rule merge_bam_alignment:
                 --MAX_INSERTIONS_OR_DELETIONS -1 \
                 --PRIMARY_ALIGNMENT_STRATEGY MostDistant \
                 --PROGRAM_RECORD_ID "bwamem" \
-                --PROGRAM_GROUP_VERSION "${BWA_VER}" \
+                --PROGRAM_GROUP_VERSION "{params.bwa_ver}" \
                 --PROGRAM_GROUP_COMMAND_LINE "{params.bwa_cl}" \
                 --PROGRAM_GROUP_NAME "bwamem" \
                 --UNMAPPED_READ_STRATEGY COPY_TO_TAG \
@@ -190,162 +222,319 @@ rule merge_bam_alignment:
                 --UNMAP_CONTAMINANT_READS true
         '''
 
-#  call GetBwaVersion {
-#    input: 
-#      bwa = bwa
-#  }
-#
-#  # Align flowcell-level unmapped input bams in parallel
-#  scatter (unmapped_bam in read_lines(CreateFoFN.fofn_list)) {
-#
-#    # Get the basename, i.e. strip the filepath and the extension
-#    String bam_basename = basename(unmapped_bam, unmapped_bam_suffix)
-#
-#    # Map reads to reference
-#    call SamToFastqAndBwaMem {
-#      input:
-#        bwa = bwa,
-#        picard = picard,
-#        samtools = samtools,
-#        input_bam = unmapped_bam,
-#        bwa_commandline = bwa_commandline,
-#        output_bam_basename = bam_basename + ".unmerged",
-#        ref_fasta = ref_fasta,
-#        ref_fasta_index = ref_fasta_index,
-#        ref_dict = ref_dict,
-#        compression_level = compression_level
-#     }
-#
-#    # Merge original uBAM and BWA-aligned BAM 
-#    call MergeBamAlignment {
-#      input:
-#        gatk = gatk,
-#        unmapped_bam = unmapped_bam,
-#        bwa_commandline = bwa_commandline,
-#        bwa_version = GetBwaVersion.version,
-#        aligned_bam = SamToFastqAndBwaMem.output_bam,
-#        output_bam_basename = bam_basename + ".aligned.unsorted",
-#        ref_fasta = ref_fasta,
-#        ref_fasta_index = ref_fasta_index,
-#        ref_dict = ref_dict,
-#        compression_level = compression_level
-#    }
-#  }
-#task SamToFastqAndBwaMem {
-#  String input_bam
-#  String bwa_commandline
-#  String output_bam_basename
-#  String ref_fasta
-#  String ref_fasta_index
-#  String ref_dict
-#
-#  # This is the .alt file from bwa-kit (https://github.com/lh3/bwa/tree/master/bwakit), 
-#  # listing the reference contigs that are "alternative". Leave blank in JSON for legacy 
-#  # references such as b37 and hg19.
-#  String ref_amb
-#  String ref_ann
-#  String ref_bwt
-#  String ref_pac
-#  String ref_sa
-#
-#  Int compression_level
-#
-#  String bwa
-#  String picard
-#  String samtools
-#  String java_opt
-#
-#  Int mem_gb
-#  Int cpu
-#  String walltime
-#
-#  command <<<
-#    set -o pipefail
-#    set -e
-#
-#    # set the bash variable needed for the command-line
-#    bash_ref_fasta=${ref_fasta}
-#
-#		java -Dsamjdk.compression_level=${compression_level} ${java_opt} -jar ${picard} \
-#      SamToFastq \
-#			INPUT=${input_bam} \
-#			FASTQ=/dev/stdout \
-#			INTERLEAVE=true \
-#			NON_PF=true \
-#    | \
-#		${bwa}${bwa_commandline} /dev/stdin -  2> >(tee ${output_bam_basename}.bwa.stderr.log >&2) \
-#    | \
-#		${samtools} view -1 - > ${output_bam_basename}.bam
-#
-#  >>>
-#  runtime {
-#    backend: "slurm"
-#    mem_gb: mem_gb
-#    cpu: cpu
-#    walltime: walltime
-#  }
-#  output {
-#    File output_bam = "${output_bam_basename}.bam"
-#    File bwa_stderr_log = "${output_bam_basename}.bwa.stderr.log"
-#  }
-#}
-#
-## Merge original input uBAM file with BWA-aligned BAM file
-#task MergeBamAlignment {
-#  String unmapped_bam
-#  String bwa_commandline
-#  String bwa_version
-#  String aligned_bam
-#  String output_bam_basename
-#  String ref_fasta
-#  String ref_fasta_index
-#  String ref_dict
-#
-#  Int compression_level
-#
-#  String gatk
-#  String java_opt
-#
-#  Int mem_gb
-#  Int cpu
-#  String walltime
-#
-#  command {
-#    # set the bash variable needed for the command-line
-#    bash_ref_fasta=${ref_fasta}
-#    ${gatk} --java-options "-Dsamjdk.compression_level=${compression_level} ${java_opt}" \
-#      MergeBamAlignment \
-#      --VALIDATION_STRINGENCY SILENT \
-#      --EXPECTED_ORIENTATIONS FR \
-#      --ATTRIBUTES_TO_RETAIN X0 \
-#      --ALIGNED_BAM ${aligned_bam} \
-#      --UNMAPPED_BAM ${unmapped_bam} \
-#      --OUTPUT ${output_bam_basename}.bam \
-#      --REFERENCE_SEQUENCE ${ref_fasta} \
-#      --PAIRED_RUN true \
-#      --SORT_ORDER "unsorted" \
-#      --IS_BISULFITE_SEQUENCE false \
-#      --ALIGNED_READS_ONLY false \
-#      --CLIP_ADAPTERS false \
-#      --MAX_RECORDS_IN_RAM 2000000 \
-#      --ADD_MATE_CIGAR true \
-#      --MAX_INSERTIONS_OR_DELETIONS -1 \
-#      --PRIMARY_ALIGNMENT_STRATEGY MostDistant \
-#      --PROGRAM_RECORD_ID "bwamem" \
-#      --PROGRAM_GROUP_VERSION "${bwa_version}" \
-#      --PROGRAM_GROUP_COMMAND_LINE "${bwa_commandline}" \
-#      --PROGRAM_GROUP_NAME "bwamem" \
-#      --UNMAPPED_READ_STRATEGY COPY_TO_TAG \
-#      --ALIGNER_PROPER_PAIR_FLAGS true \
-#      --UNMAP_CONTAMINANT_READS true
-#  }
-#  runtime {
-#    backend: "slurm"
-#    mem_gb: mem_gb
-#    cpu: cpu
-#    walltime: walltime
-#  }
-#  output {
-#    File output_bam = "${output_bam_basename}.bam"
-#  }
-#}
+rule mark_duplicates:
+    input:
+        merged_bams = expand(
+                        "results/merge_bam_alignment/{sample_name}/{readgroup_name}.{ref}.merged.unsorted.bam",
+                        sample_name=units["sample_name"].values[0],
+                        readgroup_name=list(units["readgroup_name"]),
+                        ref=config["ref"]
+                      )
+    output:
+        dedup_bam = "results/mark_duplicates/{sample_name}.{ref}.aligned.unsorted.duplicates_marked.bam",
+        metrics   = "results/mark_duplicates/{sample_name}.{ref}.duplicate_metrics"
+    params:
+        comp_level = 5,
+        java_opt   = "-Xms4000m -Xmx16g",
+        gatk       = config["gatk"],
+        tmp_dir    = "/dev/shm/{sample_name}.md.tmp"
+    threads: 4
+    resources:
+         time   = 720,
+         mem_mb = 60000
+    run:
+        # separate bams by --INPUT
+        bams = " --INPUT ".join(map(str,input.merged_bams))
+
+        shell(f'''
+            mkdir -p {{params.tmp_dir}}
+
+            {{params.gatk}} --java-options "-Dsamjdk.compression_level={{params.comp_level}} {{params.java_opt}}" \
+                MarkDuplicates \
+                --TMP_DIR {{params.tmp_dir}} \
+                --INPUT {bams} \
+                --OUTPUT {{output.dedup_bam}} \
+                --METRICS_FILE {{output.metrics}} \
+                --VALIDATION_STRINGENCY SILENT \
+                --OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500 \
+                --ASSUME_SORT_ORDER "queryname" \
+                --CREATE_MD5_FILE true
+        ''')
+
+rule sort_and_fix_tags:
+    input:
+        dedup_bam = "results/mark_duplicates/{sample_name}.{ref}.aligned.unsorted.duplicates_marked.bam"
+    output:
+        sorted_bam = "results/sort_and_fix_tags/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam",
+        sorted_bai = "results/sort_and_fix_tags/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bai"
+    params:
+        comp_level = 5,
+        java_opt   = "-Xms4000m",
+        gatk       = config["gatk"],
+        ref_fasta  = config["ref_fasta"],
+    threads: 12
+    resources:
+         time   = 720,
+         mem_mb = 24000
+    shell:
+        '''
+            set -o pipefail
+            
+            {params.gatk} --java-options "-Dsamjdk.compression_level={params.comp_level} {params.java_opt}" \
+                SortSam \
+                --INPUT {input.dedup_bam} \
+                --OUTPUT /dev/stdout \
+                --SORT_ORDER "coordinate" \
+                --CREATE_INDEX false \
+                --CREATE_MD5_FILE false \
+            | \
+            {params.gatk} --java-options "-Dsamjdk.compression_level={params.comp_level} {params.java_opt}" \
+                SetNmMdAndUqTags \
+                --INPUT /dev/stdin \
+                --OUTPUT {output.sorted_bam} \
+                --CREATE_INDEX true \
+                --CREATE_MD5_FILE true \
+                --REFERENCE_SEQUENCE {params.ref_fasta}
+       '''
+
+rule base_recalibrator:
+    input:
+        sorted_bam = "results/sort_and_fix_tags/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam",
+        interval   = ancient("results/seq_group/no_unmap/{interval}.tsv")
+    output:
+        recal_csv = "results/base_recal/{sample_name}.{ref}.{interval}.recal_data.csv"
+    params:
+        java_opt         = "-Xms4000m",
+        gatk             = config["gatk"],
+        ref_fasta        = config["ref_fasta"],
+        dbsnp_snp_vcf    = config["dbsnp146_indels_vcf"],
+        broad_snp_vcf    = config["broad_snp_vcf"],
+        axelsson_snp_vcf = config["axelsson_snp_vcf"],
+        dbsnp_indels_vcf = config["dbsnp146_indels_vcf"],
+    resources:
+         time   = 120,
+         mem_mb = 10000
+    run:
+        # separate content of interval by -L
+       # ivals = " -L ".join(map(str,input.interval))
+        with open(input.interval,"r") as f:
+            ival = f.read().strip().replace("\t", " -L ")
+
+        shell(f'''
+            {{params.gatk}} --java-options {{params.java_opt}} \
+                BaseRecalibrator \
+                -R {{params.ref_fasta}} \
+                -I {{input.sorted_bam}} \
+                --use-original-qualities \
+                -O {{output.recal_csv}} \
+                --known-sites {{params.dbsnp_snp_vcf}} \
+                --known-sites {{params.broad_snp_vcf}} \
+                --known-sites {{params.axelsson_snp_vcf}} \
+                --known-sites {{params.dbsnp_indels_vcf}} \
+                -L {ival}
+        ''')
+
+rule gather_bqsr_reports:
+    input:
+       #bqsr_reports = sorted(
+       #            expand("results/base_recal/{sample_name}.{ref}.{interval}.recal_data.csv",
+       #                sample_name=units["sample_name"].values[0],
+       #                ref=config["ref"],
+       #                interval=intervals
+       #            )
+       #)
+        bqsr_reports = sorted(
+                    expand("results/base_recal/{sample_name}.{ref}.{interval}.recal_data.csv",
+                        sample_name=units["sample_name"].values[0],
+                        ref=config["ref"],
+                        interval=intervals
+                        ), key=lambda item: int(os.path.basename(item).split(".")[-3].split("_")[1])
+        )
+    output:
+        report = "results/gather_bqsr_reports/{sample_name}.{ref}.recal_data.csv"
+    params:
+        java_opt = "-Xms3000m",
+        gatk     = config["gatk"]
+    resources:
+         time   = 10,
+         mem_mb = 2000
+    run:
+        # separate reports by -I
+        reports = " -I ".join(map(str,input.bqsr_reports))
+
+        shell(f'''
+            {{params.gatk}} --java-options {{params.java_opt}} \
+                GatherBQSRReports \
+                -I {reports} \
+                -O {{output.report}}
+        ''')
+        
+rule apply_bqsr:
+    input:
+        sorted_bam = "results/sort_and_fix_tags/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam",
+        report     = "results/gather_bqsr_reports/{sample_name}.{ref}.recal_data.csv",
+        interval   = ancient("results/seq_group/with_unmap/{interval}.tsv")
+    output:
+        recal_bam = "results/apply_bqsr/{sample_name}.{ref}.{interval}.aligned.duplicates_marked.recalibrated.bam",
+        recal_bai = "results/apply_bqsr/{sample_name}.{ref}.{interval}.aligned.duplicates_marked.recalibrated.bai"
+    params:
+        java_opt         = "-Xms3000m",
+        gatk             = config["gatk"],
+        ref_fasta        = config["ref_fasta"],
+        dbsnp_snp_vcf    = config["dbsnp146_indels_vcf"],
+        broad_snp_vcf    = config["broad_snp_vcf"],
+        axelsson_snp_vcf = config["axelsson_snp_vcf"],
+        dbsnp_indels_vcf = config["dbsnp146_indels_vcf"],
+    resources:
+         time   = 180,
+         mem_mb = 10000
+    run:
+        # separate content of interval by -L
+       #ivals = " -L ".join(map(str,input.interval))
+        with open(input.interval,"r") as f:
+            ival = f.read().strip().replace("\t", " -L ")
+
+        shell(f'''
+            {{params.gatk}} --java-options {{params.java_opt}} \
+                ApplyBQSR \
+                -R {{params.ref_fasta}} \
+                -I {{input.sorted_bam}} \
+                -O {{output.recal_bam}} \
+                -L {ival} \
+                -bqsr {{input.report}} \
+                --static-quantized-quals 10 --static-quantized-quals 20 --static-quantized-quals 30 \
+                --add-output-sam-program-record \
+                --create-output-bam-md5 \
+                --use-original-qualities
+        ''')
+
+rule gather_bam_files:
+    input:
+        recal_bams = sorted(
+                expand("results/apply_bqsr/{sample_name}.{ref}.{interval}.aligned.duplicates_marked.recalibrated.bam",
+                    sample_name=units["sample_name"].values[0],
+                    ref=config["ref"],
+                    interval=intervals
+                    ), key=lambda item: int(os.path.basename(item).split(".")[2].split("_")[1])
+        )
+    output:
+        final_bam = "results/gather_bam_files/{sample_name}.{ref}.bam",
+        final_bai = "results/gather_bam_files/{sample_name}.{ref}.bai"
+    params:
+        comp_level = 5,
+        java_opt   = "-Xms2000m",
+        gatk       = config["gatk"]
+    threads: 4
+    resources:
+         time   = 180,
+         mem_mb = 16000
+    run:
+        # separate bams by -I
+        bams = " -I ".join(map(str,input.recal_bams))
+        
+        shell(f'''
+            {{params.gatk}} --java-options "-Dsamjdk.compression_level={{params.comp_level}} {{params.java_opt}}" \
+                GatherBamFiles \
+                --INPUT {bams} \
+                --OUTPUT {{output.final_bam}} \
+                --CREATE_INDEX true \
+                --CREATE_MD5_FILE true \
+        ''')
+
+rule coverage_depth_and_flagstat:
+    input:
+        final_bam = "results/gather_bam_files/{sample_name}.{ref}.bam"
+    output:
+        doc      = "results/coverage_depth_and_flagstat/{sample_name}.{ref}.depthofcoverage.sample_summary",
+        flagstat = "results/coverage_depth_and_flagstat/{sample_name}.{ref}.flagstat"
+    params:
+        comp_level = 5,
+        java_opt   = "-Xmx32000m",
+        gatk3      = config["gatk3"],
+        ref_fasta  = config["ref_fasta"],
+    threads: 8
+    resources:
+         time   = 360,
+         mem_mb = 32000
+    shell:
+        '''
+            set -e
+
+            java -jar {params.java_opt} {params.gatk3} \
+                -T DepthOfCoverage \
+                -R {params.ref_fasta} \
+                -omitBaseOutput \
+                -omitLocusTable \
+                -omitIntervals \
+                -I {input.final_bam} \
+                -o results/coverage_depth_and_flagstat/{wildcards.sample_name}.{wildcards.ref}.depthofcoverage \
+                -ct 5 \
+                -ct 15 \
+                -ct 30 \
+                -nt 8
+        
+            java -jar {params.java_opt} {params.gatk3} \
+                -T FlagStat \
+                -R {params.ref_fasta} \
+                -I {input.final_bam} \
+                -o results/coverage_depth_and_flagstat/{wildcards.sample_name}.{wildcards.ref}.flagstat \
+                -nct 8
+        '''
+
+rule haplotype_caller:
+    input:
+        final_bam = "results/gather_bam_files/{sample_name}.{ref}.bam",
+       #interval  = f"{os.path.join(config['hc_intervals'],wildcards.hc_interval)}.interval_list"
+        interval  = "/panfs/roc/groups/0/fried255/shared/gatk4_workflow/intervals/scattered_intervals_80/{hc_interval}.interval_list"
+    output:
+        hc_gvcf = "results/haplotype_caller/{hc_interval}/{sample_name}.{ref}.g.vcf.gz"
+    params:
+        java_opt  = "-Xmx10G -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10",
+        gatk      = config["gatk"],
+        ref_fasta = config["ref_fasta"],
+    threads: 4
+    resources:
+         time   = 720,
+         mem_mb = 8000
+    shell:
+        '''
+            {params.gatk} --java-options "{params.java_opt}" \
+                HaplotypeCaller \
+                -R {params.ref_fasta} \
+                -I {input.final_bam} \
+                -L {input.interval} \
+                -O {output.hc_gvcf} \
+                -contamination 0 -ERC GVCF
+        '''
+
+rule merge_gvcfs:
+    input:
+        flagstat  = "results/coverage_depth_and_flagstat/{sample_name}.{ref}.flagstat",
+        hc_gvcfs = sorted(
+                expand("results/haplotype_caller/{hc_interval}/{sample_name}.{ref}.g.vcf.gz",
+                    sample_name=units["sample_name"].values[0],
+                    ref=config["ref"],
+                    hc_interval=hc_intervals
+                    ), key=lambda item: int(item.split("/")[-2].split("-")[0])
+        )
+    output:
+        final_gvcf = "results/merge_gvcfs/{sample_name}.{ref}.g.vcf.gz"
+    params:
+        java_opt  = "-Xmx2000m",
+        gatk      = config["gatk"],
+        ref_fasta = config["ref_fasta"],
+    threads: 4
+    resources:
+         time   = 60,
+         mem_mb = 4000
+    run:
+        # separate bams by -I
+        gvcfs = " -I ".join(map(str,input.hc_gvcfs))
+
+        shell(f'''
+            {params.gatk} --java-options {params.java_opt}  \
+                MergeVcfs \
+                --INPUT {gvcfs} \
+                --OUTPUT {{output.final_gvcf}}
+        ''')
+

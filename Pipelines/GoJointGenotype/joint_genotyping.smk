@@ -131,10 +131,10 @@ rule import_gvcfs:
         tmp_dir = "/dev/shm/{interval}",
         gatk    = config["gatk"],
         batch   = config["batch_size"],
+    threads: 5
     resources:
          time   = 2160,
-         mem_mb = 60000, 
-         cpus   = 5
+         mem_mb = 60000
     shell:
         ''' 
             mkdir -p {params.tmp_dir}
@@ -160,10 +160,10 @@ rule genotype_gvcfs:
     params:
         gatk      = config["gatk"],
         ref_fasta = config["ref_fasta"]
+    threads: 4
     resources:
          time   = 2880,
-         mem_mb = 60000, 
-         cpus   = 4
+         mem_mb = 60000
     shell:
         '''
             {params.gatk} --java-options "-Xmx50g -Xms50g" \
@@ -188,8 +188,7 @@ rule fltr_make_sites_only:
         ref_fasta = config["ref_fasta"]
     resources:
          time   = 30,
-         mem_mb = 12000, 
-         cpus   = 1
+         mem_mb = 12000
     shell:
         '''
             {params.gatk} --java-options "-Xmx3g -Xms3g" \
@@ -216,10 +215,10 @@ rule sites_only_gather_vcf:
     params:
         gatk   = config["gatk"],
         picard = config["picard"]
+    threads: 4
     resources:
          time   = 240,
-         mem_mb = 24000, 
-         cpus   = 4
+         mem_mb = 24000
     run:
         vcfs = " --input ".join(map(str,input.sites_only_vcf))
 
@@ -257,10 +256,10 @@ rule indels_var_recal:
         recal_tranche_values    = config["indel_recalibration_tranche_values"],
         recal_annotation_values = config["indel_recalibration_annotation_values"],
         dbsnp146_indels_vcf     = config["dbsnp146_indels_vcf"]
+    threads: 4
     resources:
          time   = 240,
-         mem_mb = 24000, 
-         cpus   = 4
+         mem_mb = 24000
     run:
         tranche_values = " -tranche ".join(map(str,params.recal_tranche_values))
         an_values = " -an ".join(map(str,params.recal_annotation_values))
@@ -294,10 +293,10 @@ rule snps_var_recal:
         broad_snp_vcf           = config["broad_snp_vcf"],
         axelsson_snp_vcf        = config["axelsson_snp_vcf"],
         illumina_snp_vcf        = config["illumina_snp_vcf"]
+    threads: 4
     resources:
          time   = 240,
-         mem_mb = 16000, 
-         cpus   = 4
+         mem_mb = 16000
     run:
         tranche_values = " -tranche ".join(map(str,params.recal_tranche_values))
         an_values = " -an ".join(map(str,params.recal_annotation_values))
@@ -335,8 +334,7 @@ rule apply_recal:
         snp_filter_level   = config["snp_filter_level"]
     resources:
          time   = 30,
-         mem_mb = 16000, 
-         cpus   = 1
+         mem_mb = 16000
     shell:
         '''
             set -e
@@ -374,10 +372,10 @@ rule final_gather_vcfs:
         final_vcf_index = f"results/final_gather_vcfs/joint_genotype.{config['ref']}.vcf.gz.tbi"
     params:
         gatk = config["gatk"],
+    threads: 4
     resources:
          time   = 240,
-         mem_mb = 22000, 
-         cpus   = 4
+         mem_mb = 22000
     run:
         vcfs = " --input ".join(map(str,input.recal_vcfs))
 
@@ -410,10 +408,10 @@ rule collect_metrics_on_vcf:
         ref_dict           = config["ref_dict"],
         eval_interval_list = config["eval_interval_list"],
         metrics_prefix     = f"results/collect_metrics_on_vcf/joint_genotype.{config['ref']}"
+    threads: 8
     resources:
          time   = 360,
-         mem_mb = 22000, 
-         cpus   = 8
+         mem_mb = 22000
     shell:
         '''
             set -e
@@ -438,10 +436,10 @@ rule vep_final_vcf:
         vep_vcf = f"results/vep_final_vcf/joint_genotype.{config['ref']}.vcf.gz"
     params:
         conda_vep = config["conda_vep"]
+    threads: 12
     resources:
          time   = 4320,
-         mem_mb = 60000, 
-         cpus   = 12
+         mem_mb = 60000
     run:
         import os
         out_name = os.path.splitext(output.vep_vcf)[0] 
@@ -482,10 +480,10 @@ rule all_var_to_table:
         gatk      = config["gatk"],
         ref_fasta = config["ref_fasta"],
         table_dir = config["var_to_table_dir"]
+    threads: 12
     resources:
          time   = 2160,
-         mem_mb = 12000, 
-         cpus   = 12
+         mem_mb = 12000
     shell:
         '''
             {params.gatk} \

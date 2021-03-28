@@ -1,62 +1,62 @@
 {
-    "copy_intervals" :
+    "fastqs_to_ubam" :
     {
-        "output" : ".logs/{rule}/{wildcards.interval}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.interval}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.readgroup_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.readgroup_name}/%j.{rule}.err"
     },
-    "import_gvcfs" :
+    "sam_to_fastq_and_bwa_mem" :
     {
-        "output" : ".logs/{rule}/{wildcards.interval}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.interval}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.readgroup_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.readgroup_name}/%j.{rule}.err"
     },
-    "genotype_gvcfs" :
+    "merge_bam_alignment" :
     {
-        "output" : ".logs/{rule}/{wildcards.interval}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.interval}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.readgroup_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.readgroup_name}/%j.{rule}.err"
     },
-    "fltr_make_sites_only" :
+    "mark_duplicates" :
     {
-        "output" : ".logs/{rule}/{wildcards.interval}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.interval}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
     },
-    "sites_only_gather_vcf" :
+    "sort_and_fix_tags" :
     {
-        "output" : ".logs/{rule}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
     },
-    "indels_var_recal" :
+    "base_recalibrator" :
     {
-        "output" : ".logs/{rule}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.interval}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.interval}/%j.{rule}.err"
     },
-    "snps_var_recal" :
+    "gather_bqsr_reports" :
     {
-        "output" : ".logs/{rule}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
     },
-    "apply_recal" :
+    "apply_bqsr" :
     {
-        "output" : ".logs/{rule}/{wildcards.interval}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.interval}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.interval}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.interval}/%j.{rule}.err"
     },
-    "final_gather_vcfs" :
+    "gather_bam_files" :
     {
-        "output" : ".logs/{rule}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
     },
-    "collect_metrics_on_vcf" :
+    "coverage_depth_and_flagstat" :
     {
-        "output" : ".logs/{rule}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
     },
-    "vep_final_vcf" :
+    "haplotype_caller" :
     {
-        "output" : ".logs/{rule}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.hc_interval}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.hc_interval}/%j.{rule}.err"
     },
-    "all_var_to_table" :
+    "merge_gvcfs" :
     {
-        "output" : ".logs/{rule}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
     }
 }

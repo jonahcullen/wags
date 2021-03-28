@@ -106,10 +106,15 @@ def main(dog_meta, outdir, fq_dir, ref):
                                   "GoProcessWGS",
                                   "slurm.go_wgs")
         
-        input_names = ["go_process_wgs.smk",f"{ref}_config.yaml","slurm.go_wgs"]
+        src = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                  "Pipelines",
+                                  "GoProcessWGS",
+                                  "src")
+        
+        input_names = ["go_process_wgs.smk",f"{ref}_config.yaml","slurm.go_wgs","src"]
         dst_files = [os.path.join(v["work_dir"],i) for i in input_names]
         
-        for i in zip([smk,config,profile],dst_files):
+        for i in zip([smk,config,profile,src],dst_files):
             if not os.path.exists(i[1]):
                 if os.path.isfile(i[0]):
                     shutil.copy(i[0],i[1])
