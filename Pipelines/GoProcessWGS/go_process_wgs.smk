@@ -47,11 +47,12 @@ rule all:
        #expand("results/gather_bqsr_reports/{u.sample_name}.{ref}.recal_data.csv",
        #    u=units.itertuples(),ref=config["ref"]
        #),
-       ## apply bqsr
-       #expand("results/apply_bqsr/{sample_name}.{ref}.{interval}.aligned.duplicates_marked.recalibrated.bam",
-       #    sample_name=units["sample_name"].values[0],ref=config["ref"],
-       #    interval=unmap_intervals
-       #),
+       ## apply bqsr - DUE TO THE DIFFERENCE IN INTERVALS WITH OR WITHOUT UNMAPPED,
+       ## THIS IS NEEDED IN ADDITION TO THE FINAL MERGEGVCFS...FOR NOW...
+        expand("results/apply_bqsr/{sample_name}.{ref}.{interval}.aligned.duplicates_marked.recalibrated.bam",
+            sample_name=units["sample_name"].values[0],ref=config["ref"],
+            interval=unmap_intervals
+        ),
        ## gather bams
        #expand("results/gather_bam_files/{u.sample_name}.{ref}.bam",
        #    u=units.itertuples(),ref=config["ref"]
@@ -307,10 +308,10 @@ rule base_recalibrator:
         java_opt         = "-Xms4000m",
         gatk             = config["gatk"],
         ref_fasta        = config["ref_fasta"],
-        dbsnp_snp_vcf    = config["dbsnp146_indels_vcf"],
+        dbsnp_snp_vcf    = config["dbsnp_indels_vcf"],
         broad_snp_vcf    = config["broad_snp_vcf"],
         axelsson_snp_vcf = config["axelsson_snp_vcf"],
-        dbsnp_indels_vcf = config["dbsnp146_indels_vcf"],
+        dbsnp_indels_vcf = config["dbsnp_indels_vcf"],
     resources:
          time   = 120,
          mem_mb = 10000
@@ -378,13 +379,9 @@ rule apply_bqsr:
         recal_bam = "results/apply_bqsr/{sample_name}.{ref}.{interval}.aligned.duplicates_marked.recalibrated.bam",
         recal_bai = "results/apply_bqsr/{sample_name}.{ref}.{interval}.aligned.duplicates_marked.recalibrated.bai"
     params:
-        java_opt         = "-Xms3000m",
-        gatk             = config["gatk"],
-        ref_fasta        = config["ref_fasta"],
-        dbsnp_snp_vcf    = config["dbsnp146_indels_vcf"],
-        broad_snp_vcf    = config["broad_snp_vcf"],
-        axelsson_snp_vcf = config["axelsson_snp_vcf"],
-        dbsnp_indels_vcf = config["dbsnp146_indels_vcf"],
+        java_opt  = "-Xms3000m",
+        gatk      = config["gatk"],
+        ref_fasta = config["ref_fasta"]
     resources:
          time   = 180,
          mem_mb = 10000

@@ -16,10 +16,10 @@ ref_fasta_index : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/
 ref_dict : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/canFam3.dict
 
 # RESOURCE FILES
-dbsnp146_indels_vcf : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/dbsnp146.indel.vcf
-dbsnp146_indels_vcf_index : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/dbsnp146.indel.vcf.idx
-dbsnp146_snp_vcf : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/dbsnp146.snp.vcf
-dbsnp146_snp_vcf_index : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/dbsnp146.snp.vcf.idx
+dbsnp_indels_vcf : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/dbsnp146.indel.vcf
+dbsnp_indels_vcf_index : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/dbsnp146.indel.vcf.idx
+dbsnp_snp_vcf : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/dbsnp146.snp.vcf
+dbsnp_snp_vcf_index : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/dbsnp146.snp.vcf.idx
 broad_snp_vcf : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/final.broad.snps.vcf
 broad_snp_vcf_index : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/final.broad.snps.vcf.idx
 axelsson_snp_vcf : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/refdata/canFam3/final.axelsson.snps.vcf
