@@ -98,11 +98,12 @@ rule fastqs_to_ubam:
     params:
         java_opt  = "-Xms6000m",
         gatk      = config["gatk"],
-        ref_fasta = config["ref_fasta"]
+        ref_fasta = config["ref_fasta"],
+	    tmp_dir   = "/scratch.global/friedlab_SNKPROC/{readgroup_name}.ubam.tmp"
     threads: 6
     resources:
          time   = 360,
-         mem_mb = 12000
+         mem_mb = 24000
     run:
 
         # get fastq meta data for logging in the bam
@@ -113,8 +114,13 @@ rule fastqs_to_ubam:
         sequencing_center = units.loc[units['readgroup_name'] == wildcards.readgroup_name,'sequencing_center'].values[0]
 
         shell(f'''
+            set -e
+
+	        mkdir -p {{params.tmp_dir}}
+
             {{params.gatk}} --java-options {params.java_opt} \
                 FastqToSam \
+		        --TMP_DIR {params.tmp_dir} \
                 --FASTQ {{input.r1}} \
                 --FASTQ2 {{input.r2}} \
                 --OUTPUT {{output.ubam}} \
@@ -125,6 +131,8 @@ rule fastqs_to_ubam:
                 --RUN_DATE {run_date} \
                 --PLATFORM {platform_name} \
                 --SEQUENCING_CENTER {sequencing_center}
+
+	        rm -rf {params.tmp_dir}
         ''')
 
 rule sam_to_fastq_and_bwa_mem:
@@ -273,16 +281,20 @@ rule sort_and_fix_tags:
         java_opt   = "-Xms4000m",
         gatk       = config["gatk"],
         ref_fasta  = config["ref_fasta"],
+        tmp_dir    = "/scratch.global/friedlab_SNKPROC/{readgroup_name}.sort.tmp"
     threads: 12
     resources:
          time   = 720,
-         mem_mb = 24000
+         mem_mb = 32000
     shell:
         '''
             set -o pipefail
             
+            mkdir -p {params.tmp_dir}
+
             {params.gatk} --java-options "-Dsamjdk.compression_level={params.comp_level} {params.java_opt}" \
                 SortSam \
+                --TMP_DIR {params.tmp_dir} \
                 --INPUT {input.dedup_bam} \
                 --OUTPUT /dev/stdout \
                 --SORT_ORDER "coordinate" \
@@ -296,6 +308,8 @@ rule sort_and_fix_tags:
                 --CREATE_INDEX true \
                 --CREATE_MD5_FILE true \
                 --REFERENCE_SEQUENCE {params.ref_fasta}
+
+            rm -rf {params.tmp_dir}
        '''
 
 rule base_recalibrator:
@@ -481,8 +495,7 @@ rule coverage_depth_and_flagstat:
 rule haplotype_caller:
     input:
         final_bam = "results/gather_bam_files/{sample_name}.{ref}.bam",
-       #interval  = f"{os.path.join(config['hc_intervals'],wildcards.hc_interval)}.interval_list"
-        interval  = "/panfs/roc/groups/0/fried255/shared/gatk4_workflow/intervals/scattered_intervals_80/{hc_interval}.interval_list"
+        interval = f"{os.path.join(config['hc_intervals'],'{hc_interval}')}.interval_list"
     output:
         hc_gvcf = "results/haplotype_caller/{hc_interval}/{sample_name}.{ref}.g.vcf.gz"
     params:
