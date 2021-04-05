@@ -29,7 +29,10 @@ def extract_pu(s):
             return f"{head.split('.')[0][1:]}.NA.NA"
         elif head.startswith("@HWI"): # older MiSeq (?) fastqs...
             head = head.split(":")
-            return f"{head[2]}.{head[3]}.NA"
+            if head[-1]:
+                return f"{head[2]}.{head[3]}.{head[-1]}"
+            else:
+                return f"{head[2]}.{head[3]}.NA"
         else: # or "standard" illumina headers...
             head = head.split(":")
             return f"{head[2]}.{head[3]}.{head[-1]}"

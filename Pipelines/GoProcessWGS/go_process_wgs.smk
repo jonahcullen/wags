@@ -99,7 +99,7 @@ rule fastqs_to_ubam:
         java_opt  = "-Xms6000m",
         gatk      = config["gatk"],
         ref_fasta = config["ref_fasta"],
-	    tmp_dir   = "/scratch.global/friedlab_SNKPROC/{readgroup_name}.ubam.tmp"
+        tmp_dir   = f"/scratch.global/friedlab_{os.environ['USER']}/{{readgroup_name}}.ubam.tmp"
     threads: 6
     resources:
          time   = 360,
@@ -120,7 +120,7 @@ rule fastqs_to_ubam:
 
             {{params.gatk}} --java-options {params.java_opt} \
                 FastqToSam \
-		        --TMP_DIR {params.tmp_dir} \
+                --TMP_DIR {params.tmp_dir} \
                 --FASTQ {{input.r1}} \
                 --FASTQ2 {{input.r2}} \
                 --OUTPUT {{output.ubam}} \
@@ -281,7 +281,7 @@ rule sort_and_fix_tags:
         java_opt   = "-Xms4000m",
         gatk       = config["gatk"],
         ref_fasta  = config["ref_fasta"],
-        tmp_dir    = "/scratch.global/friedlab_SNKPROC/{readgroup_name}.sort.tmp"
+        tmp_dir    = f"/scratch.global/friedlab_{os.environ['USER']}/{{sample_name}}.sort.tmp"
     threads: 12
     resources:
          time   = 720,
