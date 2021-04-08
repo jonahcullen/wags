@@ -322,7 +322,7 @@ rule base_recalibrator:
         java_opt         = "-Xms4000m",
         gatk             = config["gatk"],
         ref_fasta        = config["ref_fasta"],
-        dbsnp_snp_vcf    = config["dbsnp_indels_vcf"],
+        dbsnp_snp_vcf    = config["dbsnp_snp_vcf"],
         broad_snp_vcf    = config["broad_snp_vcf"],
         axelsson_snp_vcf = config["axelsson_snp_vcf"],
         dbsnp_indels_vcf = config["dbsnp_indels_vcf"],
