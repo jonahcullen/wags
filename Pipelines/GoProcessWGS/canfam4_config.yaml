@@ -1,5 +1,6 @@
 units : input.tsv
 ref : canfam4
+primary : /panfs/roc/groups/0/fried255/fried255/working
 hc_intervals : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/CanFam4/Intervals/Splint_NOCHRUN/
 
 # TOOLS

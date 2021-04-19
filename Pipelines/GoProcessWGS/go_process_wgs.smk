@@ -6,6 +6,9 @@ include: "src/utils.py"
 units = pd.read_table(config["units"],dtype=str).set_index("readgroup_name",drop=False)
 #units.index = units.index.set_levels([i.astype(str) for i in units.index.levels])  # enforce str in index
 
+# get breed from units
+BREED = units["breed"].unique()[0]
+
 sequence_grouping(config["ref_dict"])
 # get sequence group intervals without unmapped, with unmapped, and hc caller intervals
 intervals, = glob_wildcards(os.path.join("results/seq_group/no_unmap","{interval}.tsv"))
@@ -15,9 +18,9 @@ hc_intervals, = glob_wildcards(os.path.join(config["hc_intervals"],"{hc_interval
 rule all:
     input:
        ## fastqc 
-       #expand("results/{u.sample_name}/{u.readgroup_name}/{u.platform_unit}/hello",
-       #    u=units.itertuples()
-       #),
+        expand("results/fastqc/{u.sample_name}/{u.readgroup_name}/qc.done",
+            u=units.itertuples()
+        ),
        ## fastq to ubam
        #expand("results/fastqs_to_ubam/{u.sample_name}/{u.readgroup_name}.unmapped.bam",
        #    u=units.itertuples()
@@ -75,24 +78,56 @@ rule all:
 rule fastqc:
     input:
         unpack(get_fastq)
+    output:
+        "results/fastqc/{sample_name}/{readgroup_name}/qc.done"
     params:
-        fastqc = config["fastqc"],
-        outdir = "results/{sample_name}/{readgroup_name}/{platform_unit}/"
+        fastqc  = config["fastqc"],
     resources:
          time   = 120,
          mem_mb = 6000, 
-         cpus   = 1
-    output:
-        "results/{sample_name}/{readgroup_name}/{platform_unit}/hello"
-    shell:
-        '''
-            {params.fastqc} --outdir {params.outdir} \
-                {input}
-        '''
+         cpus   = 4
+    run:
+        # get flowcell
+        flowcell = units.loc[units["readgroup_name"] == wildcards.readgroup_name,"flowcell"].values[0]
+
+        # output path to fastqc by flowcell
+        qc_outdir = os.path.join(
+                config["primary"],
+                config["ref"],
+                BREED,
+                wildcards.sample_name,
+                "fastqc",
+                flowcell
+        )
+        
+        # output path to fastq by flowcell
+        fq_outdir = os.path.join(
+                config["primary"],
+                config["ref"],
+                BREED,
+                wildcards.sample_name,
+                "fastq",
+                flowcell
+        )
+
+        shell(f'''
+            set -e
+
+            mkdir -p {qc_outdir} {fq_outdir}
+
+            {{params.fastqc}} --outdir {qc_outdir} \
+                {{input.r1}} {{input.r2}}
+
+            cp -t {fq_outdir} \
+                {{input.r1}} {{input.r2}}
+
+            touch {{output}}
+        ''')
 
 rule fastqs_to_ubam:
     input:
-        unpack(get_fastq)
+        unpack(get_fastq),
+       #"results/fastqc/{sample_name}/{readgroup_name}/qc.done"
     output:
         ubam = "results/fastqs_to_ubam/{sample_name}/{readgroup_name}.unmapped.bam"
     params:
@@ -102,16 +137,16 @@ rule fastqs_to_ubam:
         tmp_dir   = f"/scratch.global/friedlab_{os.environ['USER']}/{{readgroup_name}}.ubam.tmp"
     threads: 6
     resources:
-         time   = 360,
+         time   = 540,
          mem_mb = 24000
     run:
 
         # get fastq meta data for logging in the bam
-        library_name = units.loc[units['readgroup_name'] == wildcards.readgroup_name,'library_name'].values[0]
-        platform_unit = units.loc[units['readgroup_name'] == wildcards.readgroup_name,'platform_unit'].values[0]
-        run_date = units.loc[units['readgroup_name'] == wildcards.readgroup_name,'run_date'].values[0]
-        platform_name = units.loc[units['readgroup_name'] == wildcards.readgroup_name,'platform_name'].values[0]
-        sequencing_center = units.loc[units['readgroup_name'] == wildcards.readgroup_name,'sequencing_center'].values[0]
+        library_name = units.loc[units["readgroup_name"] == wildcards.readgroup_name,"library_name"].values[0]
+        platform_unit = units.loc[units["readgroup_name"] == wildcards.readgroup_name,"platform_unit"].values[0]
+        run_date = units.loc[units["readgroup_name"] == wildcards.readgroup_name,"run_date"].values[0]
+        platform_name = units.loc[units["readgroup_name"] == wildcards.readgroup_name,"platform_name"].values[0]
+        sequencing_center = units.loc[units["readgroup_name"] == wildcards.readgroup_name,"sequencing_center"].values[0]
 
         shell(f'''
             set -e
@@ -255,8 +290,19 @@ rule mark_duplicates:
         # separate bams by --INPUT
         bams = " --INPUT ".join(map(str,input.merged_bams))
 
+        # primary logs dir
+        log_outdir = os.path.join(
+                config["primary"],
+                config["ref"],
+                BREED,
+                wildcards.sample_name,
+                "logs"
+        )
+
         shell(f'''
-            mkdir -p {{params.tmp_dir}}
+            set -e
+
+            mkdir -p {{params.tmp_dir}} {log_outdir}
 
             {{params.gatk}} --java-options "-Dsamjdk.compression_level={{params.comp_level}} {{params.java_opt}}" \
                 MarkDuplicates \
@@ -268,6 +314,8 @@ rule mark_duplicates:
                 --OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500 \
                 --ASSUME_SORT_ORDER "queryname" \
                 --CREATE_MD5_FILE true
+
+            cp {{output.metrics}} {log_outdir}
         ''')
 
 rule sort_and_fix_tags:
@@ -331,7 +379,6 @@ rule base_recalibrator:
          mem_mb = 10000
     run:
         # separate content of interval by -L
-       # ivals = " -L ".join(map(str,input.interval))
         with open(input.interval,"r") as f:
             ival = f.read().strip().replace("\t", " -L ")
 
@@ -372,16 +419,29 @@ rule gather_bqsr_reports:
         gatk     = config["gatk"]
     resources:
          time   = 10,
-         mem_mb = 2000
+         mem_mb = 4000
     run:
         # separate reports by -I
         reports = " -I ".join(map(str,input.bqsr_reports))
 
+        # primary logs dir
+        log_outdir = os.path.join(
+                config["primary"],
+                config["ref"],
+                BREED,
+                wildcards.sample_name,
+                "logs"
+        )
+
         shell(f'''
+            set -e
+
             {{params.gatk}} --java-options {{params.java_opt}} \
                 GatherBQSRReports \
                 -I {reports} \
                 -O {{output.report}}
+
+            cp {{output.report}} {log_outdir}
         ''')
         
 rule apply_bqsr:
@@ -401,7 +461,6 @@ rule apply_bqsr:
          mem_mb = 10000
     run:
         # separate content of interval by -L
-       #ivals = " -L ".join(map(str,input.interval))
         with open(input.interval,"r") as f:
             ival = f.read().strip().replace("\t", " -L ")
 
@@ -430,7 +489,8 @@ rule gather_bam_files:
         )
     output:
         final_bam = "results/gather_bam_files/{sample_name}.{ref}.bam",
-        final_bai = "results/gather_bam_files/{sample_name}.{ref}.bai"
+        final_bai = "results/gather_bam_files/{sample_name}.{ref}.bai",
+        final_md5 = "results/gather_bam_files/{sample_name}.{ref}.bam.md5"
     params:
         comp_level = 5,
         java_opt   = "-Xms2000m",
@@ -443,20 +503,37 @@ rule gather_bam_files:
         # separate bams by -I
         bams = " -I ".join(map(str,input.recal_bams))
         
+        # primary bam dir
+        bam_outdir = os.path.join(
+                config["primary"],
+                config["ref"],
+                BREED,
+                wildcards.sample_name,
+                "bam"
+        )
+
         shell(f'''
+            set -e
+
+            mkdir -p {bam_outdir}
+
             {{params.gatk}} --java-options "-Dsamjdk.compression_level={{params.comp_level}} {{params.java_opt}}" \
                 GatherBamFiles \
                 --INPUT {bams} \
                 --OUTPUT {{output.final_bam}} \
                 --CREATE_INDEX true \
-                --CREATE_MD5_FILE true \
+                --CREATE_MD5_FILE true
+            
+            cp -t {bam_outdir} {{output}}
+
         ''')
 
 rule coverage_depth_and_flagstat:
     input:
         final_bam = "results/gather_bam_files/{sample_name}.{ref}.bam"
     output:
-        doc      = "results/coverage_depth_and_flagstat/{sample_name}.{ref}.depthofcoverage.sample_summary",
+        doc_smry = "results/coverage_depth_and_flagstat/{sample_name}.{ref}.depthofcoverage.sample_summary",
+        doc_stat = "results/coverage_depth_and_flagstat/{sample_name}.{ref}.depthofcoverage.sample_statistics",
         flagstat = "results/coverage_depth_and_flagstat/{sample_name}.{ref}.flagstat"
     params:
         comp_level = 5,
@@ -467,30 +544,41 @@ rule coverage_depth_and_flagstat:
     resources:
          time   = 360,
          mem_mb = 32000
-    shell:
-        '''
+    run:
+        # primary bam dir
+        bam_outdir = os.path.join(
+                config["primary"],
+                config["ref"],
+                BREED,
+                wildcards.sample_name,
+                "bam"
+        )
+        
+        shell(f'''
             set -e
 
-            java -jar {params.java_opt} {params.gatk3} \
+            java -jar {{params.java_opt}} {{params.gatk3}} \
                 -T DepthOfCoverage \
-                -R {params.ref_fasta} \
+                -R {{params.ref_fasta}} \
                 -omitBaseOutput \
                 -omitLocusTable \
                 -omitIntervals \
-                -I {input.final_bam} \
-                -o results/coverage_depth_and_flagstat/{wildcards.sample_name}.{wildcards.ref}.depthofcoverage \
+                -I {{input.final_bam}} \
+                -o results/coverage_depth_and_flagstat/{{wildcards.sample_name}}.{{wildcards.ref}}.depthofcoverage \
                 -ct 5 \
                 -ct 15 \
                 -ct 30 \
                 -nt 8
         
-            java -jar {params.java_opt} {params.gatk3} \
+            java -jar {{params.java_opt}} {{params.gatk3}} \
                 -T FlagStat \
-                -R {params.ref_fasta} \
-                -I {input.final_bam} \
-                -o results/coverage_depth_and_flagstat/{wildcards.sample_name}.{wildcards.ref}.flagstat \
+                -R {{params.ref_fasta}} \
+                -I {{input.final_bam}} \
+                -o results/coverage_depth_and_flagstat/{{wildcards.sample_name}}.{{wildcards.ref}}.flagstat \
                 -nct 8
-        '''
+
+            cp -t {bam_outdir} {{output}}
+        ''')
 
 rule haplotype_caller:
     input:
@@ -528,23 +616,39 @@ rule merge_gvcfs:
                     ), key=lambda item: int(item.split("/")[-2].split("-")[0])
         )
     output:
-        final_gvcf = "results/merge_gvcfs/{sample_name}.{ref}.g.vcf.gz"
+        final_gvcf     = "results/merge_gvcfs/{sample_name}.{ref}.g.vcf.gz",
+        final_gvcf_tbi = "results/merge_gvcfs/{sample_name}.{ref}.g.vcf.gz.tbi"
     params:
         java_opt  = "-Xmx2000m",
         gatk      = config["gatk"],
         ref_fasta = config["ref_fasta"],
     threads: 4
     resources:
-         time   = 60,
+         time   = 120,
          mem_mb = 4000
     run:
         # separate bams by -I
         gvcfs = " -I ".join(map(str,input.hc_gvcfs))
+        
+        # primary gvcf dir
+        gvcf_outdir = os.path.join(
+                config["primary"],
+                config["ref"],
+                BREED,
+                wildcards.sample_name,
+                "gvcf"
+        )
 
         shell(f'''
+            set -e
+
+            mkdir -p {gvcf_outdir}
+
             {params.gatk} --java-options {params.java_opt}  \
                 MergeVcfs \
                 --INPUT {gvcfs} \
                 --OUTPUT {{output.final_gvcf}}
+
+            cp -t {gvcf_outdir} {{output}}
         ''')
 

@@ -42,14 +42,15 @@ def main(dog_meta, outdir, fq_dir, ref):
    
     d = defaultdict(dict)
 
+    cols = ["breed","sample_name","readgroup_name",
+            "fastq_1","fastq_2","library_name",
+            "platform_unit","flowcell","run_date",
+            "platform_name","sequencing_center"]
+    
     with open(dog_meta) as ids:
         reader = csv.reader(ids, delimiter=',')
         next(reader, None)
         for line in reader:
-            
-            cols = ["sample_name","readgroup_name","fastq_1","fastq_2",
-                    "library_name","platform_unit","flowcell","run_date",
-                    "platform_name","sequencing_center"]
             
             # find associated fastqs
             tmp = []
@@ -66,7 +67,8 @@ def main(dog_meta, outdir, fq_dir, ref):
                 cdate = datetime.fromtimestamp(os.path.getctime(v)).strftime('%Y-%m-%dT%H:%M:%S')                   
     
                 dog_input.append(
-                    [
+                    [   
+                        line[1],
                         line[0],
                         f"{line[0]}_{string.ascii_uppercase[i]}",
                         v.replace("_R2","_R1"),
@@ -161,8 +163,10 @@ def main(dog_meta, outdir, fq_dir, ref):
                 ),
             file=f)
 
-            print(f"mkdir -p {os.path.join(v['work_dir'],'jobs')}\n" +
-                  f"cp -t {os.path.join(v['work_dir'],'jobs')} *.{{slurm,smk,yaml,err,out}}\n",
+            ref_dog_breed = os.path.join(base,ref.lower(),v["breed"],k)
+
+            print(f"mkdir -p {os.path.join(ref_dog_breed,'jobs')}\n" +
+                  f"cp -t {os.path.join(ref_dog_breed,'jobs')} *.{{slurm,smk,yaml,err,out}}\n",
                   file=f)
             
             print(f"sbatch  --mail-user={os.environ['USER']}@umn.edu \\\n" +
@@ -257,6 +261,9 @@ if __name__ == '__main__':
     fq_dir = os.path.abspath(args.fastqs)
     outdir = os.path.abspath(args.out)
     ref = args.ref.lower()
+
+    # base dir to save pipeline output in primary
+    base = "/panfs/roc/groups/0/fried255/fried255/working"
 
     # sync job
     sync = "/panfs/roc/groups/0/fried255/shared/gatk4_workflow/SyncDogs/sync.slurm"

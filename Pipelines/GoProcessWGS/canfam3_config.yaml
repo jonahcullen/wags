@@ -1,5 +1,6 @@
 units : input.tsv
 ref : canfam3
+primary : /panfs/roc/groups/0/fried255/fried255/working
 hc_intervals : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/intervals/scattered_intervals_80/
 
 # TOOLS
