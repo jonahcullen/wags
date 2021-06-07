@@ -39,7 +39,7 @@
         "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
     },
-    "apply_recal" :
+    "apply_bqsr" :
     {
         "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.interval}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.interval}/%j.{rule}.err"

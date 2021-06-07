@@ -54,6 +54,11 @@
         "output" : ".logs/{rule}/%j.{rule}.out",
         "error"  : ".logs/{rule}/%j.{rule}.err"
     },
+    "bcftools_stats" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    },
     "all_var_to_table" :
     {
         "output" : ".logs/{rule}/%j.{rule}.out",

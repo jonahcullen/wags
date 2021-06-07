@@ -4,7 +4,7 @@ from collections import defaultdict
 import pandas as pd
 import numpy as np
 
-configfile: "config.yaml"
+configfile: "canfam4_config.yaml"
 
 # get dog ids from current vcf (FOR NOW FROM FILE BUT SHOULD AUTOMATE BY 
 # BY USING BCFTOOLS QUERY -L)
@@ -60,11 +60,13 @@ rule all:
        #f"results/collect_metrics_on_vcf/joint_genotype.{config['ref']}.variant_calling_detail_metrics",
        #f"results/collect_metrics_on_vcf/joint_genotype.{config['ref']}.variant_calling_summary_metrics",
         # step09 - all variants table for af analysis
-        all_vars_table = os.path.join(
-                "results/var_to_table/",
-                datetime.today().strftime('%Y%m%d'),
-                f"all.{datetime.today().strftime('%Y%m%d')}.table"
-        )
+       #all_vars_table = os.path.join(
+       #        "results/var_to_table/",
+       #        datetime.today().strftime('%Y%m%d'),
+       #        f"all.{datetime.today().strftime('%Y%m%d')}.table"
+       #)
+        expand("results/var_to_table/all.{date}.{ref}.table", 
+                date=config["date"],ref=config["ref"])
        #read_interval_file(),
        #expand("results/{u.breed}/{u.dogid}/{u.dogid}_proc.txt",
        #        u=units.itertuples()
@@ -124,16 +126,16 @@ rule input_list:
 rule import_gvcfs:
     input:
         gvcf_list = "data/inputs.list",
-        interval  = "/panfs/roc/groups/0/fried255/shared/gatk4_workflow/GoDawgs/Intervals/{interval}.interval_list"
+        interval  = "/panfs/roc/groups/0/fried255/shared/gatk4_workflow/GoDawgs/CanFam4/Intervals/{interval}.interval_list"
     output:
         directory("results/import_gvcfs/{interval}")
     params:
         tmp_dir = "/dev/shm/{interval}",
         gatk    = config["gatk"],
         batch   = config["batch_size"],
-    threads: 5
+    threads: 6
     resources:
-         time   = 2160,
+         time   = 4800,
          mem_mb = 60000
     shell:
         ''' 
@@ -154,15 +156,15 @@ rule import_gvcfs:
 rule genotype_gvcfs:
     input:
         ival_db  = "results/import_gvcfs/{interval}",
-        interval = "/panfs/roc/groups/0/fried255/shared/gatk4_workflow/GoDawgs/Intervals/{interval}.interval_list"
+        interval = "/panfs/roc/groups/0/fried255/shared/gatk4_workflow/GoDawgs/CanFam4/Intervals/{interval}.interval_list"
     output:
         vcf = "results/genotype_gvcfs/{interval}/output.vcf.gz",
     params:
         gatk      = config["gatk"],
         ref_fasta = config["ref_fasta"]
-    threads: 4
+    threads: 6
     resources:
-         time   = 2880,
+         time   = 4800,
          mem_mb = 60000
     shell:
         '''
@@ -255,7 +257,7 @@ rule indels_var_recal:
         gatk                    = config["gatk"],
         recal_tranche_values    = config["indel_recalibration_tranche_values"],
         recal_annotation_values = config["indel_recalibration_annotation_values"],
-        dbsnp146_indels_vcf     = config["dbsnp146_indels_vcf"]
+        dbsnp_indels_vcf     = config["dbsnp_indels_vcf"]
     threads: 4
     resources:
          time   = 240,
@@ -275,7 +277,7 @@ rule indels_var_recal:
                 -an {an_values} \
                 -mode INDEL \
                 --max-gaussians 4 \
-                --resource:dbsnp,known=false,training=true,truth=true,prior=10 {params.dbsnp146_indels_vcf}
+                --resource:dbsnp,known=false,training=true,truth=true,prior=10 {params.dbsnp_indels_vcf}
         ''')
 
 
@@ -289,7 +291,7 @@ rule snps_var_recal:
         gatk                    = config["gatk"],
         recal_tranche_values    = config["snp_recalibration_tranche_values"],
         recal_annotation_values = config["snp_recalibration_annotation_values"],
-        dbsnp146_snp_vcf        = config["dbsnp146_snp_vcf"],
+        dbsnp_snp_vcf           = config["dbsnp_snp_vcf"],
         broad_snp_vcf           = config["broad_snp_vcf"],
         axelsson_snp_vcf        = config["axelsson_snp_vcf"],
         illumina_snp_vcf        = config["illumina_snp_vcf"]
@@ -315,7 +317,7 @@ rule snps_var_recal:
                 --resource:illumina,known=true,training=true,truth=true,prior=15.0 {params.illumina_snp_vcf} \
                 --resource:broad,known=true,training=true,truth=true,prior=10.0 {params.broad_snp_vcf} \
                 --resource:axelsson,known=false,training=true,truth=true,prior=8.0 {params.axelsson_snp_vcf} \
-                --resource:dbSNP146,known=true,training=true,truth=true,prior=12.0 {params.dbsnp146_snp_vcf}
+                --resource:dbSNP146,known=true,training=true,truth=true,prior=12.0 {params.dbsnp_snp_vcf}
         ''')
 
 rule apply_recal:
@@ -404,7 +406,7 @@ rule collect_metrics_on_vcf:
         summary_metrics = f"results/collect_metrics_on_vcf/joint_genotype.{config['ref']}.variant_calling_summary_metrics"
     params:
         gatk               = config["gatk"],
-        dbsnp146_snp_vcf   = config["dbsnp146_snp_vcf"],
+        dbsnp_snp_vcf      = config["dbsnp_snp_vcf"],
         ref_dict           = config["ref_dict"],
         eval_interval_list = config["eval_interval_list"],
         metrics_prefix     = f"results/collect_metrics_on_vcf/joint_genotype.{config['ref']}"
@@ -421,7 +423,7 @@ rule collect_metrics_on_vcf:
             {params.gatk} --java-options "-Xmx18g -Xms6g" \
                 CollectVariantCallingMetrics \
                 --INPUT {input.final_vcf} \
-                --DBSNP {params.dbsnp146_snp_vcf} \
+                --DBSNP {params.dbsnp_snp_vcf} \
                 --SEQUENCE_DICTIONARY {params.ref_dict} \
                 --OUTPUT {params.metrics_prefix} \
                 --THREAD_COUNT 8 \
@@ -433,9 +435,11 @@ rule vep_final_vcf:
         final_vcf = f"results/final_gather_vcfs/joint_genotype.{config['ref']}.vcf.gz",
        #detail_metrics  = f"results/collect_metrics_on_vcf/joint_genotype.{config['ref']}.variant_calling_detail_metrics",
     output:
-        vep_vcf = f"results/vep_final_vcf/joint_genotype.{config['ref']}.vcf.gz"
+        vep_vcf = f"results/vep_final_vcf/joint_genotype.{config['ref']}.vep.vcf.gz"
     params:
-        conda_vep = config["conda_vep"]
+        conda_vep = config["conda_vep"],
+        ref_fasta = config["ref_fasta"],
+        ref_gtf   = config["ref_gtf"]
     threads: 12
     resources:
          time   = 4320,
@@ -452,37 +456,74 @@ rule vep_final_vcf:
 
             vep \
                 -i {{input.final_vcf}} \
-                --cache \
+                -o {out_name} \
+                --gtf {{params.ref_gtf}} \
+                --fasta {{params.ref_fasta}} \
                 --everything \
                 --force_overwrite \
-                -o {out_name} \
                 --vcf \
-                --no_stats \
-                --species=canis_familiaris \
-                --offline \
                 --dont_skip
 
             bgzip --threads 12 -c {out_name} > {{output.vep_vcf}} &&
             tabix -p vcf {{output.vep_vcf}}
         ''')
 
+#            vep \
+#                -i {{input.final_vcf}} \
+#                --gtf {{params.ref_gtf}} \
+#                --fasta {{params.ref_fasta}} \
+#                --everything \
+#                --force_overwrite \
+#                -o {out_name} \
+#                --vcf \
+#                --no_stats \
+#                --offline \
+#                --dont_skip
+
+rule bcftools_stats:
+    input:
+        vep_vcf = "results/vep_final_vcf/joint_genotype.{ref}.vep.vcf.gz",
+    output:
+        all_stats = "results/stats/joint_genotype.{date}.{ref}.vchk",
+        prefix    = "results/stats/joint_genotype.{date}.{ref}"
+    params:
+        ref_fasta = config["ref_fasta"],
+    threads: 1
+    resources:
+         time   = 720,
+         mem_mb = 6000
+    shell:
+        '''
+            bcftools stats \
+                -F {params.ref_fasta} \
+                -s - {input.vep_vcf} \
+                > {output.all_stats}
+
+            plot-vcfstats \
+                -p {output.prefix} \
+                {output.all_stats}
+        '''
+
 rule all_var_to_table:
     input:
-        vep_vcf        = f"results/vep_final_vcf/joint_genotype.{config['ref']}.vcf.gz",
-        detail_metrics = f"results/collect_metrics_on_vcf/joint_genotype.{config['ref']}.variant_calling_detail_metrics",
+        vep_vcf        = "results/vep_final_vcf/joint_genotype.{ref}.vep.vcf.gz",
+        detail_metrics = "results/collect_metrics_on_vcf/joint_genotype.{ref}.variant_calling_detail_metrics",
+       #all_stats      = "results/stats/joint_genotype.{date}.{ref}.vchk"
     output:
-        all_vars_table = os.path.join(
-                "results/var_to_table/",
-                datetime.today().strftime('%Y%m%d'),
-                f"all.{datetime.today().strftime('%Y%m%d')}.table"
-        )
+#        all_vars_table = os.path.join(
+#                "results/var_to_table/",
+#                datetime.today().strftime('%Y%m%d'),
+#                f"all.{datetime.today().strftime('%Y%m%d')}.table"
+#        )
+        all_vars_table = "results/var_to_table/all.{date}.{ref}.table"
     params:
         gatk      = config["gatk"],
         ref_fasta = config["ref_fasta"],
         table_dir = config["var_to_table_dir"]
     threads: 12
     resources:
-         time   = 2160,
+        #time   = 2160,
+         time   = 840,
          mem_mb = 12000
     shell:
         '''

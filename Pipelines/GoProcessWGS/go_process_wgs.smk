@@ -79,11 +79,11 @@ rule fastqc:
     input:
         unpack(get_fastq)
     output:
-        "results/fastqc/{sample_name}/{readgroup_name}/qc.done"
+        touch("results/fastqc/{sample_name}/{readgroup_name}/qc.done")
     params:
         fastqc  = config["fastqc"],
     resources:
-         time   = 120,
+         time   = 360,
          mem_mb = 6000, 
          cpus   = 4
     run:
@@ -120,8 +120,6 @@ rule fastqc:
 
             cp -t {fq_outdir} \
                 {{input.r1}} {{input.r2}}
-
-            touch {{output}}
         ''')
 
 rule fastqs_to_ubam:
@@ -153,9 +151,9 @@ rule fastqs_to_ubam:
 
 	        mkdir -p {{params.tmp_dir}}
 
-            {{params.gatk}} --java-options {params.java_opt} \
+            {{params.gatk}} --java-options {{params.java_opt}} \
                 FastqToSam \
-                --TMP_DIR {params.tmp_dir} \
+                --TMP_DIR {{params.tmp_dir}} \
                 --FASTQ {{input.r1}} \
                 --FASTQ2 {{input.r2}} \
                 --OUTPUT {{output.ubam}} \
