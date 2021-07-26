@@ -1,10 +1,9 @@
-# CanFam3 money
+# CanFam4 money
 
 import pandas as pd
 import os
 
-localrules: manifest_and_upload,
-            save_jobs
+localrules: manifest_and_upload
 
 include: "src/utils.py"
 
@@ -22,7 +21,7 @@ units = pd.read_table(config["units"],dtype=str).set_index("readgroup_name",drop
 #units.index = units.index.set_levels([i.astype(str) for i in units.index.levels])  # enforce str in index
 
 # get breed from units
-breed = units["breed"].unique()[0]
+BREED = units["breed"].unique()[0]
 
 sequence_grouping(config["ref_dict"])
 # get sequence group intervals without unmapped, with unmapped, and hc caller intervals
@@ -32,21 +31,10 @@ hc_intervals, = glob_wildcards(os.path.join(config["hc_intervals"],"{hc_interval
 
 rule all:
     input:
-       ## fastqc - FOR NOW JUST USING mino client in shell command due to 
-       ## fastqc's output naming conventions
-        expand(
-            "{bucket}/fastqc/{u.sample_name}/{u.readgroup_name}/qc.done",
-            u=units.itertuples(), bucket=config["bucket"]
+       ## fastqc 
+        expand("results/fastqc/{u.sample_name}/{u.readgroup_name}/qc.done",
+            u=units.itertuples()
         ),
-       #S3.remote(expand("{bucket}/wgs/{breed}/{u.sample_name}/fastqc/{u.readgroup_name}/"
-       # fastp
-       #S3.remote(
-       #    expand(
-       #        '{bucket}/private/fastq/trimmed/{u.tissue}/{u.tissue}_{u.sample}_{u.lane}_{read}_001.fastq.gz',
-       #        u=units.itertuples(), bucket=config['bucket'], 
-       #        read=['R1','R2']
-       #    )
-       #)
        ## fastq to ubam
        #expand("results/fastqs_to_ubam/{u.sample_name}/{u.readgroup_name}.unmapped.bam",
        #    u=units.itertuples()
@@ -78,23 +66,13 @@ rule all:
        #),
        ## apply bqsr - DUE TO THE DIFFERENCE IN INTERVALS WITH OR WITHOUT UNMAPPED,
        ## THIS IS NEEDED IN ADDITION TO THE FINAL MERGEGVCFS...FOR NOW...
-        expand("{bucket}/apply_bqsr/{sample_name}.{ref}.{interval}.aligned.duplicates_marked.recalibrated.bam",
+        expand("results/apply_bqsr/{sample_name}.{ref}.{interval}.aligned.duplicates_marked.recalibrated.bam",
             sample_name=units["sample_name"].values[0],ref=config["ref"],
-            interval=unmap_intervals, bucket=config["bucket"],
-            breed=breed
+            interval=unmap_intervals
         ),
        ## gather bams
        #expand("results/gather_bam_files/{u.sample_name}.{ref}.bam",
        #    u=units.itertuples(),ref=config["ref"]
-       #),
-       ## gather bams
-       #S3.remote(
-       #    expand(
-       #        "{bucket}/wgs/{breed}/{u.sample_name}/{ref}/bam/{u.sample_name}.{ref}.{ext}",
-       #        u=units.itertuples(), bucket=config['bucket'],
-       #        ref=config["ref"], breed=breed, 
-       #        ext=["bam","bai","bam.md5"]
-       #    )
        #),
        ## doc and flagstat
        #expand("results/coverage_depth_and_flagstat/{u.sample_name}.{ref}.depthofcoverage.sample_summary",
@@ -109,14 +87,6 @@ rule all:
        #expand("results/merge_gvcfs/{u.sample_name}.{ref}.g.vcf.gz",
        #    u=units.itertuples(),ref=config["ref"]
        #)
-       #S3.remote(
-       #    expand(
-       #        "{bucket}/wgs/{breed}/{u.sample_name}/{ref}/gvcf/{u.sample_name}.{ref}.g.vcf.gz",
-       #        u=units.itertuples(), bucket=config['bucket'],
-       #        ref=config["ref"], breed=breed, 
-       #       #ext=["bam","bai","bam.md5"]
-       #    )
-       #),
        ## sites only gather 
        #"results/sites_only_gather_vcf/gather.sites_only.vcf.gz",
        ## final gather 
@@ -131,23 +101,9 @@ rule all:
        #    ref=config["ref"]
        #)
        ## archive and gzip final out
-       #expand("results/final_output/{ref}/{sample_out}_{ref}_K9MM.tar.gz",
-       #    sample_out=units['sample_name'].values[0],
-       #    ref=config["ref"]
-       #)
-       #S3.remote(
-       #    expand(
-       #        "{bucket}/wgs/{breed}/{sample_out}/{ref}/money/{sample_out}_{ref}_K9MM.tar.gz",
-       #        sample_out=units['sample_name'].values[0], 
-       #        bucket=config['bucket'], ref=config["ref"], 
-       #        breed=breed, 
-       #    )
-       #),
-        expand(
-            "{bucket}/save_jobs/{breed}_{sample_out}_{ref}_jobs.done",
-            sample_out=units['sample_name'].values[0], 
-            bucket=config['bucket'], ref=config["ref"], 
-            breed=breed, 
+        expand("results/final_output/{ref}/{sample_out}_{ref}_K9MM.tar.gz",
+            sample_out=units['sample_name'].values[0],
+            ref=config["ref"]
         )
 
 
@@ -155,12 +111,9 @@ rule fastqc:
     input:
         unpack(get_fastq)
     output:
-        touch("{bucket}/fastqc/{sample_name}/{readgroup_name}/qc.done")
-       #fqs = S3.remote('{bucket}/private/fastq/trimmed/{tissue}/{tissue}_{sample}_{lane}.fastp.html'),
-       #qc  =
+        touch("results/fastqc/{sample_name}/{readgroup_name}/qc.done")
     params:
-        fastqc = config["fastqc"],
-        alias  = config["alias"]
+        fastqc  = config["fastqc"],
     resources:
          time   = 360,
          mem_mb = 6000, 
@@ -170,46 +123,35 @@ rule fastqc:
         flowcell = units.loc[units["readgroup_name"] == wildcards.readgroup_name,"flowcell"].values[0]
 
         # output path to fastqc by flowcell
-       #qc_outdir = os.path.join(
-       #        config["primary"],
-       #        config["ref"],
-       #        BREED,
-       #        wildcards.sample_name,
-       #        "fastqc",
-       #        flowcell
-       #)
         qc_outdir = os.path.join(
-                "results",
-                "fastqc",
+                config["primary"],
                 config["ref"],
+                BREED,
+                wildcards.sample_name,
+                "fastqc",
                 flowcell
         )
         
-       #qc_name = os.path.basename(input.r1).split(".")[0] + "_fastqc"
         # output path to fastq by flowcell
-       #fq_outdir = os.path.join(
-       #        config["primary"],
-       #        config["ref"],
-       #        BREED,
-       #        wildcards.sample_name,
-       #        "fastq",
-       #        flowcell
-       #
-       #)
+        fq_outdir = os.path.join(
+                config["primary"],
+                config["ref"],
+                BREED,
+                wildcards.sample_name,
+                "fastq",
+                flowcell
+        )
 
         shell(f'''
             set -e
 
-            mkdir -p {qc_outdir}
+            mkdir -p {qc_outdir} {fq_outdir}
 
             {{params.fastqc}} --outdir {qc_outdir} \
                 {{input.r1}} {{input.r2}}
 
-            mcli cp --recursive {qc_outdir} \
-                {{params.alias}}/{config["bucket"]}/wgs/{breed}/{wildcards.sample_name}/fastqc/{flowcell}/
-
-            mcli cp {{input.r1}} {{input.r2}} \
-                {{params.alias}}/{config["bucket"]}/wgs/{breed}/{wildcards.sample_name}/fastq/{flowcell}/
+            cp -t {fq_outdir} \
+                {{input.r1}} {{input.r2}}
         ''')
 
 rule fastqs_to_ubam:
@@ -217,13 +159,13 @@ rule fastqs_to_ubam:
         unpack(get_fastq),
        #"results/fastqc/{sample_name}/{readgroup_name}/qc.done"
     output:
-        ubam = "{bucket}/fastqs_to_ubam/{sample_name}/{readgroup_name}.unmapped.bam"
+        ubam = "results/fastqs_to_ubam/{sample_name}/{readgroup_name}.unmapped.bam"
     params:
         java_opt  = "-Xms6000m",
         gatk      = config["gatk"],
         ref_fasta = config["ref_fasta"],
        #tmp_dir   = f"/scratch.global/friedlab_{os.environ['USER']}/{{readgroup_name}}.ubam.tmp"
-        tmp_dir   = f"/dev/shm/friedlab_{os.environ['USER']}/{{readgroup_name}}_{config['ref']}.ubam.tmp"
+        tmp_dir   = f"/dev/shm/friedlab_{os.environ['USER']}/{{readgroup_name}}.ubam.tmp"
     threads: 6
     resources:
          time   = 400,
@@ -261,10 +203,10 @@ rule fastqs_to_ubam:
 
 rule sam_to_fastq_and_bwa_mem:
     input:
-        ubam = "{bucket}/fastqs_to_ubam/{sample_name}/{readgroup_name}.unmapped.bam"
+        ubam = "results/fastqs_to_ubam/{sample_name}/{readgroup_name}.unmapped.bam"
     output:
-        bwa_log = "{bucket}/sam_to_fastq_and_bwa_mem/{sample_name}/{readgroup_name}.{ref}_aligned.unmerged.bwa.stderr.log",
-        bam     = "{bucket}/sam_to_fastq_and_bwa_mem/{sample_name}/{readgroup_name}.{ref}_aligned.unmerged.bam"
+        bwa_log = "results/sam_to_fastq_and_bwa_mem/{sample_name}/{readgroup_name}.{ref}_aligned.unmerged.bwa.stderr.log",
+        bam     = "results/sam_to_fastq_and_bwa_mem/{sample_name}/{readgroup_name}.{ref}_aligned.unmerged.bam"
     params:
         comp_level = 5,
         java_opt   = "-Xms3000m",
@@ -300,10 +242,10 @@ rule sam_to_fastq_and_bwa_mem:
 
 rule merge_bam_alignment:
     input:
-        ubam = "{bucket}/fastqs_to_ubam/{sample_name}/{readgroup_name}.unmapped.bam",
-        bam  = "{bucket}/sam_to_fastq_and_bwa_mem/{sample_name}/{readgroup_name}.{ref}_aligned.unmerged.bam"
+        ubam = "results/fastqs_to_ubam/{sample_name}/{readgroup_name}.unmapped.bam",
+        bam  = "results/sam_to_fastq_and_bwa_mem/{sample_name}/{readgroup_name}.{ref}_aligned.unmerged.bam"
     output:
-        merged_bam = "{bucket}/merge_bam_alignment/{sample_name}/{readgroup_name}.{ref}.merged.unsorted.bam"
+        merged_bam = "results/merge_bam_alignment/{sample_name}/{readgroup_name}.{ref}.merged.unsorted.bam"
     params:
         comp_level = 5,
         java_opt   = "-Xms3000m",
@@ -358,20 +300,19 @@ rule merge_bam_alignment:
 rule mark_duplicates:
     input:
         merged_bams = expand(
-                        "{bucket}/merge_bam_alignment/{sample_name}/{readgroup_name}.{ref}.merged.unsorted.bam",
+                        "results/merge_bam_alignment/{sample_name}/{readgroup_name}.{ref}.merged.unsorted.bam",
                         sample_name=units["sample_name"].values[0],
                         readgroup_name=list(units["readgroup_name"]),
-                        ref=config["ref"], bucket=config["bucket"]
+                        ref=config["ref"]
                       )
     output:
-        dedup_bam = S3.remote("{bucket}/mark_duplicates/{sample_name}.{ref}.aligned.unsorted.duplicates_marked.bam"),
-       #metrics   = "results/mark_duplicates/{sample_name}.{ref}.duplicate_metrics"
-        metrics   = S3.remote(f"{{bucket}}/wgs/{breed}/{{sample_name}}/{{ref}}/logs/{{sample_name}}.{{ref}}.duplicate_metrics"),
+        dedup_bam = "results/mark_duplicates/{sample_name}.{ref}.aligned.unsorted.duplicates_marked.bam",
+        metrics   = "results/mark_duplicates/{sample_name}.{ref}.duplicate_metrics"
     params:
         comp_level = 5,
         java_opt   = "-Xms4000m -Xmx16g",
         gatk       = config["gatk"],
-        tmp_dir    = "/dev/shm/{sample_name}_{ref}.md.tmp"
+        tmp_dir    = "/dev/shm/{sample_name}.md.tmp"
     threads: 4
     resources:
          time   = 720,
@@ -381,16 +322,18 @@ rule mark_duplicates:
         bams = " --INPUT ".join(map(str,input.merged_bams))
 
         # primary logs dir
-       #log_outdir = os.path.join(
-       #        config["primary"],
-       #        config["ref"],
-       #        BREED,
-       #        wildcards.sample_name,
-       #        "logs"
-       #)
+        log_outdir = os.path.join(
+                config["primary"],
+                config["ref"],
+                BREED,
+                wildcards.sample_name,
+                "logs"
+        )
 
         shell(f'''
-            mkdir -p {{params.tmp_dir}}
+            set -e
+
+            mkdir -p {{params.tmp_dir}} {log_outdir}
 
             {{params.gatk}} --java-options "-Dsamjdk.compression_level={{params.comp_level}} {{params.java_opt}}" \
                 MarkDuplicates \
@@ -402,20 +345,22 @@ rule mark_duplicates:
                 --OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500 \
                 --ASSUME_SORT_ORDER "queryname" \
                 --CREATE_MD5_FILE true
+
+            cp {{output.metrics}} {log_outdir}
         ''')
 
 rule sort_and_fix_tags:
     input:
-        dedup_bam = "{bucket}/mark_duplicates/{sample_name}.{ref}.aligned.unsorted.duplicates_marked.bam"
+        dedup_bam = "results/mark_duplicates/{sample_name}.{ref}.aligned.unsorted.duplicates_marked.bam"
     output:
-        sorted_bam = "{bucket}/sort_and_fix_tags/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam",
-        sorted_bai = "{bucket}/sort_and_fix_tags/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bai"
+        sorted_bam = "results/sort_and_fix_tags/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam",
+        sorted_bai = "results/sort_and_fix_tags/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bai"
     params:
         comp_level = 5,
         java_opt   = "-Xms4000m",
         gatk       = config["gatk"],
         ref_fasta  = config["ref_fasta"],
-        tmp_dir    = f"/scratch.global/friedlab_{os.environ['USER']}/{{sample_name}}_{config['ref']}.sort.tmp"
+        tmp_dir    = f"/scratch.global/friedlab_{os.environ['USER']}/{{sample_name}}.sort.tmp"
     threads: 12
     resources:
          time   = 720,
@@ -448,10 +393,10 @@ rule sort_and_fix_tags:
 
 rule base_recalibrator:
     input:
-        sorted_bam = "{bucket}/sort_and_fix_tags/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam",
+        sorted_bam = "results/sort_and_fix_tags/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam",
         interval   = ancient("results/seq_group/no_unmap/{interval}.tsv")
     output:
-        recal_csv = "{bucket}/base_recal/{sample_name}.{ref}.{interval}.recal_data.csv"
+        recal_csv = "results/base_recal/{sample_name}.{ref}.{interval}.recal_data.csv"
     params:
         java_opt         = "-Xms4000m",
         gatk             = config["gatk"],
@@ -462,7 +407,7 @@ rule base_recalibrator:
         dbsnp_indels_vcf = config["dbsnp_indels_vcf"],
     resources:
          time   = 120,
-         mem_mb = 20000
+         mem_mb = 10000
     run:
         # separate content of interval by -L
         with open(input.interval,"r") as f:
@@ -492,15 +437,14 @@ rule gather_bqsr_reports:
        #            )
        #)
         bqsr_reports = sorted(
-                    expand("{bucket}/base_recal/{sample_name}.{ref}.{interval}.recal_data.csv",
+                    expand("results/base_recal/{sample_name}.{ref}.{interval}.recal_data.csv",
                         sample_name=units["sample_name"].values[0],
-                        ref=config["ref"], bucket=config["bucket"],
+                        ref=config["ref"],
                         interval=intervals
                         ), key=lambda item: int(os.path.basename(item).split(".")[-3].split("_")[1])
         )
     output:
-       #report = "results/gather_bqsr_reports/{sample_name}.{ref}.recal_data.csv"
-        report = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/logs/{sample_name}.{ref}.recal_data.csv"),
+        report = "results/gather_bqsr_reports/{sample_name}.{ref}.recal_data.csv"
     params:
         java_opt = "-Xms3000m",
         gatk     = config["gatk"]
@@ -512,30 +456,33 @@ rule gather_bqsr_reports:
         reports = " -I ".join(map(str,input.bqsr_reports))
 
         # primary logs dir
-       #log_outdir = os.path.join(
-       #        config["primary"],
-       #        config["ref"],
-       #        BREED,
-       #        wildcards.sample_name,
-       #        "logs"
-       #)
+        log_outdir = os.path.join(
+                config["primary"],
+                config["ref"],
+                BREED,
+                wildcards.sample_name,
+                "logs"
+        )
 
         shell(f'''
+            set -e
+
             {{params.gatk}} --java-options {{params.java_opt}} \
                 GatherBQSRReports \
                 -I {reports} \
                 -O {{output.report}}
+
+            cp {{output.report}} {log_outdir}
         ''')
         
 rule apply_bqsr:
     input:
-        sorted_bam = "{bucket}/sort_and_fix_tags/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam",
-       #report     = "results/gather_bqsr_reports/{sample_name}.{ref}.recal_data.csv",
-        report     = S3.remote(f"{{bucket}}/wgs/{breed}/{{sample_name}}/{{ref}}/logs/{{sample_name}}.{{ref}}.recal_data.csv"),
+        sorted_bam = "results/sort_and_fix_tags/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam",
+        report     = "results/gather_bqsr_reports/{sample_name}.{ref}.recal_data.csv",
         interval   = ancient("results/seq_group/with_unmap/{interval}.tsv")
     output:
-        recal_bam = "{bucket}/apply_bqsr/{sample_name}.{ref}.{interval}.aligned.duplicates_marked.recalibrated.bam",
-        recal_bai = "{bucket}/apply_bqsr/{sample_name}.{ref}.{interval}.aligned.duplicates_marked.recalibrated.bai"
+        recal_bam = "results/apply_bqsr/{sample_name}.{ref}.{interval}.aligned.duplicates_marked.recalibrated.bam",
+        recal_bai = "results/apply_bqsr/{sample_name}.{ref}.{interval}.aligned.duplicates_marked.recalibrated.bai"
     params:
         java_opt  = "-Xms3000m",
         gatk      = config["gatk"],
@@ -565,19 +512,16 @@ rule apply_bqsr:
 rule gather_bam_files:
     input:
         recal_bams = sorted(
-                expand("{bucket}/apply_bqsr/{sample_name}.{ref}.{interval}.aligned.duplicates_marked.recalibrated.bam",
+                expand("results/apply_bqsr/{sample_name}.{ref}.{interval}.aligned.duplicates_marked.recalibrated.bam",
                     sample_name=units["sample_name"].values[0],
-                    ref=config["ref"], bucket=config["bucket"],
+                    ref=config["ref"],
                     interval=intervals
                     ), key=lambda item: int(os.path.basename(item).split(".")[2].split("_")[1])
         )
     output:
-       #final_bam = "results/gather_bam_files/{sample_name}.{ref}.bam",
-       #final_bai = "results/gather_bam_files/{sample_name}.{ref}.bai",
-       #final_md5 = "results/gather_bam_files/{sample_name}.{ref}.bam.md5"
-        final_bam = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bam"),
-        final_bai = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai"),
-        final_md5 = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bam.md5"),
+        final_bam = "results/gather_bam_files/{sample_name}.{ref}.bam",
+        final_bai = "results/gather_bam_files/{sample_name}.{ref}.bai",
+        final_md5 = "results/gather_bam_files/{sample_name}.{ref}.bam.md5"
     params:
         comp_level = 5,
         java_opt   = "-Xms2000m",
@@ -591,37 +535,38 @@ rule gather_bam_files:
         bams = " -I ".join(map(str,input.recal_bams))
         
         # primary bam dir
-       #bam_outdir = os.path.join(
-       #        config["primary"],
-       #        config["ref"],
-       #        BREED,
-       #        wildcards.sample_name,
-       #        "bam"
-       #)
+        bam_outdir = os.path.join(
+                config["primary"],
+                config["ref"],
+                BREED,
+                wildcards.sample_name,
+                "bam"
+        )
 
         shell(f'''
+            set -e
+
+            mkdir -p {bam_outdir}
+
             {{params.gatk}} --java-options "-Dsamjdk.compression_level={{params.comp_level}} {{params.java_opt}}" \
                 GatherBamFiles \
                 --INPUT {bams} \
                 --OUTPUT {{output.final_bam}} \
                 --CREATE_INDEX true \
                 --CREATE_MD5_FILE true
+            
+            cp -t {bam_outdir} {{output}}
+
         ''')
 
 rule coverage_depth_and_flagstat:
     input:
-       #final_bam = "results/gather_bam_files/{sample_name}.{ref}.bam"
-        final_bam = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bam"),
-        final_bai = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai"),
+        final_bam = "results/gather_bam_files/{sample_name}.{ref}.bam"
     output:
-       #doc_smry = "results/coverage_depth_and_flagstat/{sample_name}.{ref}.depthofcoverage.sample_summary",
-       #doc_stat = "results/coverage_depth_and_flagstat/{sample_name}.{ref}.depthofcoverage.sample_statistics",
-       #flagstat = "results/coverage_depth_and_flagstat/{sample_name}.{ref}.flagstat"
-        doc_smry = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.depthofcoverage.sample_summary"),
-        doc_stat = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.depthofcoverage.sample_statistics"),
-        flagstat = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.flagstat"),
+        doc_smry = "results/coverage_depth_and_flagstat/{sample_name}.{ref}.depthofcoverage.sample_summary",
+        doc_stat = "results/coverage_depth_and_flagstat/{sample_name}.{ref}.depthofcoverage.sample_statistics",
+        flagstat = "results/coverage_depth_and_flagstat/{sample_name}.{ref}.flagstat"
     params:
-        doc_base   = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.depthofcoverage"),
         comp_level = 5,
         java_opt   = "-Xmx32000m",
         gatk3      = config["gatk3"],
@@ -632,15 +577,17 @@ rule coverage_depth_and_flagstat:
          mem_mb = 32000
     run:
         # primary bam dir
-       #bam_outdir = os.path.join(
-       #        config["primary"],
-       #        config["ref"],
-       #        BREED,
-       #        wildcards.sample_name,
-       #        "bam"
-       #)
+        bam_outdir = os.path.join(
+                config["primary"],
+                config["ref"],
+                BREED,
+                wildcards.sample_name,
+                "bam"
+        )
         
         shell(f'''
+            set -e
+
             java -jar {{params.java_opt}} {{params.gatk3}} \
                 -T DepthOfCoverage \
                 -R {{params.ref_fasta}} \
@@ -648,7 +595,7 @@ rule coverage_depth_and_flagstat:
                 -omitLocusTable \
                 -omitIntervals \
                 -I {{input.final_bam}} \
-                -o {{params.doc_base}} \
+                -o results/coverage_depth_and_flagstat/{{wildcards.sample_name}}.{{wildcards.ref}}.depthofcoverage \
                 -ct 5 \
                 -ct 15 \
                 -ct 30 \
@@ -658,18 +605,18 @@ rule coverage_depth_and_flagstat:
                 -T FlagStat \
                 -R {{params.ref_fasta}} \
                 -I {{input.final_bam}} \
-                -o {{output.flagstat}} \
+                -o results/coverage_depth_and_flagstat/{{wildcards.sample_name}}.{{wildcards.ref}}.flagstat \
                 -nct 8
+
+            cp -t {bam_outdir} {{output}}
         ''')
 
 rule haplotype_caller:
     input:
-       #final_bam = "{bucket}/gather_bam_files/{sample_name}.{ref}.bam",
-        final_bam = S3.remote(f"{{bucket}}/wgs/{breed}/{{sample_name}}/{{ref}}/bam/{{sample_name}}.{{ref}}.bam"),
-        final_bai = S3.remote(f"{{bucket}}/wgs/{breed}/{{sample_name}}/{{ref}}/bam/{{sample_name}}.{{ref}}.bai"),
-        interval  = f"{os.path.join(config['hc_intervals'],'{hc_interval}')}.interval_list"
+        final_bam = "results/gather_bam_files/{sample_name}.{ref}.bam",
+        interval = f"{os.path.join(config['hc_intervals'],'{hc_interval}')}.interval_list"
     output:
-        hc_gvcf = "{bucket}/haplotype_caller/{hc_interval}/{sample_name}.{ref}.g.vcf.gz"
+        hc_gvcf = "results/haplotype_caller/{hc_interval}/{sample_name}.{ref}.g.vcf.gz"
     params:
         java_opt  = "-Xmx10G -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10",
         gatk      = config["gatk"],
@@ -691,21 +638,18 @@ rule haplotype_caller:
 
 rule merge_gvcfs:
     input:
-        flagstat = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.flagstat"),
-       #flagstat  = "results/coverage_depth_and_flagstat/{sample_name}.{ref}.flagstat",
+        flagstat  = "results/coverage_depth_and_flagstat/{sample_name}.{ref}.flagstat",
         hc_gvcfs = sorted(
             expand(
-                "{bucket}/haplotype_caller/{hc_interval}/{sample_name}.{ref}.g.vcf.gz",
+                "results/haplotype_caller/{hc_interval}/{sample_name}.{ref}.g.vcf.gz",
                 sample_name=units["sample_name"].values[0],
-                ref=config["ref"], bucket=config["bucket"],
+                ref=config["ref"],
                 hc_interval=hc_intervals
                 ), key=lambda item: int(item.split("/")[-2].split("-")[0])
         )
     output:
-       #final_gvcf     = "results/merge_gvcfs/{sample_name}.{ref}.g.vcf.gz",
-       #final_gvcf_tbi = "results/merge_gvcfs/{sample_name}.{ref}.g.vcf.gz.tbi"
-        final_gvcf     = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/{sample_name}.{ref}.g.vcf.gz"),
-        final_gvcf_tbi = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/{sample_name}.{ref}.g.vcf.gz.tbi"),
+        final_gvcf     = "results/merge_gvcfs/{sample_name}.{ref}.g.vcf.gz",
+        final_gvcf_tbi = "results/merge_gvcfs/{sample_name}.{ref}.g.vcf.gz.tbi"
     params:
         java_opt  = "-Xmx2000m",
         gatk      = config["gatk"],
@@ -719,65 +663,65 @@ rule merge_gvcfs:
         gvcfs = " -I ".join(map(str,input.hc_gvcfs))
         
         # primary gvcf dir
-       #gvcf_outdir = os.path.join(
-       #        config["primary"],
-       #        config["ref"],
-       #        BREED,
-       #        wildcards.sample_name,
-       #        "gvcf"
-       #)
+        gvcf_outdir = os.path.join(
+                config["primary"],
+                config["ref"],
+                BREED,
+                wildcards.sample_name,
+                "gvcf"
+        )
 
         shell(f'''
+            set -e
+
+            mkdir -p {gvcf_outdir}
+
             {params.gatk} --java-options {params.java_opt}  \
                 MergeVcfs \
                 --INPUT {gvcfs} \
                 --OUTPUT {{output.final_gvcf}}
+
+            cp -t {gvcf_outdir} {{output}}
         ''')
 
 rule genotype_gvcfs:
     input:
        #ival_db  = "results/import_gvcfs/{interval}",
        #interval = "/panfs/roc/groups/0/fried255/shared/gatk4_workflow/GoDawgs/CanFam4/Intervals/{interval}.interval_list"
-        final_gvcf = S3.remote(
-            expand(
-                "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/{sample_name}.{ref}.g.vcf.{ext}",
-                sample_name=units["sample_name"].values[0],
-                ref=config["ref"], breed=breed,
-                ext=["gz","gz.tbi"], bucket=config["bucket"]
-            )
+        final_gvcf = expand(
+            "results/merge_gvcfs/{sample_name}.{ref}.g.vcf.gz",
+            sample_name=units["sample_name"].values[0],
+            ref=config["ref"]
         ),
        #interval   = "/panfs/roc/groups/0/fried255/shared/gatk4_workflow/GoDawgs/MoneyCF4/Intervals/{interval}.interval_list"
         interval   = f"{os.path.join(config['hc_intervals'],'{hc_interval}')}.interval_list"
     output:
-        vcf = "{bucket}/genotype_gvcfs/{ref}/{hc_interval}/output.vcf.gz",
+        vcf = "results/genotype_gvcfs/{ref}/{hc_interval}/output.vcf.gz",
     params:
         gatk      = config["gatk"],
         ref_fasta = config["ref_fasta"]
     threads: 6
     resources:
          time   = 60,
-         mem_mb = 60000
-    run:
-        # need the index for tool but not included in command
-        gvcf = [i for i in input.final_gvcf if ".tbi" not in i][0]
-
-        shell(f'''
-            {{params.gatk}} --java-options "-Xmx50g -Xms50g" \
+         mem_mb = 120000
+    shell:
+        '''
+            {params.gatk} --java-options "-Xmx50g -Xms50g" \
             GenotypeGVCFs \
-                -R {{params.ref_fasta}} \
-                -O {{output.vcf}} \
+                -R {params.ref_fasta} \
+                -O {output.vcf} \
                 -G StandardAnnotation \
                 --only-output-calls-starting-in-intervals \
-                -V {gvcf} \
-                -L {{input.interval}}
-        ''')
+                -V {input.final_gvcf} \
+                -L {input.interval}
+        '''
 
 rule fltr_make_sites_only:
     input:
-        vcf = "{bucket}/genotype_gvcfs/{ref}/{hc_interval}/output.vcf.gz"
+        vcf = "results/genotype_gvcfs/{ref}/{hc_interval}/output.vcf.gz"
     output:
-        var_filtrd_vcf = "{bucket}/fltr_make_sites_only/{ref}/{hc_interval}/filtr.{hc_interval}.variant_filtered.vcf.gz",
-        sites_only_vcf = "{bucket}/fltr_make_sites_only/{ref}/{hc_interval}/filtr.{hc_interval}.sites_only.variant_filtered.vcf.gz"
+        var_filtrd_vcf = "results/fltr_make_sites_only/{ref}/{hc_interval}/filtr.{hc_interval}.variant_filtered.vcf.gz",
+        sites_only_vcf = "results/fltr_make_sites_only/{ref}/{hc_interval}/filtr.{hc_interval}.sites_only.variant_filtered.vcf.gz"
     params:
         gatk       = config["gatk"],
         excess_het = config["excess_het_threshold"],
@@ -803,14 +747,13 @@ rule fltr_make_sites_only:
 rule sites_only_gather_vcf:
     input:
         sites_only_vcf = expand(
-            "{bucket}/fltr_make_sites_only/{ref}/{hc_interval}/filtr.{hc_interval}.sites_only.variant_filtered.vcf.gz",
-            ref=config["ref"], bucket=config["bucket"],
+            "results/fltr_make_sites_only/{ref}/{hc_interval}/filtr.{hc_interval}.sites_only.variant_filtered.vcf.gz",
+            ref=config["ref"],
             hc_interval=hc_intervals
         )
     output:
-        unsrtd_sites_only_vcf = "{bucket}/sites_only_gather_vcf/{ref}/unsrtd.sites_only.vcf.gz",
-        gather_sites_only_vcf = "{bucket}/sites_only_gather_vcf/{ref}/gather.sites_only.vcf.gz",
-        gather_sites_only_tbi = "{bucket}/sites_only_gather_vcf/{ref}/gather.sites_only.vcf.gz.tbi"
+        gather_sites_only_vcf = "results/sites_only_gather_vcf/{ref}/gather.sites_only.vcf.gz",
+        gather_sites_only_tbi = "results/sites_only_gather_vcf/{ref}/gather.sites_only.vcf.gz.tbi"
     params:
         gatk   = config["gatk"],
         picard = config["picard"]
@@ -822,16 +765,18 @@ rule sites_only_gather_vcf:
         vcfs = " --input ".join(map(str,input.sites_only_vcf))
 
         shell(f'''
+            set -e
+
             {{params.gatk}} --java-options "-Xmx18g -Xms6g" \
                 GatherVcfsCloud \
                 --ignore-safety-checks \
                 --gather-type BLOCK \
                 --input {vcfs} \
-                --output {{output.unsrtd_sites_only_vcf}}
+                --output results/sites_only_gather_vcf/tmp.vcf.gz
 
             java -jar {{params.picard}} \
                 SortVcf \
-                I={{output.unsrtd_sites_only_vcf}} \
+                I=results/sites_only_gather_vcf/tmp.vcf.gz \
                 O={{output.gather_sites_only_vcf}}
 
             {{params.gatk}} --java-options "-Xmx18g -Xms6g" \
@@ -843,10 +788,10 @@ rule sites_only_gather_vcf:
 
 rule indels_var_recal:
     input:
-        gather_sites_only_vcf = "{bucket}/sites_only_gather_vcf/{ref}/gather.sites_only.vcf.gz",
+        gather_sites_only_vcf = "results/sites_only_gather_vcf/{ref}/gather.sites_only.vcf.gz",
     output:
-        indels_recal    = "{bucket}/recal/{ref}/indels/indels.recal",
-        indels_tranches = "{bucket}/recal/{ref}/indels/indels.tranches"
+        indels_recal    = "results/recal/{ref}/indels/indels.recal",
+        indels_tranches = "results/recal/{ref}/indels/indels.tranches"
     params:
         gatk                    = config["gatk"],
         recal_tranche_values    = config["indel_recalibration_tranche_values"],
@@ -877,10 +822,10 @@ rule indels_var_recal:
 
 rule snps_var_recal:
     input:
-        gather_sites_only_vcf = "{bucket}/sites_only_gather_vcf/{ref}/gather.sites_only.vcf.gz",
+        gather_sites_only_vcf = "results/sites_only_gather_vcf/{ref}/gather.sites_only.vcf.gz",
     output:
-        snps_recal    = "{bucket}/recal/{ref}/snps/snps.recal",
-        snps_tranches = "{bucket}/recal/{ref}/snps/snps.tranches"
+        snps_recal    = "results/recal/{ref}/snps/snps.recal",
+        snps_tranches = "results/recal/{ref}/snps/snps.tranches"
     params:
         gatk                    = config["gatk"],
         recal_tranche_values    = config["snp_recalibration_tranche_values"],
@@ -916,14 +861,14 @@ rule snps_var_recal:
 
 rule apply_recal:
     input:
-        input_vcf       = "{bucket}/fltr_make_sites_only/{ref}/{hc_interval}/filtr.{hc_interval}.variant_filtered.vcf.gz",
-        indels_recal    = "{bucket}/recal/{ref}/indels/indels.recal",
-        indels_tranches = "{bucket}/recal/{ref}/indels/indels.tranches",
-        snps_recal      = "{bucket}/recal/{ref}/snps/snps.recal",
-        snps_tranches   = "{bucket}/recal/{ref}/snps/snps.tranches"
+        input_vcf       = "results/fltr_make_sites_only/{ref}/{hc_interval}/filtr.{hc_interval}.variant_filtered.vcf.gz",
+        indels_recal    = "results/recal/{ref}/indels/indels.recal",
+        indels_tranches = "results/recal/{ref}/indels/indels.tranches",
+        snps_recal      = "results/recal/{ref}/snps/snps.recal",
+        snps_tranches   = "results/recal/{ref}/snps/snps.tranches"
     output:
-        recal_vcf       = "{bucket}/apply_recal/{ref}/{hc_interval}/recal.{hc_interval}.vcf.gz",
-        recal_vcf_index = "{bucket}/apply_recal/{ref}/{hc_interval}/recal.{hc_interval}.vcf.gz.tbi"
+        recal_vcf       = "results/apply_recal/{ref}/{hc_interval}/recal.{hc_interval}.vcf.gz",
+        recal_vcf_index = "results/apply_recal/{ref}/{hc_interval}/recal.{hc_interval}.vcf.gz.tbi"
     params:
         gatk               = config["gatk"],
         indel_filter_level = config["indel_filter_level"],
@@ -933,6 +878,8 @@ rule apply_recal:
          mem_mb = 16000
     shell:
         '''
+            set -e
+
             mkdir -p results/apply_recal/{wildcards.hc_interval}/
 
             {params.gatk} --java-options "-Xmx15g -Xms5g" \
@@ -962,14 +909,14 @@ rule final_gather_vcfs:
     input:
         recal_vcfs = sorted(
             expand(
-                "{bucket}/apply_recal/{ref}/{hc_interval}/recal.{hc_interval}.vcf.gz", 
-                ref=config["ref"], bucket=config["bucket"],
+                "results/apply_recal/{ref}/{hc_interval}/recal.{hc_interval}.vcf.gz", 
+                ref=config["ref"],
                 hc_interval=hc_intervals
             )
         )
     output:
-        final_vcf       = "{bucket}/final_gather_vcfs/joint_genotype.{ref}.vcf.gz",
-        final_vcf_index = "{bucket}/final_gather_vcfs/joint_genotype.{ref}.vcf.gz.tbi"
+        final_vcf       = "results/final_gather_vcfs/joint_genotype.{ref}.vcf.gz",
+        final_vcf_index = "results/final_gather_vcfs/joint_genotype.{ref}.vcf.gz.tbi"
     params:
         gatk = config["gatk"],
     threads: 4
@@ -997,23 +944,25 @@ rule final_gather_vcfs:
 
 rule collect_metrics_on_vcf:
     input:
-        final_vcf       = "{bucket}/final_gather_vcfs/joint_genotype.{ref}.vcf.gz",
-        final_vcf_index = "{bucket}/final_gather_vcfs/joint_genotype.{ref}.vcf.gz.tbi"
+        final_vcf       = "results/final_gather_vcfs/joint_genotype.{ref}.vcf.gz",
+        final_vcf_index = "results/final_gather_vcfs/joint_genotype.{ref}.vcf.gz.tbi"
     output:
-        detail_metrics  = "{bucket}/collect_metrics_on_vcf/joint_genotype.{ref}.variant_calling_detail_metrics",
-        summary_metrics = "{bucket}/collect_metrics_on_vcf/joint_genotype.{ref}.variant_calling_summary_metrics"
+        detail_metrics  = "results/collect_metrics_on_vcf/joint_genotype.{ref}.variant_calling_detail_metrics",
+        summary_metrics = "results/collect_metrics_on_vcf/joint_genotype.{ref}.variant_calling_summary_metrics"
     params:
         gatk               = config["gatk"],
         dbsnp_snp_vcf      = config["dbsnp_snp_vcf"],
         ref_dict           = config["ref_dict"],
         eval_interval_list = config["eval_interval_list"],
-        metrics_prefix     = f"{config['bucket']}/collect_metrics_on_vcf/joint_genotype.{config['ref']}"
+        metrics_prefix     = f"results/collect_metrics_on_vcf/joint_genotype.{config['ref']}"
     threads: 8
     resources:
          time   = 360,
          mem_mb = 22000
     shell:
         '''
+            set -e
+
             mkdir -p results/collect_metrics_on_vcf/
 
             {params.gatk} --java-options "-Xmx18g -Xms6g" \
@@ -1028,10 +977,10 @@ rule collect_metrics_on_vcf:
 
 rule vep_final_vcf:
     input:
-        final_vcf = "{bucket}/final_gather_vcfs/joint_genotype.{ref}.vcf.gz",
+        final_vcf = "results/final_gather_vcfs/joint_genotype.{ref}.vcf.gz",
     output:
-        vep_vcf     = "{bucket}/vep_final_vcf/joint_genotype.{ref}.vep.vcf.gz",
-        vep_vcf_tbi = "{bucket}/vep_final_vcf/joint_genotype.{ref}.vep.vcf.gz.tbi"
+        vep_vcf     = "results/vep_final_vcf/joint_genotype.{ref}.vep.vcf.gz",
+        vep_vcf_tbi = "results/vep_final_vcf/joint_genotype.{ref}.vep.vcf.gz.tbi"
     params:
         conda_vep = config["conda_vep"],
         ref_fasta = config["ref_fasta"],
@@ -1043,91 +992,58 @@ rule vep_final_vcf:
     run:
         import os
         out_name = os.path.splitext(output.vep_vcf)[0] 
-        
-        # if canfam4 VEP with the gtf
-        if "canfam4" in wildcards.ref:
-            shell(f'''
-                set +eu
 
-                eval "$(conda shell.bash hook)"
-                conda activate {params.conda_vep}
+        shell(f'''
+            set +eu
 
-                vep \
-                    -i {{input.final_vcf}} \
-                    -o {out_name} \
-                    --gtf {{params.ref_gtf}} \
-                    --fasta {{params.ref_fasta}} \
-                    --everything \
-                    --force_overwrite \
-                    --vcf \
-                    --dont_skip
+            eval "$(conda shell.bash hook)"
+            conda activate {params.conda_vep}
 
-                bgzip --threads 12 -c {out_name} > {{output.vep_vcf}} &&
-                tabix -p vcf {{output.vep_vcf}}
-            ''')
-        # else VEP with the canfam3 annotation from ensembl
-        else:
-            shell(f'''
-                set +eu
+            vep \
+                -i {{input.final_vcf}} \
+                -o {out_name} \
+                --gtf {{params.ref_gtf}} \
+                --fasta {{params.ref_fasta}} \
+                --everything \
+                --force_overwrite \
+                --vcf \
+                --dont_skip
 
-                eval "$(conda shell.bash hook)"
-                conda activate {params.conda_vep}
-
-                vep \
-                  -i {{input.final_vcf}} \
-                  --cache \
-                  --everything \
-                  -o {out_name} \
-                  --vcf \
-                  --no_stats \
-                  --species=canis_familiaris \
-                  --offline \
-                  --dont_skip
-
-                bgzip --threads 12 -c {out_name} > {{output.vep_vcf}} &&
-                tabix -p vcf {{output.vep_vcf}}
-            ''')
+            bgzip --threads 12 -c {out_name} > {{output.vep_vcf}} &&
+            tabix -p vcf {{output.vep_vcf}}
+        ''')
 
 rule select_common_vars:
     input:
         pop_vcf     = config["pop_vcf"],
        #pop_vcf_tbi = config["pop_vcf_tbi"]
     output:
-        common_vars     = "{bucket}/select_common_vars/joint_genotype.{ref}.vep.af_nonmajor.vcf.gz",
-        common_vars_tbi = "{bucket}/select_common_vars/joint_genotype.{ref}.vep.af_nonmajor.vcf.gz.tbi"
+        common_vars     = "results/select_common_vars/joint_genotype.{ref}.vep.af_nonmajor.vcf.gz",
+        common_vars_tbi = "results/select_common_vars/joint_genotype.{ref}.vep.af_nonmajor.vcf.gz.tbi"
     params:
         conda_vep = config["conda_vep"],
         ref_fasta = config["ref_fasta"],
+        ref_gtf   = config["ref_gtf"]
     threads: 8
     resources:
          time   = 2160,
          mem_mb = 32000
-    run:
-        # check if common_vars already exists for population vcf - generate
-        # if not and copy if does
-        l = [config["common_vars"],config["common_vars_tbi"]]
-        
-        if all([os.path.isfile(f) for f in l]):
-            shell(f'''
-                cp {config["common_vars"]} {{output.common_vars}}
-                cp {config["common_vars_tbi"]} {{output.common_vars_tbi}}
-            ''')
-        else:
-            shell('''
-                set +eu
+    shell:
+        '''
+            set +eu
 
-                eval "$(conda shell.bash hook)"
-                conda activate {params.conda_vep}
-                
-                module load bcftools
+            eval "$(conda shell.bash hook)"
+            conda activate {params.conda_vep}
+            
+            module load bcftools
 
-                bcftools view -Oz \
-                    -i 'AF[*]>0.005' \
-                    {input.pop_vcf} \
-                    -o {output.common_vars}
+            bcftools view -Oz \
+                -i 'AF[*]>0.005' \
+                {input.pop_vcf} \
+                -o {output.common_vars}
 
-                tabix -p vcf {output.common_vars}
-            ''')
+            tabix -p vcf {output.common_vars}
+        '''
 
 
 rule select_variants_to_table:
@@ -1135,23 +1051,23 @@ rule select_variants_to_table:
        #final_vcf      = f"results/final_gather_vcfs/joint_genotype.{config['ref']}.vcf.gz",
        #common_vars    = f"results/vep_final_vcf/joint_genotype.{config['ref']}.vep.af_nonmajor.vcf.gz",
        #detail_metrics = f"results/collect_metrics_on_vcf/joint_genotype.{config['ref']}.variant_calling_detail_metrics",
-        final_vcf      = "{bucket}/vep_final_vcf/joint_genotype.{ref}.vep.vcf.gz",
-        common_vars    = "{bucket}/select_common_vars/joint_genotype.{ref}.vep.af_nonmajor.vcf.gz",
-        detail_metrics = "{bucket}/collect_metrics_on_vcf/joint_genotype.{ref}.variant_calling_detail_metrics",
+        final_vcf      = "results/vep_final_vcf/joint_genotype.{ref}.vep.vcf.gz",
+        common_vars    = "results/select_common_vars/joint_genotype.{ref}.vep.af_nonmajor.vcf.gz",
+        detail_metrics = "results/collect_metrics_on_vcf/joint_genotype.{ref}.variant_calling_detail_metrics",
     output:
        #unique_vars           = "results/select_vars_to_table/{units['sample_name'].values[0]}.{config['ref']}.unique_vars.vcf",
        #rare_and_common_vars  = "results/select_vars_to_table/{units['sample_name'].values[0]}.{config['ref']}.rare_and_common_vars.vcf",
        #rare_vars             = "results/select_vars_to_table/{units['sample_name'].values[0]}.{config['ref']}.rare_vars.vcf",
        #unique_vars_vep_split = "results/select_vars_to_table/{units['sample_name'].values[0]}.{config['ref']}.unique_vars.vep_split.txt",
        #rare_vars_vep_split   = "results/select_vars_to_table/{units['sample_name'].values[0]}.{config['ref']}.rare_vars.vep_split.txt"
-        unique_vars           = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vcf",
-        rare_and_common_vars  = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_and_common_vars.vcf",
-        rare_vars             = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vcf",
-        unique_vars_vep_split = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vep_split.txt",
-        rare_vars_vep_split   = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vep_split.txt"
+        unique_vars           = "results/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vcf",
+        rare_and_common_vars  = "results/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_and_common_vars.vcf",
+        rare_vars             = "results/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vcf",
+        unique_vars_vep_split = "results/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vep_split.txt",
+        rare_vars_vep_split   = "results/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vep_split.txt"
     params:
         gatk = config["gatk"],
-        tmp_dir = "/dev/shm/money_vars_{ref}",
+        tmp_dir = "/dev/shm/money_vars",
         ref_fasta = config["ref_fasta"],
         pop_vcf = config["pop_vcf"]
     threads: 4
@@ -1160,6 +1076,8 @@ rule select_variants_to_table:
          mem_mb = 16000
     shell:
         '''
+            set -e
+    
             module load bcftools    
             mkdir -p {params.tmp_dir} results/select_vars_to_table
 
@@ -1202,13 +1120,13 @@ rule select_variants_to_table:
 
 rule bgzip_and_tabix:
     input:            
-        unique_vars = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vcf",
-        rare_vars   = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vcf",
+        unique_vars = "results/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vcf",
+        rare_vars   = "results/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vcf",
     output:
-        unique_vars_gz  = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vcf.gz",
-        unique_vars_tbi = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vcf.gz.tbi",
-        rare_vars_gz    = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vcf.gz",
-        rare_vars_tbi   = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vcf.gz.tbi",
+        unique_vars_gz  = "results/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vcf.gz",
+        unique_vars_tbi = "results/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vcf.gz.tbi",
+        rare_vars_gz    = "results/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vcf.gz",
+        rare_vars_tbi   = "results/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vcf.gz.tbi",
     params:
         conda_vep = config["conda_vep"],
     threads: 8
@@ -1237,15 +1155,15 @@ rule final_output:
     input:
        #unique_vars_vep_split = f"results/select_vars_to_table/{units['sample_name'].values[0]}.{config['ref']}.unique_vars.vep_split.txt",
        #rare_vars_vep_split   = f"results/select_vars_to_table/{units['sample_name'].values[0]}.{config['ref']}.rare_vars.vep_split.txt"
-        unique_vars_vep_split = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vep_split.txt",
-        rare_vars_vep_split   = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vep_split.txt"
+        unique_vars_vep_split = "results/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vep_split.txt",
+        rare_vars_vep_split   = "results/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vep_split.txt"
     output:
        #excel_sheet = f"results/final_output/{units['sample_name'].values[0]}_{config['ref']}_tables.xlsx",
-        excel_sheet = "{bucket}/final_output/{ref}/{sample_out}_{ref}_tables.xlsx",
+        excel_sheet = "results/final_output/{ref}/{sample_out}_{ref}_tables.xlsx",
        #excel_sheet = "{sample_out}_{ref}_tables.xlsx",
     params:
         conda_vep = config["conda_vep"],
-        base_name = "{bucket}/final_output/{ref}"
+        base_name = "results/final_output/{ref}"
     threads: 4
     resources:
          time   = 30,
@@ -1255,48 +1173,46 @@ rule final_output:
        #import pandas as pd
         
         # first add header to the rare and unique tables
-        if "canfam3" in wildcards.ref:
-            header = [
-              'chrom', 'pos', 'ref', 'alt', 'ac', 
-              'allele', 'consequence', 'impact', 'symbol', 
-              'gene', 'feature_type', 'feature', 'biotype', 
-              'exon', 'intron', 'hgvsc', 'hgvsp', 
-              'cdna_position', 'cds_position', 'protein_position', 'amino_acids', 
-              'codons', 'existing_variation', 'distance', 'strand', 
-              'flags', 'variant_class', 'symbol_source', 'hgnc_id', 
-              'canonical','mane', 'tsl', 'appris', 
-              'ccds', 'ensp', 'swissprot', 'trembl',
-              'uniparc', 'gene_pheno', 'sift', 'domains', 
-              'mirna', 'af', 'afr_af', 'amr_af', 
-              'eas_af', 'eur_af', 'sas_af', 'aa_af', 
-              'ea_af', 'gnomad_af', 'gnomad_afr_af', 'gnomad_amr_af', 
-              'gnomad_asj_af', 'gnomad_eas_af', 'gnomad_fin_af', 'gnomad_nfe_af', 
-              'gnomad_oth_af', 'gnomad_sas_af', 'max_af', 'max_af_pops', 
-              'clin_sig', 'somatic', 'pheno', 'pubmed', 
-              'check_ref', 'motif_name', 'motif_pos', 'high_inf_pos',
-              'motif_score_change'
-            ]
-        else:
-            header = [
-                'chrom', 'pos', 'ref', 'alt', 'ac',
-                'allele', 'consequence', 'impact', 'symbol', 'gene', 
-                'feature_type', 'feature', 'biotype', 'exon', 'intron', 
-                'hgvsc', 'hgvsp', 'cdna_position', 'cds_position', 
-                'protein_position', 'amino_acids', 'codons', 'existing_variation',
-                'distance', 'strand', 'flags', 'variant_class', 'symbol_source', 
-                'hgnc_id', 'canonical', 'mane_select', 'mane_plus_clinical', 
-                'tsl', 'appris', 'ccds', 'ensp', 'swissprot', 'trembl', 'uniparc', 
-                'uniprot_isoform', 'source', 'gene_pheno', 'sift', 'polyphen', 
-                'domains', 'mirna', 'hgvs_offset', 'af', 'afr_af', 'amr_af', 
-                'eas_af', 'eur_af', 'sas_af', 'aa_af', 'ea_af', 'gnomad_af', 
-                'gnomad_afr_af', 'gnomad_amr_af', 'gnomad_asj_af', 
-                'gnomad_eas_af', 'gnomad_fin_af', 'gnomad_nfe_af', 
-                'gnomad_oth_af', 'gnomad_sas_af', 'max_af', 'max_af_pops', 
-                'clin_sig', 'somatic', 'pheno', 'pubmed', 'check_ref', 
-                'motif_name', 'motif_pos', 'high_inf_pos', 
-                'motif_score_change', 'transcription_factors', 
-                'canFam4_genes_ncbi.gtf.gz'
-            ]
+       #header = [
+       #  'chrom', 'pos', 'ref', 'alt', 'ac', 
+       #  'allele', 'consequence', 'impact', 'symbol', 
+       #  'gene', 'feature_type', 'feature', 'biotype', 
+       #  'exon', 'intron', 'hgvsc', 'hgvsp', 
+       #  'cdna_position', 'cds_position', 'protein_position', 'amino_acids', 
+       #  'codons', 'existing_variation', 'distance', 'strand', 
+       #  'flags', 'variant_class', 'symbol_source', 'hgnc_id', 
+       #  'canonical','mane', 'tsl', 'appris', 
+       #  'ccds', 'ensp', 'swissprot', 'trembl',
+       #  'uniparc', 'gene_pheno', 'sift', 'domains', 
+       #  'mirna', 'af', 'afr_af', 'amr_af', 
+       #  'eas_af', 'eur_af', 'sas_af', 'aa_af', 
+       #  'ea_af', 'gnomad_af', 'gnomad_afr_af', 'gnomad_amr_af', 
+       #  'gnomad_asj_af', 'gnomad_eas_af', 'gnomad_fin_af', 'gnomad_nfe_af', 
+       #  'gnomad_oth_af', 'gnomad_sas_af', 'max_af', 'max_af_pops', 
+       #  'clin_sig', 'somatic', 'pheno', 'pubmed', 
+       #  'check_ref', 'motif_name', 'motif_pos', 'high_inf_pos',
+       #  'motif_score_change'
+       #]
+        header = [
+            'chrom', 'pos', 'ref', 'alt', 'ac',
+            'allele', 'consequence', 'impact', 'symbol', 'gene', 
+            'feature_type', 'feature', 'biotype', 'exon', 'intron', 
+            'hgvsc', 'hgvsp', 'cdna_position', 'cds_position', 
+            'protein_position', 'amino_acids', 'codons', 'existing_variation',
+            'distance', 'strand', 'flags', 'variant_class', 'symbol_source', 
+            'hgnc_id', 'canonical', 'mane_select', 'mane_plus_clinical', 
+            'tsl', 'appris', 'ccds', 'ensp', 'swissprot', 'trembl', 'uniparc', 
+            'uniprot_isoform', 'source', 'gene_pheno', 'sift', 'polyphen', 
+            'domains', 'mirna', 'hgvs_offset', 'af', 'afr_af', 'amr_af', 
+            'eas_af', 'eur_af', 'sas_af', 'aa_af', 'ea_af', 'gnomad_af', 
+            'gnomad_afr_af', 'gnomad_amr_af', 'gnomad_asj_af', 
+            'gnomad_eas_af', 'gnomad_fin_af', 'gnomad_nfe_af', 
+            'gnomad_oth_af', 'gnomad_sas_af', 'max_af', 'max_af_pops', 
+            'clin_sig', 'somatic', 'pheno', 'pubmed', 'check_ref', 
+            'motif_name', 'motif_pos', 'high_inf_pos', 
+            'motif_score_change', 'transcription_factors', 
+            'canFam4_genes_ncbi.gtf.gz'
+        ]
      
         # for each table, add header and print the rest of table   
         dfs = {}
@@ -1327,18 +1243,18 @@ rule final_output:
 
 rule manifest_and_upload:
     input:
-        vep_vcf         = "{bucket}/vep_final_vcf/joint_genotype.{ref}.vep.vcf.gz",
-        vep_vcf_tbi     = "{bucket}/vep_final_vcf/joint_genotype.{ref}.vep.vcf.gz.tbi",
-        unique_vars_gz  = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vcf.gz",
-        unique_vars_tbi = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vcf.gz.tbi",
-        rare_vars_gz    = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vcf.gz",
-        rare_vars_tbi   = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vcf.gz.tbi",
-        excel_sheet     = "{bucket}/final_output/{ref}/{sample_out}_{ref}_tables.xlsx",
+        vep_vcf         = "results/vep_final_vcf/joint_genotype.{ref}.vep.vcf.gz",
+        vep_vcf_tbi     = "results/vep_final_vcf/joint_genotype.{ref}.vep.vcf.gz.tbi",
+        unique_vars_gz  = "results/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vcf.gz",
+        unique_vars_tbi = "results/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vcf.gz.tbi",
+        rare_vars_gz    = "results/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vcf.gz",
+        rare_vars_tbi   = "results/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vcf.gz.tbi",
+        excel_sheet     = "results/final_output/{ref}/{sample_out}_{ref}_tables.xlsx",
     output:
-       #manifest      = "{bucket}/{sample_out}_{ref}_manifest.txt",
-       #money_tar_gz  = "{bucket}/final_output/{ref}/{sample_out}_{ref}_K9MM.tar.gz",
-        manifest     = S3.remote("{bucket}/wgs/{breed}/{sample_out}/{ref}/money/{sample_out}_{ref}_manifest.txt"),
-        money_tar_gz = S3.remote("{bucket}/wgs/{breed}/{sample_out}/{ref}/money/{sample_out}_{ref}_K9MM.tar.gz"),
+       #excel_sheet = f"results/final_output/{units['sample_name'].values[0]}_{config['ref']}_tables.xlsx",
+        manifest      = "results/{sample_out}_{ref}_manifest.txt",
+        money_tar_gz  = "results/final_output/{ref}/{sample_out}_{ref}_K9MM.tar.gz",
+       #excel_sheet = "{sample_out}_{ref}_tables.xlsx",
     params:
        #base_dir = "results/final_output/{ref}/upload/"
     run:
@@ -1368,30 +1284,3 @@ rule manifest_and_upload:
                 {output.manifest}
         ''')
 
-rule save_jobs:
-    input:
-        manifest     = S3.remote("{bucket}/wgs/{breed}/{sample_out}/{ref}/money/{sample_out}_{ref}_manifest.txt"),
-        money_tar_gz = S3.remote("{bucket}/wgs/{breed}/{sample_out}/{ref}/money/{sample_out}_{ref}_K9MM.tar.gz"),
-    output:
-        touch("{bucket}/save_jobs/{breed}_{sample_out}_{ref}_jobs.done")
-    params:
-        fastqc = config["fastqc"],
-        alias  = config["alias"]
-   #resources:
-   #     time   = 360,
-   #     mem_mb = 6000, 
-   #     cpus   = 1
-    shell:
-        '''
-            mcli cp --recursive src/ \
-                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_out}/{wildcards.ref}/jobs/src
-            
-            mcli cp --recursive slurm.go_money/ \
-                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_out}/{wildcards.ref}/jobs/slurm.go_money
-            
-            mcli cp --recursive Jobs/ \
-                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_out}/{wildcards.ref}/jobs/slurm_logs
-            
-            mcli cp {wildcards.ref}_money.yaml {wildcards.breed}_{wildcards.sample_out}.go_make_money.slurm go_make_money.smk input.tsv \
-                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_out}/{wildcards.ref}/jobs/
-        '''

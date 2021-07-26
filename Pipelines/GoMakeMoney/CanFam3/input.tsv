@@ -1,0 +1,2 @@
+breed	sample_name	readgroup_name	fastq_1	fastq_2	library_name	platform_unit	flowcell	run_date	platform_name	sequencing_center
+amst	D07513	D07513_A	/home/fried255/fried255/temp/fried255/185103-S1_R1_001.fastq.gz	/home/fried255/fried255/temp/fried255/185103-S1_R2_001.fastq.gz	illumina-D07513	GW210524000.4.AACCTACG+CTTAATAG	GW210524000	2021-06-04T15:06:29	illumina	unknown

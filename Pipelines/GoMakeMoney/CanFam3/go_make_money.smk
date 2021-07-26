@@ -1,7 +1,10 @@
+# CanFam3 money
+
 import pandas as pd
 import os
 
-localrules: save_jobs
+localrules: manifest_and_upload,
+            save_jobs
 
 include: "src/utils.py"
 
@@ -103,13 +106,8 @@ rule all:
        #    hc_interval=hc_intervals
        #),
        ## merge gvcfs
-       #S3.remote(
-       #    expand(
-       #        "{bucket}/wgs/{breed}/{u.sample_name}/{ref}/gvcf/{u.sample_name}.{ref}.g.vcf.{ext}",
-       #        u=units.itertuples(), ref=config["ref"],
-       #        bucket=config["bucket"], breed=breed,
-       #        ext=["gz","gz.tbi"]
-       #    )
+       #expand("results/merge_gvcfs/{u.sample_name}.{ref}.g.vcf.gz",
+       #    u=units.itertuples(),ref=config["ref"]
        #)
        #S3.remote(
        #    expand(
@@ -145,16 +143,11 @@ rule all:
        #        breed=breed, 
        #    )
        #),
-       #expand(
-       #    "{bucket}/save_jobs/{breed}_{sample_out}_{ref}_jobs.done",
-       #    sample_out=units['sample_name'].values[0], 
-       #    bucket=config['bucket'], ref=config["ref"], 
-       #    breed=breed, 
-       #)
         expand(
-            "{bucket}/save_jobs/{breed}_{u.sample_name}_{ref}_jobs.done",
-            u=units.itertuples(), bucket=config['bucket'], 
-            ref=config["ref"], breed=breed, 
+            "{bucket}/save_jobs/{breed}_{sample_out}_{ref}_jobs.done",
+            sample_out=units['sample_name'].values[0], 
+            bucket=config['bucket'], ref=config["ref"], 
+            breed=breed, 
         )
 
 
@@ -741,27 +734,662 @@ rule merge_gvcfs:
                 --OUTPUT {{output.final_gvcf}}
         ''')
 
+rule genotype_gvcfs:
+    input:
+       #ival_db  = "results/import_gvcfs/{interval}",
+       #interval = "/panfs/roc/groups/0/fried255/shared/gatk4_workflow/GoDawgs/CanFam4/Intervals/{interval}.interval_list"
+        final_gvcf = S3.remote(
+            expand(
+                "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/{sample_name}.{ref}.g.vcf.{ext}",
+                sample_name=units["sample_name"].values[0],
+                ref=config["ref"], breed=breed,
+                ext=["gz","gz.tbi"], bucket=config["bucket"]
+            )
+        ),
+       #interval   = "/panfs/roc/groups/0/fried255/shared/gatk4_workflow/GoDawgs/MoneyCF4/Intervals/{interval}.interval_list"
+        interval   = f"{os.path.join(config['hc_intervals'],'{hc_interval}')}.interval_list"
+    output:
+        vcf = "{bucket}/genotype_gvcfs/{ref}/{hc_interval}/output.vcf.gz",
+    params:
+        gatk      = config["gatk"],
+        ref_fasta = config["ref_fasta"]
+    threads: 6
+    resources:
+         time   = 60,
+         mem_mb = 60000
+    run:
+        # need the index for tool but not included in command
+        gvcf = [i for i in input.final_gvcf if ".tbi" not in i][0]
+
+        shell(f'''
+            {{params.gatk}} --java-options "-Xmx50g -Xms50g" \
+            GenotypeGVCFs \
+                -R {{params.ref_fasta}} \
+                -O {{output.vcf}} \
+                -G StandardAnnotation \
+                --only-output-calls-starting-in-intervals \
+                -V {gvcf} \
+                -L {{input.interval}}
+        ''')
+
+rule fltr_make_sites_only:
+    input:
+        vcf = "{bucket}/genotype_gvcfs/{ref}/{hc_interval}/output.vcf.gz"
+    output:
+        var_filtrd_vcf = "{bucket}/fltr_make_sites_only/{ref}/{hc_interval}/filtr.{hc_interval}.variant_filtered.vcf.gz",
+        sites_only_vcf = "{bucket}/fltr_make_sites_only/{ref}/{hc_interval}/filtr.{hc_interval}.sites_only.variant_filtered.vcf.gz"
+    params:
+        gatk       = config["gatk"],
+        excess_het = config["excess_het_threshold"],
+        ref_fasta  = config["ref_fasta"]
+    resources:
+         time   = 30,
+         mem_mb = 6000
+    shell:
+        '''
+            {params.gatk} --java-options "-Xmx3g -Xms3g" \
+            VariantFiltration \
+                --filter-expression "ExcessHet > {params.excess_het}" \
+                --filter-name ExcessHet \
+                -O {output.var_filtrd_vcf} \
+                -V {input.vcf}
+
+            {params.gatk} --java-options "-Xmx3g -Xms3g" \
+            MakeSitesOnlyVcf \
+                --INPUT {output.var_filtrd_vcf} \
+                --OUTPUT {output.sites_only_vcf}
+        '''
+
+rule sites_only_gather_vcf:
+    input:
+        sites_only_vcf = expand(
+            "{bucket}/fltr_make_sites_only/{ref}/{hc_interval}/filtr.{hc_interval}.sites_only.variant_filtered.vcf.gz",
+            ref=config["ref"], bucket=config["bucket"],
+            hc_interval=hc_intervals
+        )
+    output:
+        unsrtd_sites_only_vcf = "{bucket}/sites_only_gather_vcf/{ref}/unsrtd.sites_only.vcf.gz",
+        gather_sites_only_vcf = "{bucket}/sites_only_gather_vcf/{ref}/gather.sites_only.vcf.gz",
+        gather_sites_only_tbi = "{bucket}/sites_only_gather_vcf/{ref}/gather.sites_only.vcf.gz.tbi"
+    params:
+        gatk   = config["gatk"],
+        picard = config["picard"]
+    threads: 4
+    resources:
+         time   = 240,
+         mem_mb = 24000
+    run:
+        vcfs = " --input ".join(map(str,input.sites_only_vcf))
+
+        shell(f'''
+            {{params.gatk}} --java-options "-Xmx18g -Xms6g" \
+                GatherVcfsCloud \
+                --ignore-safety-checks \
+                --gather-type BLOCK \
+                --input {vcfs} \
+                --output {{output.unsrtd_sites_only_vcf}}
+
+            java -jar {{params.picard}} \
+                SortVcf \
+                I={{output.unsrtd_sites_only_vcf}} \
+                O={{output.gather_sites_only_vcf}}
+
+            {{params.gatk}} --java-options "-Xmx18g -Xms6g" \
+                IndexFeatureFile \
+                --input {{output.gather_sites_only_vcf}}
+
+            rm -f results/sites_only_gather_vcf/tmp.vcf.gz
+        ''')
+
+rule indels_var_recal:
+    input:
+        gather_sites_only_vcf = "{bucket}/sites_only_gather_vcf/{ref}/gather.sites_only.vcf.gz",
+    output:
+        indels_recal    = "{bucket}/recal/{ref}/indels/indels.recal",
+        indels_tranches = "{bucket}/recal/{ref}/indels/indels.tranches"
+    params:
+        gatk                    = config["gatk"],
+        recal_tranche_values    = config["indel_recalibration_tranche_values"],
+        recal_annotation_values = config["indel_recalibration_annotation_values"],
+        dbsnp_indels_vcf        = config["dbsnp_indels_vcf"]
+    threads: 4
+    resources:
+         time   = 240,
+         mem_mb = 24000
+    run:
+        tranche_values = " -tranche ".join(map(str,params.recal_tranche_values))
+        an_values = " -an ".join(map(str,params.recal_annotation_values))
+
+        shell(f'''
+            {{params.gatk}} --java-options "-Xmx24g -Xms24g" \
+                VariantRecalibrator \
+                -V {{input.gather_sites_only_vcf}} \
+                -O {{output.indels_recal}} \
+                --tranches-file {{output.indels_tranches}} \
+                --trust-all-polymorphic \
+                -tranche {tranche_values} \
+                -an {an_values} \
+                -mode INDEL \
+                --max-gaussians 4 \
+                --resource:dbsnp,known=false,training=true,truth=true,prior=10 {params.dbsnp_indels_vcf}
+        ''')
+
+
+rule snps_var_recal:
+    input:
+        gather_sites_only_vcf = "{bucket}/sites_only_gather_vcf/{ref}/gather.sites_only.vcf.gz",
+    output:
+        snps_recal    = "{bucket}/recal/{ref}/snps/snps.recal",
+        snps_tranches = "{bucket}/recal/{ref}/snps/snps.tranches"
+    params:
+        gatk                    = config["gatk"],
+        recal_tranche_values    = config["snp_recalibration_tranche_values"],
+        recal_annotation_values = config["snp_recalibration_annotation_values"],
+        dbsnp_snp_vcf           = config["dbsnp_snp_vcf"],
+        broad_snp_vcf           = config["broad_snp_vcf"],
+        axelsson_snp_vcf        = config["axelsson_snp_vcf"],
+        illumina_snp_vcf        = config["illumina_snp_vcf"]
+    threads: 4
+    resources:
+         time   = 240,
+         mem_mb = 16000
+    run:
+        tranche_values = " -tranche ".join(map(str,params.recal_tranche_values))
+        an_values = " -an ".join(map(str,params.recal_annotation_values))
+
+        shell(f'''
+            {{params.gatk}} --java-options "-Xmx12g -Xms3g" \
+                VariantRecalibrator \
+                -V {{input.gather_sites_only_vcf}} \
+                -O {{output.snps_recal}} \
+                --tranches-file {{output.snps_tranches}} \
+                --trust-all-polymorphic \
+                -tranche {tranche_values} \
+                -an {an_values} \
+                -mode SNP \
+                --max-gaussians 6 \
+                --resource:illumina,known=true,training=true,truth=true,prior=15.0 {params.illumina_snp_vcf} \
+                --resource:broad,known=true,training=true,truth=true,prior=10.0 {params.broad_snp_vcf} \
+                --resource:axelsson,known=false,training=true,truth=true,prior=8.0 {params.axelsson_snp_vcf} \
+                --resource:dbSNP146,known=true,training=true,truth=true,prior=12.0 {params.dbsnp_snp_vcf}
+        ''')
+
+rule apply_recal:
+    input:
+        input_vcf       = "{bucket}/fltr_make_sites_only/{ref}/{hc_interval}/filtr.{hc_interval}.variant_filtered.vcf.gz",
+        indels_recal    = "{bucket}/recal/{ref}/indels/indels.recal",
+        indels_tranches = "{bucket}/recal/{ref}/indels/indels.tranches",
+        snps_recal      = "{bucket}/recal/{ref}/snps/snps.recal",
+        snps_tranches   = "{bucket}/recal/{ref}/snps/snps.tranches"
+    output:
+        recal_vcf       = "{bucket}/apply_recal/{ref}/{hc_interval}/recal.{hc_interval}.vcf.gz",
+        recal_vcf_index = "{bucket}/apply_recal/{ref}/{hc_interval}/recal.{hc_interval}.vcf.gz.tbi"
+    params:
+        gatk               = config["gatk"],
+        indel_filter_level = config["indel_filter_level"],
+        snp_filter_level   = config["snp_filter_level"]
+    resources:
+         time   = 30,
+         mem_mb = 16000
+    shell:
+        '''
+            mkdir -p results/apply_recal/{wildcards.hc_interval}/
+
+            {params.gatk} --java-options "-Xmx15g -Xms5g" \
+                ApplyVQSR \
+                -O results/apply_recal/{wildcards.hc_interval}/tmp.indel.recalibrated.vcf \
+                -V {input.input_vcf} \
+                --recal-file {input.indels_recal} \
+                --tranches-file {input.indels_tranches} \
+                --truth-sensitivity-filter-level {params.indel_filter_level} \
+                --create-output-variant-index true \
+                -mode INDEL
+
+            {params.gatk} --java-options "-Xmx15g -Xms5g" \
+                ApplyVQSR \
+                -O {output.recal_vcf} \
+                -V results/apply_recal/{wildcards.hc_interval}/tmp.indel.recalibrated.vcf \
+                --recal-file {input.snps_recal} \
+                --tranches-file {input.snps_tranches} \
+                --truth-sensitivity-filter-level {params.snp_filter_level} \
+                --create-output-variant-index true \
+                -mode SNP
+
+            rm -f results/apply_recal/{wildcards.hc_interval}/tmp.indel.recalibrated.vcf
+        '''
+
+rule final_gather_vcfs:
+    input:
+        recal_vcfs = sorted(
+            expand(
+                "{bucket}/apply_recal/{ref}/{hc_interval}/recal.{hc_interval}.vcf.gz", 
+                ref=config["ref"], bucket=config["bucket"],
+                hc_interval=hc_intervals
+            )
+        )
+    output:
+        final_vcf       = "{bucket}/final_gather_vcfs/joint_genotype.{ref}.vcf.gz",
+        final_vcf_index = "{bucket}/final_gather_vcfs/joint_genotype.{ref}.vcf.gz.tbi"
+    params:
+        gatk = config["gatk"],
+    threads: 4
+    resources:
+         time   = 240,
+         mem_mb = 22000
+    run:
+        vcfs = " --input ".join(map(str,input.recal_vcfs))
+
+        shell(f'''
+            set -e
+            set -o pipefail
+
+            {{params.gatk}} --java-options "-Xmx18g -Xms6g" \
+                GatherVcfsCloud \
+                --ignore-safety-checks \
+                --gather-type BLOCK \
+                --input {vcfs} \
+                --output {{output.final_vcf}}
+
+            {{params.gatk}} --java-options "-Xmx18g -Xms6g" \
+                IndexFeatureFile \
+                --input {{output.final_vcf}}
+        ''')
+
+rule collect_metrics_on_vcf:
+    input:
+        final_vcf       = "{bucket}/final_gather_vcfs/joint_genotype.{ref}.vcf.gz",
+        final_vcf_index = "{bucket}/final_gather_vcfs/joint_genotype.{ref}.vcf.gz.tbi"
+    output:
+        detail_metrics  = "{bucket}/collect_metrics_on_vcf/joint_genotype.{ref}.variant_calling_detail_metrics",
+        summary_metrics = "{bucket}/collect_metrics_on_vcf/joint_genotype.{ref}.variant_calling_summary_metrics"
+    params:
+        gatk               = config["gatk"],
+        dbsnp_snp_vcf      = config["dbsnp_snp_vcf"],
+        ref_dict           = config["ref_dict"],
+        eval_interval_list = config["eval_interval_list"],
+        metrics_prefix     = f"{config['bucket']}/collect_metrics_on_vcf/joint_genotype.{config['ref']}"
+    threads: 8
+    resources:
+         time   = 360,
+         mem_mb = 22000
+    shell:
+        '''
+            mkdir -p results/collect_metrics_on_vcf/
+
+            {params.gatk} --java-options "-Xmx18g -Xms6g" \
+                CollectVariantCallingMetrics \
+                --INPUT {input.final_vcf} \
+                --DBSNP {params.dbsnp_snp_vcf} \
+                --SEQUENCE_DICTIONARY {params.ref_dict} \
+                --OUTPUT {params.metrics_prefix} \
+                --THREAD_COUNT 8 \
+                --TARGET_INTERVALS {params.eval_interval_list}
+        '''
+
+rule vep_final_vcf:
+    input:
+        final_vcf = "{bucket}/final_gather_vcfs/joint_genotype.{ref}.vcf.gz",
+    output:
+        vep_vcf     = "{bucket}/vep_final_vcf/joint_genotype.{ref}.vep.vcf.gz",
+        vep_vcf_tbi = "{bucket}/vep_final_vcf/joint_genotype.{ref}.vep.vcf.gz.tbi"
+    params:
+        conda_vep = config["conda_vep"],
+        ref_fasta = config["ref_fasta"],
+        ref_gtf   = config["ref_gtf"]
+    threads: 12
+    resources:
+         time   = 4320,
+         mem_mb = 60000
+    run:
+        import os
+        out_name = os.path.splitext(output.vep_vcf)[0] 
+        
+        # if canfam4 VEP with the gtf
+        if "canfam4" in wildcards.ref:
+            shell(f'''
+                set +eu
+
+                eval "$(conda shell.bash hook)"
+                conda activate {params.conda_vep}
+
+                vep \
+                    -i {{input.final_vcf}} \
+                    -o {out_name} \
+                    --gtf {{params.ref_gtf}} \
+                    --fasta {{params.ref_fasta}} \
+                    --everything \
+                    --force_overwrite \
+                    --vcf \
+                    --dont_skip
+
+                bgzip --threads 12 -c {out_name} > {{output.vep_vcf}} &&
+                tabix -p vcf {{output.vep_vcf}}
+            ''')
+        # else VEP with the canfam3 annotation from ensembl
+        else:
+            shell(f'''
+                set +eu
+
+                eval "$(conda shell.bash hook)"
+                conda activate {params.conda_vep}
+
+                vep \
+                  -i {{input.final_vcf}} \
+                  --cache \
+                  --everything \
+                  -o {out_name} \
+                  --vcf \
+                  --no_stats \
+                  --species=canis_familiaris \
+                  --offline \
+                  --dont_skip
+
+                bgzip --threads 12 -c {out_name} > {{output.vep_vcf}} &&
+                tabix -p vcf {{output.vep_vcf}}
+            ''')
+
+rule select_common_vars:
+    input:
+        pop_vcf     = config["pop_vcf"],
+       #pop_vcf_tbi = config["pop_vcf_tbi"]
+    output:
+        common_vars     = "{bucket}/select_common_vars/joint_genotype.{ref}.vep.af_nonmajor.vcf.gz",
+        common_vars_tbi = "{bucket}/select_common_vars/joint_genotype.{ref}.vep.af_nonmajor.vcf.gz.tbi"
+    params:
+        conda_vep = config["conda_vep"],
+        ref_fasta = config["ref_fasta"],
+    threads: 8
+    resources:
+         time   = 2160,
+         mem_mb = 32000
+    run:
+        # check if common_vars already exists for population vcf - generate
+        # if not and copy if does
+        l = [config["common_vars"],config["common_vars_tbi"]]
+        
+        if all([os.path.isfile(f) for f in l]):
+            shell(f'''
+                cp {config["common_vars"]} {{output.common_vars}}
+                cp {config["common_vars_tbi"]} {{output.common_vars_tbi}}
+            ''')
+        else:
+            shell('''
+                set +eu
+
+                eval "$(conda shell.bash hook)"
+                conda activate {params.conda_vep}
+                
+                module load bcftools
+
+                bcftools view -Oz \
+                    -i 'AF[*]>0.005' \
+                    {input.pop_vcf} \
+                    -o {output.common_vars}
+
+                tabix -p vcf {output.common_vars}
+            ''')
+
+
+rule select_variants_to_table:
+    input:            
+       #final_vcf      = f"results/final_gather_vcfs/joint_genotype.{config['ref']}.vcf.gz",
+       #common_vars    = f"results/vep_final_vcf/joint_genotype.{config['ref']}.vep.af_nonmajor.vcf.gz",
+       #detail_metrics = f"results/collect_metrics_on_vcf/joint_genotype.{config['ref']}.variant_calling_detail_metrics",
+        final_vcf      = "{bucket}/vep_final_vcf/joint_genotype.{ref}.vep.vcf.gz",
+        common_vars    = "{bucket}/select_common_vars/joint_genotype.{ref}.vep.af_nonmajor.vcf.gz",
+        detail_metrics = "{bucket}/collect_metrics_on_vcf/joint_genotype.{ref}.variant_calling_detail_metrics",
+    output:
+       #unique_vars           = "results/select_vars_to_table/{units['sample_name'].values[0]}.{config['ref']}.unique_vars.vcf",
+       #rare_and_common_vars  = "results/select_vars_to_table/{units['sample_name'].values[0]}.{config['ref']}.rare_and_common_vars.vcf",
+       #rare_vars             = "results/select_vars_to_table/{units['sample_name'].values[0]}.{config['ref']}.rare_vars.vcf",
+       #unique_vars_vep_split = "results/select_vars_to_table/{units['sample_name'].values[0]}.{config['ref']}.unique_vars.vep_split.txt",
+       #rare_vars_vep_split   = "results/select_vars_to_table/{units['sample_name'].values[0]}.{config['ref']}.rare_vars.vep_split.txt"
+        unique_vars           = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vcf",
+        rare_and_common_vars  = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_and_common_vars.vcf",
+        rare_vars             = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vcf",
+        unique_vars_vep_split = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vep_split.txt",
+        rare_vars_vep_split   = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vep_split.txt"
+    params:
+        gatk = config["gatk"],
+        tmp_dir = "/dev/shm/money_vars_{ref}",
+        ref_fasta = config["ref_fasta"],
+        pop_vcf = config["pop_vcf"]
+    threads: 4
+    resources:
+         time   = 2880,
+         mem_mb = 16000
+    shell:
+        '''
+            module load bcftools    
+            mkdir -p {params.tmp_dir} results/select_vars_to_table
+
+            # all unique variants
+            {params.gatk} SelectVariants \
+                -R {params.ref_fasta} \
+                -V {input.final_vcf} \
+                -disc {params.pop_vcf} \
+                --tmp-dir {params.tmp_dir} \
+                -O {output.unique_vars}
+
+            # all common and  rare variants
+            {params.gatk} SelectVariants \
+                -R {params.ref_fasta} \
+                -V {input.final_vcf} \
+                -disc {input.common_vars} \
+                -O {output.rare_and_common_vars}
+
+            # rare only variants
+            {params.gatk} SelectVariants \
+                -R {params.ref_fasta} \
+                -V {output.rare_and_common_vars} \
+                -disc {output.unique_vars} \
+                -O {output.rare_vars}
+
+            # vars to table - all unique
+            bcftools +split-vep \
+                {output.unique_vars} \
+                -f '%CHROM\t%POS\t%REF\t%ALT\t%AC\t%CSQ\n' \
+                -d -A tab \
+                -o {output.unique_vars_vep_split}
+
+            # vars to table - rare only
+            bcftools +split-vep \
+                {output.rare_vars} \
+                -f '%CHROM\t%POS\t%REF\t%ALT\t%AC\t%CSQ\n' \
+                -d -A tab \
+                -o {output.rare_vars_vep_split}
+        '''
+
+rule bgzip_and_tabix:
+    input:            
+        unique_vars = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vcf",
+        rare_vars   = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vcf",
+    output:
+        unique_vars_gz  = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vcf.gz",
+        unique_vars_tbi = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vcf.gz.tbi",
+        rare_vars_gz    = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vcf.gz",
+        rare_vars_tbi   = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vcf.gz.tbi",
+    params:
+        conda_vep = config["conda_vep"],
+    threads: 8
+    resources:
+         time   = 60,
+         mem_mb = 16000
+    shell:
+        '''
+            set +eu
+
+            eval "$(conda shell.bash hook)"
+            conda activate {params.conda_vep}
+            
+            module load bcftools
+
+            # bgzip and tabix the unique vcf
+            bgzip -c {input.unique_vars} > {output.unique_vars_gz}
+            tabix -p vcf {output.unique_vars_gz}
+        
+            # and the rare vcf
+            bgzip -c {input.rare_vars} > {output.rare_vars_gz}
+            tabix -p vcf {output.rare_vars_gz}
+        '''
+
+rule final_output:
+    input:
+       #unique_vars_vep_split = f"results/select_vars_to_table/{units['sample_name'].values[0]}.{config['ref']}.unique_vars.vep_split.txt",
+       #rare_vars_vep_split   = f"results/select_vars_to_table/{units['sample_name'].values[0]}.{config['ref']}.rare_vars.vep_split.txt"
+        unique_vars_vep_split = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vep_split.txt",
+        rare_vars_vep_split   = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vep_split.txt"
+    output:
+       #excel_sheet = f"results/final_output/{units['sample_name'].values[0]}_{config['ref']}_tables.xlsx",
+        excel_sheet = "{bucket}/final_output/{ref}/{sample_out}_{ref}_tables.xlsx",
+       #excel_sheet = "{sample_out}_{ref}_tables.xlsx",
+    params:
+        conda_vep = config["conda_vep"],
+        base_name = "{bucket}/final_output/{ref}"
+    threads: 4
+    resources:
+         time   = 30,
+         mem_mb = 16000
+    run:
+       #import os
+       #import pandas as pd
+        
+        # first add header to the rare and unique tables
+       #header = [
+       #  'chrom', 'pos', 'ref', 'alt', 'ac', 
+       #  'allele', 'consequence', 'impact', 'symbol', 
+       #  'gene', 'feature_type', 'feature', 'biotype', 
+       #  'exon', 'intron', 'hgvsc', 'hgvsp', 
+       #  'cdna_position', 'cds_position', 'protein_position', 'amino_acids', 
+       #  'codons', 'existing_variation', 'distance', 'strand', 
+       #  'flags', 'variant_class', 'symbol_source', 'hgnc_id', 
+       #  'canonical','mane', 'tsl', 'appris', 
+       #  'ccds', 'ensp', 'swissprot', 'trembl',
+       #  'uniparc', 'gene_pheno', 'sift', 'domains', 
+       #  'mirna', 'af', 'afr_af', 'amr_af', 
+       #  'eas_af', 'eur_af', 'sas_af', 'aa_af', 
+       #  'ea_af', 'gnomad_af', 'gnomad_afr_af', 'gnomad_amr_af', 
+       #  'gnomad_asj_af', 'gnomad_eas_af', 'gnomad_fin_af', 'gnomad_nfe_af', 
+       #  'gnomad_oth_af', 'gnomad_sas_af', 'max_af', 'max_af_pops', 
+       #  'clin_sig', 'somatic', 'pheno', 'pubmed', 
+       #  'check_ref', 'motif_name', 'motif_pos', 'high_inf_pos',
+       #  'motif_score_change'
+       #]
+        header = [
+            'chrom', 'pos', 'ref', 'alt', 'ac',
+            'allele', 'consequence', 'impact', 'symbol', 'gene', 
+            'feature_type', 'feature', 'biotype', 'exon', 'intron', 
+            'hgvsc', 'hgvsp', 'cdna_position', 'cds_position', 
+            'protein_position', 'amino_acids', 'codons', 'existing_variation',
+            'distance', 'strand', 'flags', 'variant_class', 'symbol_source', 
+            'hgnc_id', 'canonical', 'mane_select', 'mane_plus_clinical', 
+            'tsl', 'appris', 'ccds', 'ensp', 'swissprot', 'trembl', 'uniparc', 
+            'uniprot_isoform', 'source', 'gene_pheno', 'sift', 'polyphen', 
+            'domains', 'mirna', 'hgvs_offset', 'af', 'afr_af', 'amr_af', 
+            'eas_af', 'eur_af', 'sas_af', 'aa_af', 'ea_af', 'gnomad_af', 
+            'gnomad_afr_af', 'gnomad_amr_af', 'gnomad_asj_af', 
+            'gnomad_eas_af', 'gnomad_fin_af', 'gnomad_nfe_af', 
+            'gnomad_oth_af', 'gnomad_sas_af', 'max_af', 'max_af_pops', 
+            'clin_sig', 'somatic', 'pheno', 'pubmed', 'check_ref', 
+            'motif_name', 'motif_pos', 'high_inf_pos', 
+            'motif_score_change', 'transcription_factors', 
+            'canFam4_genes_ncbi.gtf.gz'
+        ]
+     
+        # for each table, add header and print the rest of table   
+        dfs = {}
+        for f in [input.unique_vars_vep_split, input.rare_vars_vep_split]:
+            tmp = os.path.basename(f).replace(".txt",".reform.txt")
+            reform = os.path.join(params.base_name,tmp)
+            # get name of each table as key for dict
+            name = tmp.split(".vep_split")[0]
+            # open table, add header, and write to reform 
+            with open(f, "r") as infile, open(reform, "w") as outfile:
+                print("\t".join(header), file=outfile)
+                for line in infile:
+                    print(line.strip(), file=outfile)
+            # read fixed table to dataframe
+            dfs[name] = pd.read_csv(reform, sep="\t")
+
+        # write each df to the same excel sheet
+        with pd.ExcelWriter(
+                output.excel_sheet,
+                engine="xlsxwriter",
+                options={"strings_to_formulas": False}
+            ) as writer:
+            for k,v in dfs.items():
+                v.to_excel(writer,
+                           sheet_name=k,
+                           index=False)
+            writer.save()
+
+rule manifest_and_upload:
+    input:
+        vep_vcf         = "{bucket}/vep_final_vcf/joint_genotype.{ref}.vep.vcf.gz",
+        vep_vcf_tbi     = "{bucket}/vep_final_vcf/joint_genotype.{ref}.vep.vcf.gz.tbi",
+        unique_vars_gz  = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vcf.gz",
+        unique_vars_tbi = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.unique_vars.vcf.gz.tbi",
+        rare_vars_gz    = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vcf.gz",
+        rare_vars_tbi   = "{bucket}/select_vars_to_table/{ref}/{sample_out}.{ref}.rare_vars.vcf.gz.tbi",
+        excel_sheet     = "{bucket}/final_output/{ref}/{sample_out}_{ref}_tables.xlsx",
+    output:
+       #manifest      = "{bucket}/{sample_out}_{ref}_manifest.txt",
+       #money_tar_gz  = "{bucket}/final_output/{ref}/{sample_out}_{ref}_K9MM.tar.gz",
+        manifest     = S3.remote("{bucket}/wgs/{breed}/{sample_out}/{ref}/money/{sample_out}_{ref}_manifest.txt"),
+        money_tar_gz = S3.remote("{bucket}/wgs/{breed}/{sample_out}/{ref}/money/{sample_out}_{ref}_K9MM.tar.gz"),
+    params:
+       #base_dir = "results/final_output/{ref}/upload/"
+    run:
+       #os.makedirs(os.path.dirname(output.manifest),exist_ok=True)
+        
+        with open(output.manifest, "w") as outfile:
+            s = f'''
+                Included files:
+                1) results/vep_final_vcf/joint_genotype.{wildcards.ref}.vep.vcf.gz - annotated VCF and index (.tbi) for all {wildcards.sample_out} variants
+                2) results/select_vars_to_table/{wildcards.sample_out}.{wildcards.ref}.unique_vars.vcf.gz - annotated VCF and index (.tbi) for all unique {wildcards.sample_out} variants
+                3) results/select_vars_to_table/{wildcards.sample_out}.{wildcards.ref}.rare_vars.vcf.gz - annotated VCF and index (.tbi) for all rare {wildcards.sample_out} variants
+                4) results/final_output/{wildcards.sample_out}_{wildcards.ref}_tables.xlsx - contains two sheets
+                \t i) {wildcards.sample_out}_{wildcards.ref}.unique_vars - table version of item 2
+                \t ii) {wildcards.sample_out}_{wildcards.ref}.rare_vars - table version of item 3
+            '''
+            print(s, file=outfile)
+
+        shell('''
+            tar -czvf {output.money_tar_gz} \
+                {input.vep_vcf} \
+                {input.vep_vcf_tbi} \
+                {input.unique_vars_gz} \
+                {input.unique_vars_tbi} \
+                {input.rare_vars_gz} \
+                {input.rare_vars_tbi} \
+                {input.excel_sheet} \
+                {output.manifest}
+        ''')
+
 rule save_jobs:
     input:
-        final_gvcf     = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/{sample_name}.{ref}.g.vcf.gz"),
-        final_gvcf_tbi = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/{sample_name}.{ref}.g.vcf.gz.tbi"),
-       #manifest     = S3.remote("{bucket}/wgs/{breed}/{sample_out}/{ref}/money/{sample_out}_{ref}_manifest.txt"),
-       #money_tar_gz = S3.remote("{bucket}/wgs/{breed}/{sample_out}/{ref}/money/{sample_out}_{ref}_K9MM.tar.gz"),
+        manifest     = S3.remote("{bucket}/wgs/{breed}/{sample_out}/{ref}/money/{sample_out}_{ref}_manifest.txt"),
+        money_tar_gz = S3.remote("{bucket}/wgs/{breed}/{sample_out}/{ref}/money/{sample_out}_{ref}_K9MM.tar.gz"),
     output:
-        touch("{bucket}/save_jobs/{breed}_{sample_name}_{ref}_jobs.done")
+        touch("{bucket}/save_jobs/{breed}_{sample_out}_{ref}_jobs.done")
     params:
+        fastqc = config["fastqc"],
         alias  = config["alias"]
+   #resources:
+   #     time   = 360,
+   #     mem_mb = 6000, 
+   #     cpus   = 1
     shell:
         '''
             mcli cp --recursive ./src/ \
-                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/jobs/src/
+                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_out}/{wildcards.ref}/jobs/src/
             
-            mcli cp --recursive ./slurm.go_wgs/ \
-                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/jobs/slurm.go_money/
+            mcli cp --recursive ./slurm.go_money/ \
+                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_out}/{wildcards.ref}/jobs/slurm.go_money/
             
             mcli cp --recursive ./Jobs/ \
-                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/jobs/slurm_logs/
+                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_out}/{wildcards.ref}/jobs/slurm_logs/
             
-            mcli cp {wildcards.ref}_config.yaml {wildcards.breed}_{wildcards.sample_name}.process_dog.slurm go_process_wgs.smk input.tsv \
-                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/jobs/
+            mcli cp {wildcards.ref}_money.yaml money_snake.slurm go_make_money.smk input.tsv \
+                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_out}/{wildcards.ref}/jobs/
         '''

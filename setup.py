@@ -82,7 +82,7 @@ def main(dog_meta, outdir, fq_dir, ref):
                     ]
                 )
             
-            d[line[0]]["work_dir"] = os.path.join(outdir,line[1],line[0])
+            d[line[0]]["work_dir"] = os.path.join(outdir,line[1],line[0],ref)
             d[line[0]]["breed"] = line[1]
             d[line[0]]["df"] = pd.DataFrame(dog_input, columns=cols)
             
@@ -90,33 +90,51 @@ def main(dog_meta, outdir, fq_dir, ref):
     # copy pipeline input and slurm file
     for k,v in d.items():
         os.makedirs(v["work_dir"], exist_ok=True)
-        
+
+        # create jobs dir if not exist
+        jobs = os.path.join(v["work_dir"],"Jobs")
+        if not os.path.exists(jobs):
+            os.makedirs(jobs)
+   
         # write dog input to working directory
         with open(os.path.join(v["work_dir"],"input.tsv"),"w") as out:
             v["df"].to_csv(out,sep='\t',index=False)
-        
+       
+        # input templates
+        pipeline  = "GoProcessWGS"
+        snake_n   = "go_process_wgs.smk"
+        config_n  = f"{ref}_config.yaml"
+        profile_n = "slurm.go_wgs"
+        # switch to money templates if true
+        if money:
+            pipeline  = "GoMakeMoney"
+            snake_n   = "go_make_money.smk"
+            config_n  = f"{ref}_money.yaml"
+            profile_n = "slurm.go_money"
+ 
         # copy snakefile, config, and profile to working dir
         smk = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                "Pipelines",
-                               "GoProcessWGS",
-                               "go_process_wgs.smk")
+                               pipeline,
+                               snake_n)
         
         config = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                   "Pipelines",
-                                  "GoProcessWGS",
-                                  f"{ref}_config.yaml")
+                                  pipeline,
+                                  config_n)
     
         profile = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                   "Pipelines",
-                                  "GoProcessWGS",
-                                  "slurm.go_wgs")
+                                  pipeline,
+                                  profile_n)
         
         src = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                   "Pipelines",
-                                  "GoProcessWGS",
+                                  pipeline,
                                   "src")
         
-        input_names = ["go_process_wgs.smk",f"{ref}_config.yaml","slurm.go_wgs","src"]
+       #input_names = ["go_process_wgs.smk",f"{ref}_config.yaml","slurm.go_wgs","src"]
+        input_names = [snake_n,config_n,profile_n,"src"]
         dst_files = [os.path.join(v["work_dir"],i) for i in input_names]
         
         for i in zip([smk,config,profile,src],dst_files):
@@ -128,7 +146,8 @@ def main(dog_meta, outdir, fq_dir, ref):
                     
                     
         # slurm destination
-        slurm = os.path.join(v["work_dir"],f"{v['breed']}_{k}.process_dog.slurm")
+        job_name = snake_n.split('.')[0]
+        slurm = os.path.join(v["work_dir"],f"{v['breed']}_{k}.{job_name}.slurm")
         
         # SBATCH directives 
         header = (
@@ -140,9 +159,9 @@ def main(dog_meta, outdir, fq_dir, ref):
             "#SBATCH --mem=60gb\n"
             "#SBATCH --mail-type=ALL\n"
             f"#SBATCH --mail-user={os.environ['USER']}@umn.edu\n"
-            f"#SBATCH --job-name {v['breed']}_{k}.go_process_dog.slurm\n"
-            f"#SBATCH -o %j.{v['breed']}_{k}.go_process_dog.out\n"
-            f"#SBATCH -e %j.{v['breed']}_{k}.go_process_dog.err\n"
+            f"#SBATCH --job-name {v['breed']}_{k}.{job_name}.slurm\n"
+            f"#SBATCH -o Jobs/%j.{v['breed']}_{k}.{job_name}.out\n"
+            f"#SBATCH -e Jobs/%j.{v['breed']}_{k}.{job_name}.err\n"
         )             
      
         # slurm submission body 
@@ -155,35 +174,34 @@ def main(dog_meta, outdir, fq_dir, ref):
             print(
                 textwrap.dedent(
                     f"""
-                    snakemake -s go_process_wgs.smk \\
-                        --profile slurm.go_wgs \\
-                        --configfile {ref}_config.yaml \\
+                    snakemake -s {snake_n} \\
+                        --profile {profile_n} \\
+                        --configfile {config_n} \\
                         --keep-going
                     """
                 ),
             file=f)
 
-            ref_dog_breed = os.path.join(base,ref.lower(),v["breed"],k)
+           #ref_dog_breed = os.path.join(base,ref.lower(),v["breed"],k)
 
-            print(f"mkdir -p {os.path.join(ref_dog_breed,'jobs')}\n" +
-                  f"cp -t {os.path.join(ref_dog_breed,'jobs')} *.{{slurm,smk,yaml,err,out}}\n",
-                  file=f)
-            
-            print(f"sbatch  --mail-user={os.environ['USER']}@umn.edu \\\n" +
-                  f'    --export=BREED={v["breed"]},DOG_ID={k},REF={ref.lower()},DOG_DIR="$SLURM_SUBMIT_DIR" \\\n' +
-                  f'    {sync}\n\nwait\n',file=f)
-            
-            # print(
-            #     textwrap.dedent(
-            #         f"""
-            #         sbatch --mail-user={os.environ['USER']}@umn.edu \\
-            #             --export=BREED={v["breed"]},DOG_ID={k},REF={ref.lower()},DOG_DIR="$SLURM_SUBMIT_DIR" \\
-            #             {sync}\n\nwait
-            #         """
-            #     ),
-            # file=f)
+           #print(f"mkdir -p {os.path.join(ref_dog_breed,'jobs')}\n" +
+           #      f"cp -t {os.path.join(ref_dog_breed,'jobs')} *.{{slurm,smk,yaml,err,out}}\n",
+           #      file=f)
+           #
+           #print(f"sbatch  --mail-user={os.environ['USER']}@umn.edu \\\n" +
+           #      f'    --export=BREED={v["breed"]},DOG_ID={k},REF={ref.lower()},DOG_DIR="$SLURM_SUBMIT_DIR" \\\n' +
+           #      f'    {sync}\n\nwait\n',file=f)
+           #
+           #print(
+           #    textwrap.dedent(
+           #        f"""
+           #        sbatch --mail-user={os.environ['USER']}@umn.edu \\
+           #            --export=BREED={v["breed"]},DOG_ID={k},REF={ref.lower()},DOG_DIR="$SLURM_SUBMIT_DIR" \\
+           #            {sync}\n\nwait
+           #        """
+           #    ),
+           #file=f)
 
-                    
     print(f"{len(d)} dogs setup for processing")
         
 
@@ -243,11 +261,11 @@ if __name__ == '__main__':
             " or ".join(refs) + " [default: canfam4]",
         metavar=""
     )
-    # optional.add_argument(
-    #     "-i", "--ids",
-    #     action="store_true",
-    #     help="file containing list of UMN dog IDs to process"
-    # )
+    optional.add_argument(
+        "--money",
+        action="store_true",
+        help="switch to setup private SNP pipeline"
+    )
     optional.add_argument(
         "-h", "--help",
         action="help",
@@ -261,12 +279,13 @@ if __name__ == '__main__':
     fq_dir = os.path.abspath(args.fastqs)
     outdir = os.path.abspath(args.out)
     ref = args.ref.lower()
+    money = args.money
 
     # base dir to save pipeline output in primary
     base = "/panfs/roc/groups/0/fried255/fried255/working"
 
     # sync job
-    sync = "/panfs/roc/groups/0/fried255/shared/gatk4_workflow/SyncDogs/sync.slurm"
+   #sync = "/panfs/roc/groups/0/fried255/shared/gatk4_workflow/SyncDogs/sync.slurm"
 
     # check if scratch dir exists
     if not os.path.exists(outdir):
