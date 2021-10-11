@@ -152,7 +152,7 @@ rule all:
        #    breed=breed, 
        #)
         expand(
-            "{bucket}/save_jobs/{breed}_{u.sample_name}_{ref}_jobs.done",
+            "{bucket}/save_jobs/{breed}/{u.sample_name}_{ref}_jobs.done",
             u=units.itertuples(), bucket=config['bucket'], 
             ref=config["ref"], breed=breed, 
         )
@@ -748,7 +748,7 @@ rule save_jobs:
        #manifest     = S3.remote("{bucket}/wgs/{breed}/{sample_out}/{ref}/money/{sample_out}_{ref}_manifest.txt"),
        #money_tar_gz = S3.remote("{bucket}/wgs/{breed}/{sample_out}/{ref}/money/{sample_out}_{ref}_K9MM.tar.gz"),
     output:
-        touch("{bucket}/save_jobs/{breed}_{sample_name}_{ref}_jobs.done")
+        touch("{bucket}/save_jobs/{breed}/{sample_name}_{ref}_jobs.done")
     params:
         alias  = config["alias"]
     shell:
@@ -762,6 +762,6 @@ rule save_jobs:
             mcli cp --recursive ./Jobs/ \
                 {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/jobs/slurm_logs/
             
-            mcli cp {wildcards.ref}_config.yaml {wildcards.breed}_{wildcards.sample_name}.process_dog.slurm go_process_wgs.smk input.tsv \
+            mcli cp {wildcards.ref}_config.yaml {wildcards.breed}_{wildcards.sample_name}.go_process_wgs.slurm go_process_wgs.smk input.tsv \
                 {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/jobs/
         '''
