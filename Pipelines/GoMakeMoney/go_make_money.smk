@@ -1079,7 +1079,6 @@ rule vep_final_vcf:
                   --everything \
                   -o {out_name} \
                   --vcf \
-                  --no_stats \
                   --species=canis_familiaris \
                   --offline \
                   --dont_skip
