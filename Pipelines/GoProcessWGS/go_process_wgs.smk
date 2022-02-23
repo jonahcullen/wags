@@ -176,15 +176,6 @@ rule fastqc:
         # get flowcell
         flowcell = units.loc[units["readgroup_name"] == wildcards.readgroup_name,"flowcell"].values[0]
 
-        # output path to fastqc by flowcell
-       #qc_outdir = os.path.join(
-       #        config["primary"],
-       #        config["ref"],
-       #        BREED,
-       #        wildcards.sample_name,
-       #        "fastqc",
-       #        flowcell
-       #)
         qc_outdir = os.path.join(
                 "results",
                 "fastqc",
@@ -192,18 +183,6 @@ rule fastqc:
                 flowcell
         )
         
-       #qc_name = os.path.basename(input.r1).split(".")[0] + "_fastqc"
-        # output path to fastq by flowcell
-       #fq_outdir = os.path.join(
-       #        config["primary"],
-       #        config["ref"],
-       #        BREED,
-       #        wildcards.sample_name,
-       #        "fastq",
-       #        flowcell
-       #
-       #)
-
         shell(f'''
             set -e
 
@@ -218,6 +197,10 @@ rule fastqc:
             mcli cp {{input.r1}} {{input.r2}} \
                 {{params.alias}}/{config["bucket"]}/wgs/{breed}/{wildcards.sample_name}/fastq/{flowcell}/
         ''')
+
+rule mark_adapters:
+    input:
+        unpack(get_fastq)
 
 rule fastqs_to_ubam:
     input:

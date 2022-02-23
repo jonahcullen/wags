@@ -56,7 +56,7 @@ def main(dog_meta, outdir, fq_dir, ref):
             tmp = []
             for root,dirs,files in os.walk(fq_dir):
                 for f in files:
-                    if f.startswith(line[-1]) and "_R2" in f:
+                    if f.startswith(line[-1]) and not f.endswith("md5") and "_R2" in f:
                         tmp.append(os.path.join(root,f))
             
             # add fastq information for each pair per sample

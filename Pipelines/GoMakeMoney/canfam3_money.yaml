@@ -1,0 +1,50 @@
+units : input.tsv
+ref : canfam3
+bucket : friedlab
+alias : s3Fried
+conda_vep : vep98
+primary : /panfs/roc/groups/0/fried255/fried255/working
+hc_intervals : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/intervals/Splint100/
+eval_interval_list : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/intervals/acgt.N1000.interval_list
+
+# TOOLS
+gatk : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/tools/gatk-4.2.0.0/gatk
+gatk3 : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/tools/GenomeAnalysisTK.jar
+fastqc : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/tools/FastQC/fastqc
+picard : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/tools/picard.jar
+bwa : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/tools/bwa-0.7.17/bwa
+samtools : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/tools/samtools-1.9/samtools
+
+# POPULATION VCF
+pop_vcf : /panfs/roc/groups/0/fried255/fried255/working/pipeline/20210512/VEP/joint_genotype.canfam3.20210512.vcf.gz
+common_vars : /panfs/roc/groups/0/fried255/fried255/working/pipeline/20210512/VEP/CommonVars/joint_genotype.canfam3.vep.af_nonmajor.vcf.gz
+common_vars_tbi : /panfs/roc/groups/0/fried255/fried255/working/pipeline/20210512/VEP/CommonVars/joint_genotype.canfam3.vep.af_nonmajor.vcf.gz.tbi
+
+# REFERENCE FILES - NOTE REF_GTF IS ONLY FOR CANFAM4 AT THIS POINT
+ref_fasta : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/canFam3.fa 
+ref_fasta_index : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/canFam3.fa.fai
+ref_dict : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/canFam3.dict
+ref_gtf : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/CanFam4/canFam4_genes_ncbi.gtf.gz
+
+# RESOURCE FILES
+dbsnp_indels_vcf : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/dbsnp146.indel.vcf
+dbsnp_indels_vcf_index : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/dbsnp146.indel.vcf.idx
+dbsnp_snp_vcf : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/dbsnp146.snp.vcf
+dbsnp_snp_vcf_index : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/dbsnp146.snp.vcf.idx
+broad_snp_vcf : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/final.broad.snps.vcf
+broad_snp_vcf_index : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/final.broad.snps.vcf.idx
+axelsson_snp_vcf : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/final.axelsson.snps.vcf
+axelsson_snp_vcf_index : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/final.axelsson.snps.vcf.idx
+illumina_snp_vcf : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/illumina.snps.vcf
+illumina_snp_vcf_index : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/illumina.snps.vcf.idx
+
+# RANDOM PARAMS
+excess_het_threshold : 54.69
+
+# RECAL
+indel_recalibration_tranche_values : ["100.0", "99.95", "99.9", "99.5", "99.0", "97.0", "96.0", "95.0", "94.0", "93.5", "93.0", "92.0", "91.0", "90.0"]
+indel_recalibration_annotation_values : ["FS", "ReadPosRankSum", "MQRankSum", "QD", "SOR", "DP"]
+snp_recalibration_tranche_values : ["100.0", "99.95", "99.9", "99.8", "99.6", "99.5", "99.4", "99.3", "99.0", "98.0", "97.0", "90.0" ]
+snp_recalibration_annotation_values : ["QD", "MQRankSum", "ReadPosRankSum", "FS", "MQ", "SOR", "DP"]
+snp_filter_level : 99.7
+indel_filter_level : 99.7
