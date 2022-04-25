@@ -95,17 +95,17 @@ rule sam_to_fastq_and_bwa_mem:
 
 		    java -Dsamjdk.compression_level=5 {params.java_opt} -jar /opt/wags/src/picard.jar \
                 SamToFastq \
-			    I={input.mark_adapt} \
-			    FASTQ=/dev/stdout \
+                I={input.mark_adapt} \
+                FASTQ=/dev/stdout \
                 CLIPPING_ATTRIBUTE=XT \
                 CLIPPING_ACTION=2 \
-			    INTERLEAVE=true \
-			    NON_PF=true \
+                INTERLEAVE=true \
+                NON_PF=true \
                 TMP_DIR={params.tmp_dir} \
             | \
-		    bwa {params.bwa_cl} $bash_ref_fasta /dev/stdin -  2> >(tee {output.bwa_log} >&2) \
+            bwa {params.bwa_cl} $bash_ref_fasta /dev/stdin -  2> >(tee {output.bwa_log} >&2) \
             | \
-		    samtools view -1 - > {output.bam}
+            samtools view -1 - > {output.bam}
         '''
 
 # get bwa version

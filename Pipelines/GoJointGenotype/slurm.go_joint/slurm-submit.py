@@ -14,7 +14,6 @@ SBATCH_DEFAULTS = """
                   mem=16g 
                   time=02:00:00 
                   partition=small,amdsmall
-                  account=furrowe1
                   """
 CLUSTER_CONFIG = "cluster.json"
 ADVANCED_ARGUMENT_CONVERSION = {"yes": True, "no": False}[
@@ -26,6 +25,7 @@ RESOURCE_MAPPING = {
     "mem": ("mem", "mem_mb", "ram", "memory"),
     "mem-per-cpu": ("mem-per-cpu", "mem_per_cpu", "mem_per_thread"),
     "nodes": ("nodes", "nnodes"),
+    "partition": ("partition", "queue"),
 }
 
 # parse job

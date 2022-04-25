@@ -1,33 +1,30 @@
-units : input.tsv
-ref : canfam3
-bucket : friedlab
-alias : s3Fried
-primary : /panfs/roc/groups/0/fried255/fried255/working
-hc_intervals : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/intervals/Splint100/
+# INPUT AND SECONDARY 
+units  : input.tsv
+ref    : canfam3
+bucket : wags
+alias  : s3
 
-# TOOLS
-gatk : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/tools/gatk-4.2.0.0/gatk
-gatk3 : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/tools/GenomeAnalysisTK.jar
-fastqc : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/tools/FastQC/fastqc
-picard : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/tools/picard.jar
-bwa : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/tools/bwa-0.7.17/bwa
-samtools : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/tools/samtools-1.9/samtools
+# SINGULARITY IMAGE
+sif : /path/to/WAGS/wags.sif
+
+# SORTSAM TEMP DIR
+sort_tmp : /path/to/proc/dir
+
+# BQSR INTERVAL PARAMS
+contig_n_size : 50
+scatter_size : 50
 
 # REFERENCE FILES
-ref_fasta : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/canFam3.fa 
-ref_fasta_index : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/canFam3.fa.fai
-ref_dict : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/canFam3.dict
+ref_dict  : canFam3.dict 
+ref_fasta : /home/refgen/dog/canfam3/canFam3.fa
 
 # RESOURCE FILES
-dbsnp_indels_vcf : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/dbsnp146.indel.vcf
-dbsnp_indels_vcf_index : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/dbsnp146.indel.vcf.idx
-dbsnp_snp_vcf : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/dbsnp146.snp.vcf
-dbsnp_snp_vcf_index : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/dbsnp146.snp.vcf.idx
-broad_snp_vcf : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/final.broad.snps.vcf
-broad_snp_vcf_index : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/final.broad.snps.vcf.idx
-axelsson_snp_vcf : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/final.axelsson.snps.vcf
-axelsson_snp_vcf_index : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/final.axelsson.snps.vcf.idx
+dbsnp_indels_vcf       : /home/refgen/dog/canfam3/resources/dbsnp146.indel.vcf
+dbsnp_indels_vcf_index : /home/refgen/dog/canfam3/resources/dbsnp146.indel.vcf.idx
+dbsnp_snp_vcf          : /home/refgen/dog/canfam3/resources/dbsnp146.snp.vcf
+dbsnp_snp_vcf_index    : /home/refgen/dog/canfam3/resources/dbsnp146.snp.vcf.idx
+broad_snp_vcf          : /home/refgen/dog/canfam3/resources/final.broad.snps.vcf
+broad_snp_vcf_index    : /home/refgen/dog/canfam3/resources/final.broad.snps.vcf.idx
+axelsson_snp_vcf       : /home/refgen/dog/canfam3/resources/final.axelsson.snps.vcf
+axelsson_snp_vcf_index : /home/refgen/dog/canfam3/resources/final.axelsson.snps.vcf.idx
 
-# NOT NEEDED?
-illumina_snp_vcf : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/illumina.snps.vcf
-illumina_snp_vcf_index : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/illumina.snps.vcf.idx

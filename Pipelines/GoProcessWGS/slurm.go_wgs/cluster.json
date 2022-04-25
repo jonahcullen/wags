@@ -9,6 +9,11 @@
         "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.readgroup_name}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.readgroup_name}/%j.{rule}.err"
     },
+    "mark_adapters" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.readgroup_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.readgroup_name}/%j.{rule}.err"
+    },
     "sam_to_fastq_and_bwa_mem" :
     {
         "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.readgroup_name}/%j.{rule}.out",
@@ -56,10 +61,35 @@
     },
     "haplotype_caller" :
     {
-        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.hc_interval}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.hc_interval}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.sample_name}/interval_00{wildcards.split}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/interval_00{wildcards.split}/%j.{rule}.err"
     },
     "merge_gvcfs" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
+    "flagstat" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
+    "bqsr_analyze_covariates" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
+    "qualimap_bamqc" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
+    "post_base_recalibrator" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.interval}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.interval}/%j.{rule}.err"
+    },
+    "post_gather_bqsr_reports" :
     {
         "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
