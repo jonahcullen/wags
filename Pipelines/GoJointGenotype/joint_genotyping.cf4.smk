@@ -27,6 +27,7 @@ units = pd.read_csv("gvcfs.list",sep="\t")
 
 rule all:
     input:
+        # vep'ed vcf
         S3.remote(
             expand(
                 "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_genotype.{ref}.vep.vcf.gz",
@@ -35,6 +36,7 @@ rule all:
                 date=config['date'],
             ),keep_local=True
         ),
+        # multiqc reprot
         S3.remote(
             expand(
                 "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/multiqc_report.html",
@@ -42,7 +44,17 @@ rule all:
                 ref=config['ref'],
                 date=config['date'],
             ),keep_local=True
+        ),
+        # variant table
+        S3.remote(
+            expand(
+                "{bucket}/wgs/pipeline/{ref}/{date}/var_to_table/all.{date}.{ref}.table",
+                bucket=config['bucket'],
+                ref=config['ref'],
+                date=config['date'],
+            ),keep_local=True
         )
+        # phasing - no CF4 yet
 
 
 include: "src/get_gvcfs.py"
@@ -54,4 +66,6 @@ include: "rules/genotype.smk"
 include: "rules/fltr_sites_vcf.smk"
 include: "rules/recal.smk"
 include: "rules/gather_vep.smk"
+include: "rules/table.smk"
+
 
