@@ -18,7 +18,10 @@ scatter_size : 50
 ref_dict  : canFam3.dict 
 ref_fasta : /home/refgen/dog/canfam3/canFam3.fa
 
-# RESOURCE FILES
+# BQSR
+bqsr : true
+
+# RESOURCE FILES FOR BQSR (OPTIONAL)
 dbsnp_indels_vcf       : /home/refgen/dog/canfam3/resources/dbsnp146.indel.vcf
 dbsnp_indels_vcf_index : /home/refgen/dog/canfam3/resources/dbsnp146.indel.vcf.idx
 dbsnp_snp_vcf          : /home/refgen/dog/canfam3/resources/dbsnp146.snp.vcf
