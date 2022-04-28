@@ -20,8 +20,8 @@ rule collect_metrics_on_vcf:
         detail_metrics  = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort.variant_calling_detail_metrics"),
         summary_metrics = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort.variant_calling_summary_metrics"),
     params:
-        dbsnp_snp_vcf  = config["dbsnp_snp_vcf"],
-        ref_dict       = config["ref_dict"],
+        dbsnp_snp_vcf  = config['dbsnp_snp_vcf'],
+        ref_dict       = config['ref_dict'],
         metrics_prefix = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort"
     threads: 8
     resources:

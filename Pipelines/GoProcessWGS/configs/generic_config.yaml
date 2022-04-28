@@ -1,0 +1,26 @@
+# INPUT AND SECONDARY 
+units  : input.tsv
+ref    : canfam4
+bucket : wags
+alias  : s3
+
+# SINGULARITY IMAGE
+sif : /path/to/WAGS/wags.sif
+
+# SORTSAM TEMP DIR
+sort_tmp : /path/to/proc/dir
+
+# BQSR INTERVAL PARAMS
+contig_n_size : 50
+scatter_size : 50
+
+# REFERENCE FILES
+ref_dict  : species.dict 
+ref_fasta : /home/refgen/species/version/species.fa
+
+# RESOURCE FILES FOR BQSR (OPTIONAL)
+resource_indels_vcf       : /home/refgen/species/version/resources/species.vcf
+resource_indels_vcf_index : /home/refgen/species/version/resources/species.vcf.idx
+resource_snp_vcf          : /home/refgen/species/version/resources/species.vcf
+resource_snp_vcf_index    : /home/refgen/species/version/resources/species.vcf.idx
+

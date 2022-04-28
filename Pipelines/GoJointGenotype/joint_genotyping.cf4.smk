@@ -9,6 +9,8 @@ localrules: input_list,
 #configfile: "canfam4_config.yaml"
 singularity: config['sif']
 
+include: "src/get_gvcfs.py"
+include: "src/utils.py"
 
 # setup snakemake s3 remote provider
 from snakemake.remote.S3 import RemoteProvider as S3RemoteProvider
@@ -57,15 +59,12 @@ rule all:
         # phasing - no CF4 yet
 
 
-include: "src/get_gvcfs.py"
-include: "src/utils.py"
 include: "rules/inputs.smk"
 include: "rules/intervals.smk"
-include: "rules/qc.smk"
 include: "rules/genotype.smk"
 include: "rules/fltr_sites_vcf.smk"
 include: "rules/recal.smk"
 include: "rules/gather_vep.smk"
+include: "rules/qc.smk"
 include: "rules/table.smk"
-
 

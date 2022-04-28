@@ -5,9 +5,6 @@ rule filter_x_chrom:
         final_vcf_index = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_genotype.{ref}.vcf.gz.tbi")
     output:
         chrom_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/filtered/joint_genotype.{ref}.{chrom}.vcf.gz",
-    params:
-       #gatk = config["gatk"],
-       #vcfs = lambda wildcards, input: " --input ".join(map(str,input.recal_vcfs)),
     threads: 4
     resources:
          time   = 60,
@@ -15,10 +12,9 @@ rule filter_x_chrom:
     shell:
         '''
             # change chr39 to X to extract
-            if [ ${wildcards.chrom} = "chr39" ]; then
+            chrom={wildcards.chrom}
+            if [ $chrom = "chr39" ]; then
                 chrom=chrX
-            else
-                chrom=${wildcards.chrom}
             fi
 
             bcftools view \
@@ -26,7 +22,7 @@ rule filter_x_chrom:
                 --max-alleles 2 \
                 --types snps \
                 --regions $chrom \
-                --exclude ' GT="." '
+                --exclude ' GT="." ' \
                 {input.final_vcf} \
             | \
             bcftools filter \
@@ -35,30 +31,58 @@ rule filter_x_chrom:
                 -o {output.chrom_vcf}
         '''
 
-rule filter_x_chrom:
+rule phase_x_chrom:
     input:
         chrom_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/filtered/joint_genotype.{ref}.{chrom}.vcf.gz",
     output:
         phase_vcf       = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/phased/joint_genotype.{ref}.{chrom}.phased.vcf.gz",
         phase_vcf_index = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/phased/joint_genotype.{ref}.{chrom}.phased.vcf.gz.tbi",
     params:
-        eff_pop_size = '200',
-        window       = '120',
-        overlap      = '10'
+        link_map     = "/home/refgen/dog/canfam3/canFam3.linkage.map.wgs",
+        eff_pop_size = 200,
+        window       = 120,
+        overlap      = 10,
+        out_prefix   = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/phased/joint_genotype.{ref}.{chrom}.phased",
     threads: 24
     resources:
-         time   = 60,
-         mem_mb = 248000
+        partition = config['partitions']['phasing'],
+        time      = 480,
+        mem_mb    = 248000
     shell:
         '''
             java -jar -Xmx246g /opt/wags/src/beagle.18May20.d20.jar \
                 gt={input.chrom_vcf} \
                 ne={params.eff_pop_size} \
                 nthreads={threads} \
-                map=canFam3.linkage.map.wgs \
+                map={params.link_map} \
                 window={params.window} \
                 overlap={params.overlap} \
-                out=joint_genotype.canfam3.snps.chrxxx.phased
+                out={params.out_prefix}
 
-            tabix -p vcf joint_genotype.canfam3.snps.chrxxx.phased.vcf.gz
+            tabix -p vcf {output.phase_vcf}
+        '''
+
+rule concat_phased:
+    input:
+        phase_vcf       = expand(
+            "{bucket}/wgs/pipeline/{ref}/{date}/phasing/phased/joint_genotype.{ref}.{chrom}.phased.vcf.gz",
+            bucket=config['bucket'],
+            ref=config['ref'],
+            date=config['date'],
+            chrom=[f"chr{i}" for i in range(1,39+1)]
+        ),
+    output:
+        phase_full        = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/phasing/joint_genotype.{ref}.snps.phased.vcf.gz"),
+        phase_full_index  = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/phasing/joint_genotype.{ref}.snps.phased.vcf.gz.tbi"),
+    threads: 4
+    resources:
+        time      = 720,
+        mem_mb    = 24000
+    shell:
+        '''
+            bcftools concat \
+                -Oz -o {output.phase_full} \
+                {input.phase_vcf}
+
+            tabix -p vcf {output.phase_full}
         '''

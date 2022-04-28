@@ -18,9 +18,6 @@ scatter_size : 50
 ref_dict  : canFam4.dict 
 ref_fasta : /home/refgen/dog/canfam4/canFam4.fa
 
-# BQSR
-bqsr : true
-
 # RESOURCE FILES FOR BQSR (OPTIONAL)
 dbsnp_indels_vcf       : /home/refgen/dog/canfam4/resources/canFam4.recoded.dbsnp.151.indels.sorted.fixed.header.chr.vcf
 dbsnp_indels_vcf_index : /home/refgen/dog/canfam4/resources/canFam4.recoded.dbsnp.151.indels.sorted.fixed.header.chr.vcf.idx

@@ -22,7 +22,8 @@ import wget
 import yaml
 
 
-refs = ["canfam3", "canfam4"]
+refs    = ["canfam3", "canfam4", "tiger"]
+remotes = ["local","s3","sftp"]
 
 def extract_pu(s):
     """ extracts platform unit from fastq header """
@@ -108,11 +109,13 @@ def main(dog_meta, outdir, fq_dir, ref):
        
         # input templates
         pipeline  = "GoProcessWGS"
+       #rules     = f"inputs/{remote}/{bqsr}/rules"
         rules     = "rules"
-        snake_n   = "go_process_wgs.smk"
+       #snake_n   = f"inputs/{remote}/{bqsr}/one_wags.smk"
+        snake_n   = "one_wags.smk"
         config_n  = f"{ref}_config.yaml"
         profile_n = "slurm.go_wgs"
-        # switch to money templates if true
+        # switch to money templates if true - NEEDS TO BE UPDATED STILL
         if money:
             pipeline  = "GoMakeMoney"
             rules     = "rules"
@@ -125,6 +128,7 @@ def main(dog_meta, outdir, fq_dir, ref):
             os.path.dirname(os.path.abspath(__file__)),
             "Pipelines",
             pipeline,
+            f"inputs/{remote}/{bqsr}",
             snake_n
         )
         
@@ -132,6 +136,7 @@ def main(dog_meta, outdir, fq_dir, ref):
             os.path.dirname(os.path.abspath(__file__)),
             "Pipelines",
             pipeline,
+            f"inputs/{remote}/{bqsr}",
             rules
         )
         
@@ -139,6 +144,7 @@ def main(dog_meta, outdir, fq_dir, ref):
             os.path.dirname(os.path.abspath(__file__)),
             "Pipelines",
             pipeline,
+            "configs",
             config_n
         )
     
@@ -201,7 +207,7 @@ def main(dog_meta, outdir, fq_dir, ref):
         with open(slurm, "w") as f:
             print(header, file=f)
             print("set -e\n",file=f)
-            print("conda activate snake532",file=f)
+            print(f"conda activate {snake_env}",file=f)
             print("cd $SLURM_SUBMIT_DIR\n",file=f)
 
             print(f"FQ_DIR={fq_dir}",file=f)
@@ -213,52 +219,33 @@ def main(dog_meta, outdir, fq_dir, ref):
                     f"""
                     singularity exec --bind $PWD {sif} \\
                         cp /home/refgen/dog/canfam{ref[-1]}/canFam{ref[-1]}.dict $PWD
-                    """
-                ),file=f
-            ) 
-
-            print("# begin pipeline",file=f)
-            print("start=`date +%s`",file=f)
-            print(
-                textwrap.dedent(
-                    f"""
+                    
                     snakemake -s {snake_n} \\
                         --use-singularity \\
                         --singularity-args "-B $PWD,$FQ_DIR,$PROC_DIR" \\
                         --profile {profile_n} \\
                         --configfile {config_n} \\
-                        --keep-going\n
+                        --keep-going
                     """
                 ),file=f
-            )
-            print("end=`date +%s`",file=f)
-            print("echo Runtime \(seconds\): $((end-start))\n",file=f)
-
-            print("# save slurm err/out logs",end="",file=f)
-            print(
-                textwrap.dedent(
-                    f"""
-                    mc cp --recursive ./slurm_logs/ \\
-                        s3Fried/{bucket}/wgs/{breed}/{sample_name}/canfam4/
-                    """
-                ),file=f
-            )
+            ) 
+            
+            if "s3" in remote:
+                print("# save slurm err/out logs",end="",file=f)
+                print(
+                    textwrap.dedent(
+                        f"""
+                        mc cp --recursive ./slurm_logs/ \\
+                            s3Fried/{bucket}/wgs/{breed}/{sample_name}/canfam4/
+                        """
+                    ),file=f
+                )
 
     plural = "sample"
     if len(d) > 1:
         plural = "samples"
     print(f"{len(d)} {plural} setup for processing")
         
-
-
-
-
-# dog_meta = "/Users/jonahcullen/projects/friedenberg/gatk_pipeline/RESCUER/TEST_DATA/dog_ids_convert.canfam3.csv"
-# outdir = "/Users/jonahcullen/projects/friedenberg/gatk_pipeline/RESCUER/TEST_OUT"
-# fq_dir = "/Users/jonahcullen/projects/friedenberg/gatk_pipeline/RESCUER/TEST_DATA/Fastq"
-# fq_paths = "/Users/jonahcullen/projects/friedenberg/gatk_pipeline/RESCUER/TEST_DATA/fullpath_fq.canfam3.list"
-
-
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(
@@ -315,14 +302,36 @@ if __name__ == '__main__':
         required=True,
         help="bucket name"
     )
+    required.add_argument(
+        "-s", "--snake-env",
+        default=argparse.SUPPRESS,
+        metavar="\b",
+        required=True,
+        help="conda environment with snakemake"
+    )
+    optional.add_argument(
+        "--remote",
+        nargs="?",
+        const="local",
+        default="local",
+        choices=remotes,
+        type=str.lower,
+        help="save outputs to remote: S3, SFTP [default: local]",
+        metavar=""
+    )
+    optional.add_argument(
+        "--no-bqsr",
+        action="store_true",
+        help="flag to turn off bqsr [default: bqsr on]"
+    )
     optional.add_argument(
         "-r", "--ref",
         nargs="?",
         const="canfam4",
         default="canfam4",
         choices=refs,
-        help="select canfam reference to use - "+ \
-            " or ".join(refs) + " [default: canfam4]",
+        help="select canfam reference to use: "+ \
+            ", ".join(refs) + " [default: canfam4]",
         metavar=""
     )
     optional.add_argument(
@@ -348,15 +357,23 @@ if __name__ == '__main__':
     )
 
     args = parser.parse_args()
-    dog_meta = os.path.abspath(args.meta)
-    fq_dir   = os.path.abspath(args.fastqs)
-    outdir   = os.path.abspath(args.out)
-    bucket   = args.bucket
-    sif      = args.sif
-    ref      = args.ref.lower()
-    alias    = args.alias
-    money    = args.money
-    
+    dog_meta  = os.path.abspath(args.meta)
+    fq_dir    = os.path.abspath(args.fastqs)
+    outdir    = os.path.abspath(args.out)
+    bucket    = args.bucket
+    snake_env = args.snake_env
+    sif       = args.sif
+    ref       = args.ref.lower()
+    alias     = args.alias
+    money     = args.money
+    remote    = args.remote.lower()
+    no_bqsr   = args.no_bqsr
+
+    # get bqsq or no bqsr
+    bqsr = "bqsr"
+    if no_bqsr:
+        bqsr = "no_bqsr"
+ 
     # if non default sif location
     if sif != os.path.join(os.path.expanduser("~"),".sif/wags.sif"):
         if "~" in sif:
@@ -376,9 +393,6 @@ if __name__ == '__main__':
         os.makedirs(sif_dir,exist_ok=True)
         wget.download(url,sif_dir)
         sys.exit("\nrerun without --sif or point to directory containing wags.sif")
-
-    # sync job
-   #sync = "/panfs/roc/groups/0/fried255/shared/gatk4_workflow/SyncDogs/sync.slurm"
 
     # check if scratch dir exists
     if not os.path.exists(outdir):
