@@ -197,7 +197,7 @@ def main(dog_meta, outdir, fq_dir, ref):
             "#SBATCH --cpus-per-task=1\n"
             "#SBATCH --mem=12gb\n"
             "#SBATCH --mail-type=ALL\n"
-            f"#SBATCH --mail-user={os.environ['USER']}@umn.edu\n"
+            f"#SBATCH --mail-user={email}\n"
             f"#SBATCH --job-name {v['breed']}_{k}.{job_name}.slurm\n"
             f"#SBATCH -o slurm_logs/%j.{v['breed']}_{k}.{job_name}.out\n"
             f"#SBATCH -e slurm_logs/%j.{v['breed']}_{k}.{job_name}.err\n"
@@ -309,6 +309,13 @@ if __name__ == '__main__':
         required=True,
         help="conda environment with snakemake"
     )
+    required.add_argument(
+        "-e", "--email",
+        default=argparse.SUPPRESS,
+        metavar="\b",
+        required=True,
+        help="email address for slurm logs"
+    )
     optional.add_argument(
         "--remote",
         nargs="?",
@@ -362,6 +369,7 @@ if __name__ == '__main__':
     outdir    = os.path.abspath(args.out)
     bucket    = args.bucket
     snake_env = args.snake_env
+    email     = args.email
     sif       = args.sif
     ref       = args.ref.lower()
     alias     = args.alias
