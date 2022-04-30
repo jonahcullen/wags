@@ -7,22 +7,23 @@ Created on Sun Mar 21 20:43:49 2021
 """
 
 
-import argparse
 import os
 import sys
 import csv
-from collections import defaultdict
 import gzip
-from datetime import datetime
+import wget
+import yaml
 import shutil
 import string
 import textwrap
+import argparse
+import fileinput
 import pandas as pd
-import wget
-import yaml
+from datetime import datetime
+from collections import defaultdict
 
 
-refs    = ["canfam3", "canfam4", "tiger"]
+refs    = ["canfam3", "canfam4", "goldenPath", "tiger"]
 remotes = ["local","s3","sftp"]
 
 def extract_pu(s):
@@ -56,26 +57,44 @@ def main(dog_meta, outdir, fq_dir, ref):
         next(reader, None)
         for line in reader:
             
+            # there is a problem with this strategy if the sample name
+            # contains _R1 or _R2 
             # find associated fastqs
             tmp = []
             for root,dirs,files in os.walk(fq_dir):
                 for f in files:
                     if f.startswith(line[-1]) and not f.endswith("md5") and "_R2" in f:
                         tmp.append(os.path.join(root,f))
-            
+            first = "_R1"           
+            second = "_R2"
+            # special circumstance where fastqs labelled as sample_{1,2}.fastq.gz
+            # there is DEFINITELY a better to deal with finding fastqs...
+            if not tmp:
+                for root,dirs,files in os.walk(fq_dir):
+                    for f in files:
+                        if f.startswith(line[-1]) and f.endswith("_2.fastq.gz"): 
+                            tmp.append(os.path.join(root,f))
+                first = "_1.fastq.gz"
+                second = "_2.fastq.gz"
             # add fastq information for each pair per sample
             dog_input = []  
             for i,v in enumerate(sorted(tmp)):
                 
                 platform_unit = extract_pu(v)
                 cdate = datetime.fromtimestamp(os.path.getctime(v)).strftime('%Y-%m-%dT%H:%M:%S')                   
-    
+   
+                # where second read is v, first read is
+                v1 = os.path.join(
+                    os.path.dirname(v),
+                    os.path.basename(v).replace(second,first)
+                )
+ 
                 dog_input.append(
                     [   
                         line[1],
                         line[0],
                         f"{line[0]}_{string.ascii_uppercase[i]}",
-                        v.replace("_R2","_R1"),
+                        v1,
                         v,
                         f"illumina-{line[0]}",
                         platform_unit,
@@ -109,9 +128,7 @@ def main(dog_meta, outdir, fq_dir, ref):
        
         # input templates
         pipeline  = "GoProcessWGS"
-       #rules     = f"inputs/{remote}/{bqsr}/rules"
         rules     = "rules"
-       #snake_n   = f"inputs/{remote}/{bqsr}/one_wags.smk"
         snake_n   = "one_wags.smk"
         config_n  = f"{ref}_config.yaml"
         profile_n = "slurm.go_wgs"
@@ -165,6 +182,9 @@ def main(dog_meta, outdir, fq_dir, ref):
         # modify config file
         with open(config) as f:
             doc = yaml.safe_load(f)
+        # get config values
+        species  = doc['species']
+        ref_dict = doc['ref_dict']
         # update sif location
         doc['sif']      = sif
         doc['sort_tmp'] = os.path.join(outdir,'.tmp') 
@@ -183,6 +203,12 @@ def main(dog_meta, outdir, fq_dir, ref):
                     shutil.copy(i[0],i[1])
                 else:
                     shutil.copytree(i[0],i[1])
+                    # modify profile slurm-submit.py for user-supplied parition
+                    if "slurm.go_wgs" in i[0]:
+                        slurm_sub = os.path.join(i[1],"slurm-submit.py")
+                        with fileinput.FileInput(slurm_sub,inplace=True,backup=".bak") as file:
+                            for line in file:
+                                print(line.replace("DUMMY_PAR",partition),end='')
                     
         # slurm destination
         job_name = snake_n.split('.')[0]
@@ -218,7 +244,7 @@ def main(dog_meta, outdir, fq_dir, ref):
                 textwrap.dedent(
                     f"""
                     singularity exec --bind $PWD {sif} \\
-                        cp /home/refgen/dog/canfam{ref[-1]}/canFam{ref[-1]}.dict $PWD
+                        cp /home/refgen/{species}/{ref}/{ref_dict} $PWD
                     
                     snakemake -s {snake_n} \\
                         --use-singularity \\
@@ -279,7 +305,7 @@ if __name__ == '__main__':
         default=argparse.SUPPRESS,
         metavar="\b",
         required=True,
-        help="csv of meta data with fastq to UMN ID conversions"
+        help="csv of meta data to associate sample names and fastqs"
     )
     required.add_argument(
         "-f", "--fastqs",
@@ -308,6 +334,13 @@ if __name__ == '__main__':
         metavar="\b",
         required=True,
         help="conda environment with snakemake"
+    )
+    required.add_argument(
+        "-p", "--partition",
+        default=argparse.SUPPRESS,
+        metavar="\b",
+        required=True,
+        help="default partition(s) to use (e.g. 'par1' or 'par1,par2'"
     )
     required.add_argument(
         "-e", "--email",
@@ -369,6 +402,7 @@ if __name__ == '__main__':
     outdir    = os.path.abspath(args.out)
     bucket    = args.bucket
     snake_env = args.snake_env
+    partition = args.partition
     email     = args.email
     sif       = args.sif
     ref       = args.ref.lower()
@@ -402,6 +436,15 @@ if __name__ == '__main__':
         wget.download(url,sif_dir)
         sys.exit("\nrerun without --sif or point to directory containing wags.sif")
 
+    # modify profile slurm-submit.py for user-supplied parition
+   #slurm_sub = os.path.join(
+   #    os.path.dirname(os.path.abspath(__file__)),
+   #    "Pipelines/GoProcessWGS/slurm.go_wgs/slurm-submit.py"
+   #)
+   #with fileinput.FileInput(slurm_sub,inplace=True,backup=".bak") as file:
+   #    for line in file:
+   #        print(line.replace("DUMMY_PAR",partition),end='')
+        
     # check if scratch dir exists
     if not os.path.exists(outdir):
         os.makedirs(outdir)

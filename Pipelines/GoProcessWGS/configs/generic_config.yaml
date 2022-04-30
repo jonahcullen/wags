@@ -1,8 +1,9 @@
 # INPUT AND SECONDARY 
-units  : input.tsv
-ref    : canfam4
-bucket : wags
-alias  : s3
+units   : input.tsv
+species : species
+ref     : ref
+bucket  : wags
+alias   : s3
 
 # SINGULARITY IMAGE
 sif : /path/to/WAGS/wags.sif

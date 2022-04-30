@@ -13,7 +13,7 @@ SBATCH_DEFAULTS = """
                   ntasks=1 
                   mem=16g 
                   time=02:00:00 
-                  partition=small,amdsmall
+                  partition=DUMMY_PAR
                   """
 CLUSTER_CONFIG = "cluster.json"
 ADVANCED_ARGUMENT_CONVERSION = {"yes": True, "no": False}[
