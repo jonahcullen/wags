@@ -436,15 +436,6 @@ if __name__ == '__main__':
         wget.download(url,sif_dir)
         sys.exit("\nrerun without --sif or point to directory containing wags.sif")
 
-    # modify profile slurm-submit.py for user-supplied parition
-   #slurm_sub = os.path.join(
-   #    os.path.dirname(os.path.abspath(__file__)),
-   #    "Pipelines/GoProcessWGS/slurm.go_wgs/slurm-submit.py"
-   #)
-   #with fileinput.FileInput(slurm_sub,inplace=True,backup=".bak") as file:
-   #    for line in file:
-   #        print(line.replace("DUMMY_PAR",partition),end='')
-        
     # check if scratch dir exists
     if not os.path.exists(outdir):
         os.makedirs(outdir)
