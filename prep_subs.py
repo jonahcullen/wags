@@ -411,6 +411,10 @@ if __name__ == '__main__':
     remote    = args.remote.lower()
     no_bqsr   = args.no_bqsr
 
+    # QUICK FIX FOR goldenPath - NEED TO ADJUST CONTAINER TO BE horse/goldenpath
+    if "golden" in ref:
+        ref = "goldenPath"
+
     # get bqsq or no bqsr
     bqsr = "bqsr"
     if no_bqsr:
