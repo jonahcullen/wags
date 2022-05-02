@@ -23,8 +23,11 @@ ref_dict  : Tiger_final.dict
 ref_fasta : /home/refgen/tiger/tiger/Tiger_final.fasta
 
 # RESOURCE FILES FOR BQSR (OPTIONAL)
-resource_indels_vcf       : /home/refgen/species/version/resources/species.vcf
-resource_indels_vcf_index : /home/refgen/species/version/resources/species.vcf.idx
-resource_snp_vcf          : /home/refgen/species/version/resources/species.vcf
-resource_snp_vcf_index    : /home/refgen/species/version/resources/species.vcf.idx
-
+dbsnp_indels_vcf       : /home/refgen/generic/resources/dbsnp146.indel.vcf
+dbsnp_indels_vcf_index : /home/refgen/generic/resources/dbsnp146.indel.vcf.idx
+dbsnp_snp_vcf          : /home/refgen/generic/resources/dbsnp146.snp.vcf
+dbsnp_snp_vcf_index    : /home/refgen/generic/resources/dbsnp146.snp.vcf.idx
+broad_snp_vcf          : /home/refgen/generic/resources/final.broad.snps.vcf
+broad_snp_vcf_index    : /home/refgen/generic/resources/final.broad.snps.vcf.idx
+axelsson_snp_vcf       : /home/refgen/generic/resources/final.axelsson.snps.vcf
+axelsson_snp_vcf_index : /home/refgen/generic/resources/final.axelsson.snps.vcf.idx
