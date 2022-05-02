@@ -11,6 +11,9 @@ sif : /path/to/WAGS/wags.sif
 # SORTSAM TEMP DIR
 sort_tmp : /path/to/proc/dir
 
+# LEFT ALIGN BAM
+left_align : false
+
 # BQSR INTERVAL PARAMS
 contig_n_size : 50
 scatter_size : 50

@@ -34,6 +34,11 @@
         "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
     },
+    "sort_fix_tags_left_align" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
     "base_recalibrator" :
     {
         "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.interval}/%j.{rule}.out",

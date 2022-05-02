@@ -14,6 +14,7 @@ SBATCH_DEFAULTS = """
                   mem=16g 
                   time=02:00:00 
                   partition=DUMMY_PAR
+                  account=DUMMY_ACC
                   """
 CLUSTER_CONFIG = "cluster.json"
 ADVANCED_ARGUMENT_CONVERSION = {"yes": True, "no": False}[

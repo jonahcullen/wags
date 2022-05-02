@@ -185,11 +185,12 @@ def main(dog_meta, outdir, fq_dir, ref):
         # get config values
         species  = doc['species']
         ref_dict = doc['ref_dict']
-        # update sif location
-        doc['sif']      = sif
-        doc['sort_tmp'] = os.path.join(outdir,'.tmp') 
-        doc['alias']    = alias
-        doc['bucket']   = bucket
+        # update sif and other cli args
+        doc['sif']        = sif
+        doc['alias']      = alias
+        doc['bucket']     = bucket
+        doc['sort_tmp']   = os.path.join(outdir,'.tmp')
+        doc['left_align'] = left_align
         # dump
         with open(os.path.join(v["work_dir"],config_n),'w') as out:
             yaml.dump(doc,out,sort_keys=False)
@@ -208,7 +209,10 @@ def main(dog_meta, outdir, fq_dir, ref):
                         slurm_sub = os.path.join(i[1],"slurm-submit.py")
                         with fileinput.FileInput(slurm_sub,inplace=True,backup=".bak") as file:
                             for line in file:
-                                print(line.replace("DUMMY_PAR",partition),end='')
+                               #print(line.replace("DUMMY_PAR",partition),end='')
+                                line = line.replace("DUMMY_PAR",partition)
+                                line = line.replace("DUMMY_ACC",account)
+                                print(line,end='')
                     
         # slurm destination
         job_name = snake_n.split('.')[0]
@@ -349,6 +353,13 @@ if __name__ == '__main__':
         required=True,
         help="email address for slurm logs"
     )
+    required.add_argument(
+        "-a", "--account",
+        default=argparse.SUPPRESS,
+        metavar="\b",
+        required=True,
+        help="default scheduler account"
+    )
     optional.add_argument(
         "--remote",
         nargs="?",
@@ -362,7 +373,12 @@ if __name__ == '__main__':
     optional.add_argument(
         "--no-bqsr",
         action="store_true",
-        help="flag to turn off bqsr [default: bqsr on]"
+        help="turn off bqsr [default: bqsr on]"
+    )
+    optional.add_argument(
+        "--left-align",
+        action="store_true",
+        help="left align analysis-ready bam  [default: off]"
     )
     optional.add_argument(
         "-r", "--ref",
@@ -397,19 +413,21 @@ if __name__ == '__main__':
     )
 
     args = parser.parse_args()
-    dog_meta  = os.path.abspath(args.meta)
-    fq_dir    = os.path.abspath(args.fastqs)
-    outdir    = os.path.abspath(args.out)
-    bucket    = args.bucket
-    snake_env = args.snake_env
-    partition = args.partition
-    email     = args.email
-    sif       = args.sif
-    ref       = args.ref.lower()
-    alias     = args.alias
-    money     = args.money
-    remote    = args.remote.lower()
-    no_bqsr   = args.no_bqsr
+    dog_meta   = os.path.abspath(args.meta)
+    fq_dir     = os.path.abspath(args.fastqs)
+    outdir     = os.path.abspath(args.out)
+    bucket     = args.bucket
+    snake_env  = args.snake_env
+    partition  = args.partition
+    email      = args.email
+    account    = args.account
+    sif        = args.sif
+    ref        = args.ref.lower()
+    alias      = args.alias
+    money      = args.money
+    remote     = args.remote.lower()
+    no_bqsr    = args.no_bqsr
+    left_align = args.left_align
 
     # QUICK FIX FOR goldenPath - NEED TO ADJUST CONTAINER TO BE horse/goldenpath
     if "golden" in ref:

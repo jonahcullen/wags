@@ -194,41 +194,87 @@ rule mark_duplicates:
                 --CREATE_MD5_FILE true
         '''
 
-rule sort_and_fix_tags:
-    input:
-        dedup_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.unsorted.duplicates_marked.bam",
-    output:
-        sorted_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam",
-        sorted_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bai"
-    params:
-        java_opt  = "-Xms4000m",
-        tmp_dir   = config['sort_tmp'],
-        ref_fasta = config['ref_fasta']
-    benchmark:
-        "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.merge_bams.benchmark.txt"
-    threads: 12
-    resources:
-         time   = 720,
-         mem_mb = lambda wildcards, attempt: 2**(attempt-1)*24000,
-    shell:
-        '''
-            set -o pipefail
+# optional argument to left align bam
+if not config['left_align']:
+    rule sort_and_fix_tags:
+        input:
+            dedup_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.unsorted.duplicates_marked.bam",
+        output:
+            sorted_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam",
+            sorted_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bai"
+        params:
+            java_opt  = "-Xms4000m",
+            tmp_dir   = config['sort_tmp'],
+            ref_fasta = config['ref_fasta']
+        benchmark:
+            "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.merge_bams.benchmark.txt"
+        threads: 12
+        resources:
+             time   = 720,
+             mem_mb = lambda wildcards, attempt: 2**(attempt-1)*24000,
+        shell:
+            '''
+                set -o pipefail
 
-            gatk --java-options "-Dsamjdk.compression_level=5 {params.java_opt}" \
-                SortSam \
-                --TMP_DIR {params.tmp_dir} \
-                --INPUT {input.dedup_bam} \
-                --OUTPUT /dev/stdout \
-                --SORT_ORDER "coordinate" \
-                --CREATE_INDEX false \
-                --CREATE_MD5_FILE false \
-            | \
-            gatk --java-options "-Dsamjdk.compression_level=5 {params.java_opt}" \
-                SetNmMdAndUqTags \
-                --INPUT /dev/stdin \
-                --OUTPUT {output.sorted_bam} \
-                --CREATE_INDEX true \
-                --CREATE_MD5_FILE true \
-                --REFERENCE_SEQUENCE {params.ref_fasta}
-       '''
+                gatk --java-options "-Dsamjdk.compression_level=5 {params.java_opt}" \
+                    SortSam \
+                    --TMP_DIR {params.tmp_dir} \
+                    --INPUT {input.dedup_bam} \
+                    --OUTPUT /dev/stdout \
+                    --SORT_ORDER "coordinate" \
+                    --CREATE_INDEX false \
+                    --CREATE_MD5_FILE false \
+                | \
+                gatk --java-options "-Dsamjdk.compression_level=5 {params.java_opt}" \
+                    SetNmMdAndUqTags \
+                    --INPUT /dev/stdin \
+                    --OUTPUT {output.sorted_bam} \
+                    --CREATE_INDEX true \
+                    --CREATE_MD5_FILE true \
+                    --REFERENCE_SEQUENCE {params.ref_fasta}
+           '''
+else:
+    rule sort_fix_tags_left_align:
+        input:
+            dedup_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.unsorted.duplicates_marked.bam",
+        output:
+            sorted_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam",
+            sorted_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bai"
+        params:
+            java_opt  = "-Xms4000m",
+            tmp_dir   = config['sort_tmp'],
+            ref_fasta = config['ref_fasta']
+        benchmark:
+            "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.merge_bams.benchmark.txt"
+        threads: 12
+        resources:
+             time   = 840,
+             mem_mb = lambda wildcards, attempt: 2**(attempt-1)*24000,
+        shell:
+            '''
+                set -o pipefail
+
+                gatk --java-options "-Dsamjdk.compression_level=5 {params.java_opt}" \
+                    SortSam \
+                    --TMP_DIR {params.tmp_dir} \
+                    --INPUT {input.dedup_bam} \
+                    --OUTPUT /dev/stdout \
+                    --SORT_ORDER "coordinate" \
+                    --CREATE_INDEX false \
+                    --CREATE_MD5_FILE false \
+                | \
+                gatk --java-options "-Dsamjdk.compression_level=5 {params.java_opt}" \
+                    SetNmMdAndUqTags \
+                    --INPUT /dev/stdin \
+                    --OUTPUT /dev/stdout \
+                    --CREATE_INDEX true \
+                    --CREATE_MD5_FILE true \
+                    --REFERENCE_SEQUENCE {params.ref_fasta}
+                | \
+                gatk --java-options "-Dsamjdk.compression_level=5 {params.java_opt} \
+                    LeftAlignIndels \
+                    -I /dev/stdin \
+                    -O {output.sorted_bam} \
+                    -R {params.ref_fasta}
+           '''
 
