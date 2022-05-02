@@ -231,6 +231,7 @@ def main(dog_meta, outdir, fq_dir, ref):
             f"#SBATCH --job-name {v['breed']}_{k}.{job_name}.slurm\n"
             f"#SBATCH -o slurm_logs/%j.{v['breed']}_{k}.{job_name}.out\n"
             f"#SBATCH -e slurm_logs/%j.{v['breed']}_{k}.{job_name}.err\n"
+            f"#SBATCH -A {account}\n"
         )             
      
         # slurm submission body 
