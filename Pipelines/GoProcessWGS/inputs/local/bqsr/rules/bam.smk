@@ -267,14 +267,16 @@ else:
                     SetNmMdAndUqTags \
                     --INPUT /dev/stdin \
                     --OUTPUT /dev/stdout \
-                    --CREATE_INDEX true \
-                    --CREATE_MD5_FILE true \
-                    --REFERENCE_SEQUENCE {params.ref_fasta}
+                    --CREATE_INDEX false \
+                    --CREATE_MD5_FILE false \
+                    --REFERENCE_SEQUENCE {params.ref_fasta} \
                 | \
                 gatk --java-options "-Dsamjdk.compression_level=5 {params.java_opt} \
                     LeftAlignIndels \
                     -I /dev/stdin \
                     -O {output.sorted_bam} \
+                    --create-output-bam-index true \
+                    --create-output-bam-md5 true \
                     -R {params.ref_fasta}
            '''
 
