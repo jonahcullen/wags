@@ -271,7 +271,7 @@ else:
                     --CREATE_MD5_FILE false \
                     --REFERENCE_SEQUENCE {params.ref_fasta} \
                 | \
-                gatk --java-options "-Dsamjdk.compression_level=5 {params.java_opt} \
+                gatk --java-options "-Dsamjdk.compression_level=5 {params.java_opt}" \
                     LeftAlignIndels \
                     -I /dev/stdin \
                     -O {output.sorted_bam} \
