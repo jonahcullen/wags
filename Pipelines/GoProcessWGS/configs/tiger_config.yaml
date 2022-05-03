@@ -16,7 +16,7 @@ left_align : false
 
 # BQSR INTERVAL PARAMS
 contig_n_size : 50
-scatter_size : 50
+scatter_size : 18
 
 # REFERENCE FILES
 ref_dict  : Tiger_final.dict
