@@ -189,14 +189,14 @@ def main(dog_meta, outdir, fq_dir, ref):
         doc['sif']        = sif
         doc['alias']      = alias
         doc['bucket']     = bucket
-        doc['sort_tmp']   = os.path.join(outdir,'.tmp')
+        doc['sort_tmp']   = os.path.join(outdir,".sort",breed,sample_name,".tmp")
         doc['left_align'] = left_align
         # dump
-        with open(os.path.join(v["work_dir"],config_n),'w') as out:
+        with open(os.path.join(v['work_dir'],config_n),'w') as out:
             yaml.dump(doc,out,sort_keys=False)
    
         input_names = [snake_n,"rules",profile_n,"src"]
-        dst_files = [os.path.join(v["work_dir"],i) for i in input_names]
+        dst_files = [os.path.join(v['work_dir'],i) for i in input_names]
         
         for i in zip([smk,rules,profile,src],dst_files):
             if not os.path.exists(i[1]):
@@ -216,7 +216,7 @@ def main(dog_meta, outdir, fq_dir, ref):
                     
         # slurm destination
         job_name = snake_n.split('.')[0]
-        slurm = os.path.join(v["work_dir"],f"{v['breed']}_{k}.{job_name}.slurm")
+        slurm = os.path.join(v['work_dir'],f"{v['breed']}_{k}.{job_name}.slurm")
         
         # SBATCH directives 
         header = (
