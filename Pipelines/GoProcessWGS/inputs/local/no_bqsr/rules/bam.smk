@@ -235,7 +235,7 @@ rule sort_and_fix_tags:
 
 # optional argument to left align bam
 if config['left_align']:
-    rule sort_fix_tags_left_align:
+    rule left_align_bam:
         input:
             sorted_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam",
             sorted_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bai"
