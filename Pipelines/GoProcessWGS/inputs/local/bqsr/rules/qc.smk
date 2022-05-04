@@ -99,6 +99,8 @@ rule qualimap_bamqc:
          mem_mb = 24000
     shell:
         '''
+            unset DISPLAY
+
             qualimap bamqc \
                 -bam {input.final_bam} \
                 -outdir {params.out_dir} \
@@ -139,7 +141,13 @@ rule multiqc:
         mqc_src    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report_data/multiqc_sources.txt",
         mqc_json   = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report_data/multiqc_data.json",
     params:
-        "-x '*duplicates_marked*' -x '*group_*' -e snippy"
-    wrapper: 
-       "master/bio/multiqc"
+        outdir = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc"
+    shell:
+        '''
+            multiqc {wildcards.bucket} \
+                -x '*duplicates_marked*' -x '*group_*' -e snippy \
+                --interactive \
+                --force \
+                -o {params.outdir}
+        '''
 

@@ -36,9 +36,9 @@ rule fastqc:
 rule flagstat:
     input:
         sorted_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam" 
-            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.left_align.bam",
+            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.duplicate_marked.sorted.bam",
         sorted_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bai"
-            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.left_align.bai",
+            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.duplicate_marked.sorted.bai",
     output:
         flagstat = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/{sample_name}.{ref}.flagstat.txt",
     benchmark:
@@ -58,9 +58,9 @@ rule flagstat:
 rule qualimap_bamqc:
     input:
         sorted_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam" 
-            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.left_align.bam",
+            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.duplicate_marked.sorted.bam",
         sorted_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bai"
-            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.left_align.bai",
+            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.duplicate_marked.sorted.bai",
     output:
         report_pdf  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/qualimap/report.pdf",
         report_html = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/qualimap/qualimapReport.html",
@@ -78,6 +78,8 @@ rule qualimap_bamqc:
          mem_mb = 24000
     shell:
         '''
+            unset DISPLAY
+
             qualimap bamqc \
                 -bam {input.sorted_bam} \
                 -outdir {params.out_dir} \
@@ -115,7 +117,13 @@ rule multiqc:
         mqc_src    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report_data/multiqc_sources.txt",
         mqc_json   = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report_data/multiqc_data.json",
     params:
-        "-x '*duplicates_marked*' -x '*group_*' -e snippy"
-    wrapper: 
-       "master/bio/multiqc"
+        outdir = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc"
+    shell:
+        '''
+            multiqc {wildcards.bucket} \
+                -x '*duplicates_marked*' -x '*group_*' -e snippy \
+                --interactive \
+                --force \
+                -o {params.outdir}
+        '''
 
