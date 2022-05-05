@@ -131,15 +131,15 @@ rule multiqc:
         raw_dat     = rules.qualimap_bamqc.output.raw_dat,
     output: 
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report.html",
-        mqc_log    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report_data/multiqc.log",
-        mqc_bamqc  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report_data/multiqc_qualimap_bamqc_genome_results.txt",
-        mqc_dups   = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report_data/multiqc_picard_dups.txt",
-        mqc_adapt  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report_data/multiqc_picard_mark_illumina_adapters.txt",
-        mqc_flag   = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report_data/multiqc_samtools_flagstat.txt",
-        mqc_fastqc = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report_data/multiqc_fastqc.txt",
-        mqc_gen    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report_data/multiqc_general_stats.txt",
-        mqc_src    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report_data/multiqc_sources.txt",
-        mqc_json   = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report_data/multiqc_data.json",
+        mqc_log    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc.log",
+        mqc_bamqc  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_qualimap_bamqc_genome_results.txt",
+        mqc_dups   = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_picard_dups.txt",
+        mqc_adapt  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_picard_mark_illumina_adapters.txt",
+        mqc_flag   = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_samtools_flagstat.txt",
+        mqc_fastqc = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_fastqc.txt",
+        mqc_gen    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_general_stats.txt",
+        mqc_src    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_sources.txt",
+        mqc_json   = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_data.json",
     params:
         outdir = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc"
     shell:
