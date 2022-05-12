@@ -6,7 +6,6 @@ rule fastqs_to_ubam:
         ubam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{readgroup_name}.unmapped.bam"
     params:
         java_opt          = "-Xms6000m",
-       #ref_fasta         = lambda wildcards: f"/home/refgen/{config['species']}/{config['ref']}/{config[wildcards.release]['fasta']}"
         ref_fasta         = config['ref_fasta'],
         tmp_dir           = f"/dev/shm/friedlab_{os.environ['USER']}/{{readgroup_name}}_{config['ref']}/",
         library_name      = lambda wildcards: units.loc[units["readgroup_name"] == wildcards.readgroup_name,"library_name"].values[0],
@@ -67,7 +66,6 @@ rule mark_adapters:
 
 rule sam_to_fastq_and_bwa_mem:
     input:
-       #ubam = "{bucket}/fastqs_to_ubam/{sample_name}/{readgroup_name}.unmapped.bam"
         mark_adapt = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{readgroup_name}.mark_adapt.unmapped.bam",
     output:
         bwa_log = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{readgroup_name}.{ref}_aligned.unmerged.bwa.stderr.log",
@@ -169,7 +167,7 @@ rule mark_duplicates:
         )
     output:
         dedup_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.unsorted.duplicates_marked.bam",
-        metrics   = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.duplicate_metrics"),
+        metrics   = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.duplicate_metrics",
     params:
         bams       = lambda wildcards, input: " --INPUT ".join(map(str,input.merged_bams)),
         java_opt   = "-Xms4000m -Xmx16g",
@@ -179,7 +177,6 @@ rule mark_duplicates:
     threads: 4
     resources:
          time   = 720,
-        #mem_mb = 240000
          mem_mb = lambda wildcards, attempt: 2**(attempt-1)*60000,
     shell:
         '''
@@ -197,93 +194,77 @@ rule mark_duplicates:
                 --CREATE_MD5_FILE true
         '''
 
+rule sort_and_fix_tags:
+    input:
+        dedup_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.unsorted.duplicates_marked.bam",
+    output:
+        sorted_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam",
+        sorted_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bai"
+    params:
+        java_opt  = "-Xms4000m",
+        tmp_dir   = config['sort_tmp'],
+        ref_fasta = config['ref_fasta']
+    benchmark:
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.merge_bams.benchmark.txt"
+    threads: 12
+    resources:
+         time   = 720,
+         mem_mb = lambda wildcards, attempt: 2**(attempt-1)*24000,
+    shell:
+        '''
+            set -o pipefail
+
+            gatk --java-options "-Dsamjdk.compression_level=5 {params.java_opt}" \
+                SortSam \
+                --TMP_DIR {params.tmp_dir} \
+                --INPUT {input.dedup_bam} \
+                --OUTPUT /dev/stdout \
+                --SORT_ORDER "coordinate" \
+                --CREATE_INDEX false \
+                --CREATE_MD5_FILE false \
+            | \
+            gatk --java-options "-Dsamjdk.compression_level=5 {params.java_opt}" \
+                SetNmMdAndUqTags \
+                --INPUT /dev/stdin \
+                --OUTPUT {output.sorted_bam} \
+                --CREATE_INDEX true \
+                --CREATE_MD5_FILE true \
+                --REFERENCE_SEQUENCE {params.ref_fasta}
+       '''
+
 # optional argument to left align bam
-if not config['left_align']:
-    rule sort_and_fix_tags:
+if config['left_align']:
+    rule left_align_bam:
         input:
-            dedup_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.unsorted.duplicates_marked.bam",
-        output:
             sorted_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam",
             sorted_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bai"
+        output:
+            left_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.duplicate_marked.sorted.bam",
+            left_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.duplicate_marked.sorted.bai"
         params:
             java_opt  = "-Xms4000m",
-            tmp_dir   = config['sort_tmp'],
             ref_fasta = config['ref_fasta']
         benchmark:
-            "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.merge_bams.benchmark.txt"
-        threads: 12
+            "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.sort_fix_left_align.benchmark.txt"
+        threads: 4
         resources:
-             time   = 720,
+             time   = 480,
              mem_mb = lambda wildcards, attempt: 2**(attempt-1)*24000,
         shell:
             '''
-                set -o pipefail
-
                 gatk --java-options "-Dsamjdk.compression_level=5 {params.java_opt}" \
-                    SortSam \
-                    --TMP_DIR {params.tmp_dir} \
-                    --INPUT {input.dedup_bam} \
-                    --OUTPUT /dev/stdout \
-                    --SORT_ORDER "coordinate" \
-                    --CREATE_INDEX false \
-                    --CREATE_MD5_FILE false \
-                | \
-                gatk --java-options "-Dsamjdk.compression_level=5 {params.java_opt}" \
-                    SetNmMdAndUqTags \
-                    --INPUT /dev/stdin \
-                    --OUTPUT {output.sorted_bam} \
-                    --CREATE_INDEX true \
-                    --CREATE_MD5_FILE true \
-                    --REFERENCE_SEQUENCE {params.ref_fasta}
-           '''
-else:
-    rule sort_fix_tags_left_align:
-        input:
-            dedup_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.unsorted.duplicates_marked.bam",
-        output:
-            sorted_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam",
-            sorted_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bai"
-        params:
-            java_opt  = "-Xms4000m",
-            tmp_dir   = config['sort_tmp'],
-            ref_fasta = config['ref_fasta']
-        benchmark:
-            "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.merge_bams.benchmark.txt"
-        threads: 12
-        resources:
-             time   = 840,
-             mem_mb = lambda wildcards, attempt: 2**(attempt-1)*24000,
-        shell:
-            '''
-                set -o pipefail
-
-                gatk --java-options "-Dsamjdk.compression_level=5 {params.java_opt}" \
-                    SortSam \
-                    --TMP_DIR {params.tmp_dir} \
-                    --INPUT {input.dedup_bam} \
-                    --OUTPUT /dev/stdout \
-                    --SORT_ORDER "coordinate" \
-                    --CREATE_INDEX false \
-                    --CREATE_MD5_FILE false \
-                | \
-                gatk --java-options "-Dsamjdk.compression_level=5 {params.java_opt}" \
-                    SetNmMdAndUqTags \
-                    --INPUT /dev/stdin \
-                    --OUTPUT /dev/stdout \
-                    --CREATE_INDEX true \
-                    --CREATE_MD5_FILE true \
-                    --REFERENCE_SEQUENCE {params.ref_fasta}
-                | \
-                gatk --java-options "-Dsamjdk.compression_level=5 {params.java_opt} \
                     LeftAlignIndels \
-                    -I /dev/stdin \
-                    -O {output.sorted_bam} \
+                    -I {input.sorted_bam} \
+                    -O {output.left_bam} \
+                    --create-output-bam-index true \
+                    --create-output-bam-md5 true \
                     -R {params.ref_fasta}
            '''
 
 rule base_recalibrator:
     input:
-        sorted_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam",
+        sorted_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam"
+            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.duplicate_marked.sorted.bam",
         interval   = "{bucket}/seq_group/no_unmap/{interval}.tsv"
     output:
         recal_csv = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.{interval}.recal_data.csv"
@@ -347,13 +328,17 @@ rule gather_bqsr_reports:
         
 rule apply_bqsr:
     input:
-        sorted_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam",
-        sorted_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bai",
+        sorted_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam"
+            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.duplicate_marked.sorted.bam",
+        sorted_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bai"
+            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.duplicate_marked.sorted.bai",
         report     = "{bucket}/wgs/{breed}/{sample_name}/{ref}/logs/{sample_name}.{ref}.recal_data.txt",
         interval   = "{bucket}/seq_group/with_unmap/{interval}.tsv"
     output:
-        recal_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.{interval}.aligned.duplicates_marked.recalibrated.bam",
+        recal_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.{interval}.aligned.duplicates_marked.recalibrated.bam"
+            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.{interval}.left_aligned.duplicates_marked.recalibrated.bam",
         recal_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.{interval}.aligned.duplicates_marked.recalibrated.bai"
+            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.{interval}.left_aligned.duplicates_marked.recalibrated.bai"
     params:
         ival = lambda wildcards, input: open(input.interval).readline().rstrip().replace('\t',' -L '),
         java_opt  = "-Xms3000m",
@@ -382,7 +367,8 @@ rule gather_bam_files:
     input:
         recal_bams = sorted(
             expand(
-                "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.{interval}.aligned.duplicates_marked.recalibrated.bam",
+                "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.{interval}.aligned.duplicates_marked.recalibrated.bam"
+                    if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.{interval}.left_aligned.duplicates_marked.recalibrated.bam",
                 bucket=config["bucket"],
                 breed=breed,
                 sample_name=sample_name,
@@ -391,9 +377,12 @@ rule gather_bam_files:
             ), key=lambda item: int(os.path.basename(item).split(".")[2].split("_")[1])
         )
     output:
-        final_bam = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bam"),
-        final_bai = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai"),
-        final_md5 = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bam.md5"),
+        final_bam = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bam")
+            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bam"),
+        final_bai = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai")
+            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai"),
+        final_md5 = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bam.md5")
+            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.md5"),
     params:
         bams     = lambda wildcards, input: " -I ".join(map(str,input.recal_bams)),
         java_opt = "-Xms2000m",
@@ -415,8 +404,10 @@ rule gather_bam_files:
 
 rule post_base_recalibrator:
     input:
-        final_bam = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bam"),
-        final_bai = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai"),
+        final_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bam"
+            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bam",
+        final_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai"
+            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai",
         interval  = "{bucket}/seq_group/no_unmap/{interval}.tsv"
     output:
         recal_csv = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/post_clean/{sample_name}.{ref}.{interval}.second_recal_data.csv"

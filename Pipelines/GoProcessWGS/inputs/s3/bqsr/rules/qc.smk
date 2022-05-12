@@ -35,8 +35,10 @@ rule fastqc:
 
 rule flagstat:
     input:
-        final_bam = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bam"),
-        final_bai = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai"),
+        final_bam = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bam")
+            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bam"),
+        final_bai = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai")
+            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai"),
     output:
         flagstat = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/{sample_name}.{ref}.flagstat.txt"),
     benchmark:
@@ -76,8 +78,10 @@ rule bqsr_analyze_covariates:
 
 rule qualimap_bamqc:
     input:
-        final_bam = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bam"),
-        final_bai = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai"),
+        final_bam = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bam")
+            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bam"),
+        final_bai = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai")
+            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai"),
     output:
         report_pdf  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/qualimap/report.pdf",
         report_html = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/qualimap/qualimapReport.html",
@@ -95,6 +99,8 @@ rule qualimap_bamqc:
          mem_mb = 24000
     shell:
         '''
+            unset DISPLAY
+
             qualimap bamqc \
                 -bam {input.final_bam} \
                 -outdir {params.out_dir} \
@@ -105,18 +111,14 @@ rule qualimap_bamqc:
 
 rule multiqc:
     input:
-        r1_zip      = S3.remote(
-            expand(
-                "{{bucket}}/wgs/{{breed}}/{{sample_name}}/fastqc/{{sample_name}}/{u.flowcell}/{u.readgroup_name}_R1_fastqc.zip",
-                u=units.itertuples()
-            )
-        ),
-        r2_zip      = S3.remote(
-            expand(
-                "{{bucket}}/wgs/{{breed}}/{{sample_name}}/fastqc/{{sample_name}}/{u.flowcell}/{u.readgroup_name}_R2_fastqc.zip",
-                u=units.itertuples()
-            )
-        ),
+        r1_zip      = S3.remote(expand(
+            "{{bucket}}/wgs/{{breed}}/{{sample_name}}/fastqc/{{sample_name}}/{u.flowcell}/{u.readgroup_name}_R1_fastqc.zip",
+            u=units.itertuples()
+        )),
+        r2_zip      = S3.remote(expand(
+            "{{bucket}}/wgs/{{breed}}/{{sample_name}}/fastqc/{{sample_name}}/{u.flowcell}/{u.readgroup_name}_R2_fastqc.zip",
+            u=units.itertuples()
+        )),
         flagstat    = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/{sample_name}.{ref}.flagstat.txt"),
         bqsr_before = "{bucket}/wgs/{breed}/{sample_name}/{ref}/logs/{sample_name}.{ref}.recal_data.txt",
         bqsr_after  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/logs/{sample_name}.{ref}.second_recal_data.txt",
@@ -129,17 +131,23 @@ rule multiqc:
         raw_dat     = rules.qualimap_bamqc.output.raw_dat,
     output: 
         S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report.html"),
-        mqc_log    = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report_data/multiqc.log"),
-        mqc_bamqc  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report_data/multiqc_qualimap_bamqc_genome_results.txt"),
-        mqc_dups   = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report_data/multiqc_picard_dups.txt"),
-        mqc_adapt  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report_data/multiqc_picard_mark_illumina_adapters.txt"),
-        mqc_flag   = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report_data/multiqc_samtools_flagstat.txt"),
-        mqc_fastqc = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report_data/multiqc_fastqc.txt"),
-        mqc_gen    = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report_data/multiqc_general_stats.txt"),
-        mqc_src    = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report_data/multiqc_sources.txt"),
-        mqc_json   = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report_data/multiqc_data.json"),
+        mqc_log    = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc.log"),
+        mqc_bamqc  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_qualimap_bamqc_genome_results.txt"),
+        mqc_dups   = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_picard_dups.txt"),
+        mqc_adapt  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_picard_mark_illumina_adapters.txt"),
+        mqc_flag   = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_samtools_flagstat.txt"),
+        mqc_fastqc = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_fastqc.txt"),
+        mqc_gen    = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_general_stats.txt"),
+        mqc_src    = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_sources.txt"),
+        mqc_json   = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_data.json"),
     params:
-        "-x '*duplicates_marked*' -x '*group_*' -e snippy"
-    wrapper: 
-       "master/bio/multiqc"
+        outdir = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc"
+    shell:
+        '''
+            multiqc {wildcards.bucket} \
+                -x '*duplicates_marked*' -x '*group_*' -e snippy \
+                --interactive \
+                --force \
+                -o {params.outdir}
+        '''
 
