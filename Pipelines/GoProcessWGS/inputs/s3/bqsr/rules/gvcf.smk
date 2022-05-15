@@ -11,6 +11,10 @@ rule hc_intervals:
         scatter_size = config['scatter_size'],
         ref_fasta    = config['ref_fasta'],
         split_dir    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered"
+    threads: 1
+    resources:
+         time   = 20,
+         mem_mb = 8000
     shell:
         '''
             set -e

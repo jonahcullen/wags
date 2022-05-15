@@ -23,12 +23,8 @@ ref_dict  : canFam3.dict
 ref_fasta : /home/refgen/dog/canfam3/canFam3.fa
 
 # RESOURCE FILES FOR BQSR (OPTIONAL)
-dbsnp_indels_vcf       : /home/refgen/dog/canfam3/resources/dbsnp146.indel.vcf
-dbsnp_indels_vcf_index : /home/refgen/dog/canfam3/resources/dbsnp146.indel.vcf.idx
-dbsnp_snp_vcf          : /home/refgen/dog/canfam3/resources/dbsnp146.snp.vcf
-dbsnp_snp_vcf_index    : /home/refgen/dog/canfam3/resources/dbsnp146.snp.vcf.idx
-broad_snp_vcf          : /home/refgen/dog/canfam3/resources/final.broad.snps.vcf
-broad_snp_vcf_index    : /home/refgen/dog/canfam3/resources/final.broad.snps.vcf.idx
-axelsson_snp_vcf       : /home/refgen/dog/canfam3/resources/final.axelsson.snps.vcf
-axelsson_snp_vcf_index : /home/refgen/dog/canfam3/resources/final.axelsson.snps.vcf.idx
-
+known_sites :
+    dbsnp_indels_vcf       : /home/refgen/dog/canfam3/resources/dbsnp146.indel.vcf
+    dbsnp_snp_vcf          : /home/refgen/dog/canfam3/resources/dbsnp146.snp.vcf
+    broad_snp_vcf          : /home/refgen/dog/canfam3/resources/final.broad.snps.vcf
+    axelsson_snp_vcf       : /home/refgen/dog/canfam3/resources/final.axelsson.snps.vcf

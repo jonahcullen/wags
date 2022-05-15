@@ -66,6 +66,7 @@ rule mark_adapters:
 
 rule sam_to_fastq_and_bwa_mem:
     input:
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/index.done",
         mark_adapt = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{readgroup_name}.mark_adapt.unmapped.bam",
     output:
         bwa_log = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{readgroup_name}.{ref}_aligned.unmerged.bwa.stderr.log",

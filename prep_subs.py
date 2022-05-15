@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Mar 21 20:43:49 2021
-
-@author: jonahcullen
-"""
-
 
 import os
 import sys
@@ -13,6 +6,7 @@ import csv
 import gzip
 import wget
 import yaml
+import glob
 import shutil
 import string
 import textwrap
@@ -23,7 +17,7 @@ from datetime import datetime
 from collections import defaultdict
 
 
-refs    = ["canfam3", "canfam4", "goldenPath", "tiger"]
+refs    = ["canfam3","canfam4","goldenPath","tiger"]
 remotes = ["local","s3","sftp"]
 
 def extract_pu(s):
@@ -164,6 +158,12 @@ def main(dog_meta, outdir, fq_dir, ref):
             "configs",
             config_n
         )
+        # selected reference not in container, presumed prep_custom_ref.py already
+        # executed
+        if ref not in refs:
+            tmp = glob.glob(f"{ref_dir}/**/{ref}_config.yaml",recursive=True)
+            assert tmp, f"config not found for {ref}, ensure prep_custom_ref.py ran successfully and check ref_dir"
+            config = tmp[0]
     
         profile = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
@@ -185,6 +185,7 @@ def main(dog_meta, outdir, fq_dir, ref):
         # get config values
         species  = doc['species']
         ref_dict = doc['ref_dict']
+        fasta    = doc['ref_fasta']
         # update sif and other cli args
         doc['sif']        = sif
         doc['alias']      = alias
@@ -209,7 +210,6 @@ def main(dog_meta, outdir, fq_dir, ref):
                         slurm_sub = os.path.join(i[1],"slurm-submit.py")
                         with fileinput.FileInput(slurm_sub,inplace=True,backup=".bak") as file:
                             for line in file:
-                               #print(line.replace("DUMMY_PAR",partition),end='')
                                 line = line.replace("DUMMY_PAR",partition)
                                 line = line.replace("DUMMY_ACC",account)
                                 print(line,end='')
@@ -241,19 +241,61 @@ def main(dog_meta, outdir, fq_dir, ref):
             print(f"conda activate {snake_env}",file=f)
             print("cd $SLURM_SUBMIT_DIR\n",file=f)
 
-            print(f"FQ_DIR={fq_dir}",file=f)
-            print(f"PROC_DIR={outdir}\n",file=f)
+           #print(f"REF_DIR={ref_dir}",file=f)
+           #print(f"FQ_DIR={fq_dir}",file=f)
+           #print(f"PROC_DIR={outdir}\n",file=f)
 
-            print("# extract reference dict from container",end="",file=f)
             print(
                 textwrap.dedent(
                     f"""
-                    singularity exec --bind $PWD {sif} \\
-                        cp /home/refgen/{species}/{ref}/{ref_dict} $PWD
-                    
+                    REF_DIR={ref_dir}
+                    FQ_DIR={fq_dir}
+                    PROC_DIR={outdir} 
+                    """
+                ),file=f
+            )
+
+            # if ref in container, extract dictionary or generate from fasta 
+            # if does not exist
+            if ref in refs:
+                print("# extract reference dict from container",end="",file=f)
+                print(
+                    textwrap.dedent(
+                        f"""
+                        singularity exec --bind $PWD {sif} \\
+                            cp /home/refgen/{species}/{ref}/{ref_dict} $PWD
+                        """
+                    ),file=f
+                )
+            elif not os.path.isfile(ref_dict):
+                print("# generate reference dict from fasta",end="",file=f)
+                print(
+                    textwrap.dedent(
+                        f"""
+                        singularity exec --bind $PWD,$REF_DIR {sif} \\
+                            gatk CreateSequenceDictionary -R {fasta}
+                        """
+                    ),file=f
+                )
+           
+            # generate fasta index if not available
+            if not os.path.isfile(f"{fasta}.fai") and ref not in refs:
+                print("# generate reference fasta index",end="",file=f)
+                print(
+                    textwrap.dedent(
+                        f"""
+                        singularity exec --bind $PWD,{ref_dir} {sif} \\
+                            samtools faidx {fasta}
+                        """
+                    ),file=f
+                )
+ 
+            print(
+                textwrap.dedent(
+                    f"""
                     snakemake -s {snake_n} \\
                         --use-singularity \\
-                        --singularity-args "-B $PWD,$FQ_DIR,$PROC_DIR" \\
+                        --singularity-args "-B $PWD,$REF_DIR,$FQ_DIR,$PROC_DIR" \\
                         --profile {profile_n} \\
                         --configfile {config_n} \\
                         --keep-going
@@ -299,7 +341,8 @@ if __name__ == '__main__':
             "FASTQ pair), wags outputs a directory structure organized by \n"
             "breed, wherein GATK pipeline input are contained by sample ID."
         ),
-        formatter_class=argparse.RawDescriptionHelpFormatter
+       #formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawTextHelpFormatter
     )
     
     required = parser.add_argument_group('required arguments')
@@ -386,10 +429,33 @@ if __name__ == '__main__':
         nargs="?",
         const="canfam4",
         default="canfam4",
-        choices=refs,
-        help="select canfam reference to use: "+ \
-            ", ".join(refs) + " [default: canfam4]",
+       #choices=refs,
+       #help="select reference to use: "+ \
+       #    ", ".join(refs) + " [default: canfam4]",
+        help=textwrap.dedent(f'''\
+            select reference to use: {", ".join(refs)}.
+            if using custom reference, ensure provided name
+            matches name used for prep_custom_ref.py
+        '''),
         metavar=""
+    )
+   #optional.add_argument(
+   #    "--fasta",
+   #   #default="",
+   #    nargs="?",
+   #    help="path to fasta to be used with --ref custom"
+   #)
+    optional.add_argument(
+        "--ref-dir",
+       #default="",
+       #nargs="?",
+        default=os.path.join(os.path.expanduser("~"),".wags/"),
+        help=textwrap.dedent('''\
+            path to custom reference directory generated by
+            prep_custom_ref.py - assumes multiple references
+            from the same species have different names 
+            [default ~/.wags/SPECIES/REF]
+        ''')
     )
     optional.add_argument(
         "--sif",
@@ -424,6 +490,10 @@ if __name__ == '__main__':
     account    = args.account
     sif        = args.sif
     ref        = args.ref.lower()
+    ref_dir    = os.path.expanduser(args.ref_dir) \
+        if "~" in args.ref_dir else os.path.abspath(args.ref_dir)
+   #fasta      = args.fasta
+   #sites      = args.sites
     alias      = args.alias
     money      = args.money
     remote     = args.remote.lower()
@@ -438,7 +508,23 @@ if __name__ == '__main__':
     bqsr = "bqsr"
     if no_bqsr:
         bqsr = "no_bqsr"
+
+    # if custom (not available in container) reference require fasta arg
+   #if "custom" in ref and fasta is None:
+   #    parser.error("<fasta> required with --ref custom")
+   #elif os.path.isfile(fasta):
+   #    fasta = os.path.abspath(fasta)
  
+    # custom known sites
+   #if sites:
+   #    d_sites = {}
+   #    with open(os.path.abspath(sites),'r') as f:
+   #        for line in f:
+   #            name,vcf = line.strip().split(',')
+   #            assert os.path.isfile(vcf), f"{name} was not found, check path is correct"
+   #            d_sites[name] = vcf
+   #    print(d_sites)
+
     # if non default sif location
     if sif != os.path.join(os.path.expanduser("~"),".sif/wags.sif"):
         if "~" in sif:
@@ -463,7 +549,6 @@ if __name__ == '__main__':
     if not os.path.exists(outdir):
         os.makedirs(outdir)
         print(f"{outdir} created!")
-
         
     main(dog_meta,outdir,fq_dir,ref)    
         

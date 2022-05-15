@@ -5,8 +5,7 @@ import os
 # local without BQSR ##################
 #######################################
 
-localrules: hc_intervals,
-            multiqc,
+localrules: multiqc,
             upload_fastqs,
             upload_pipe_and_logs
 
@@ -48,6 +47,7 @@ rule all:
 
 # rules to include based on user setup
 include: "rules/qc.smk"
+include: "rules/index.smk"
 include: "rules/bam.smk"
 include: "rules/gvcf.smk"
 

@@ -66,6 +66,7 @@ rule mark_adapters:
 
 rule sam_to_fastq_and_bwa_mem:
     input:
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/index.done",
         mark_adapt = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{readgroup_name}.mark_adapt.unmapped.bam",
     output:
         bwa_log = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{readgroup_name}.{ref}_aligned.unmerged.bwa.stderr.log",
@@ -269,13 +270,10 @@ rule base_recalibrator:
     output:
         recal_csv = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.{interval}.recal_data.csv"
     params:
-        ival = lambda wildcards, input: open(input.interval).readline().rstrip().replace('\t',' -L '),
-        java_opt         = "-Xms4000m",
-        ref_fasta        = config['ref_fasta'],
-        dbsnp_snp_vcf    = config['dbsnp_snp_vcf'],
-        broad_snp_vcf    = config['broad_snp_vcf'],
-        axelsson_snp_vcf = config['axelsson_snp_vcf'],
-        dbsnp_indels_vcf = config['dbsnp_indels_vcf'],
+        ival      = lambda wildcards, input: open(input.interval).readline().rstrip().replace('\t',' -L '),
+        java_opt  = "-Xms4000m",
+        ref_fasta = config['ref_fasta'],
+        sites     = " --known-sites ".join(list(config['known_sites'].values()))
     benchmark:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{interval}.base_recal.benchmark.txt"
     resources:
@@ -289,10 +287,7 @@ rule base_recalibrator:
                 -I {input.sorted_bam} \
                 --use-original-qualities \
                 -O {output.recal_csv} \
-                --known-sites {params.dbsnp_snp_vcf} \
-                --known-sites {params.broad_snp_vcf} \
-                --known-sites {params.axelsson_snp_vcf} \
-                --known-sites {params.dbsnp_indels_vcf} \
+                --known-sites {params.sites} \
                 -L {params.ival}
         '''
 
@@ -412,13 +407,10 @@ rule post_base_recalibrator:
     output:
         recal_csv = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/post_clean/{sample_name}.{ref}.{interval}.second_recal_data.csv"
     params:
-        ival = lambda wildcards, input: open(input.interval).readline().rstrip().replace('\t',' -L '),
-        java_opt         = "-Xms4000m",
-        ref_fasta        = config['ref_fasta'],
-        dbsnp_snp_vcf    = config['dbsnp_snp_vcf'],
-        broad_snp_vcf    = config['broad_snp_vcf'],
-        axelsson_snp_vcf = config['axelsson_snp_vcf'],
-        dbsnp_indels_vcf = config['dbsnp_indels_vcf'],
+        ival      = lambda wildcards, input: open(input.interval).readline().rstrip().replace('\t',' -L '),
+        java_opt  = "-Xms4000m",
+        ref_fasta = config['ref_fasta'],
+        sites     = " --known-sites ".join(list(config['known_sites'].values()))
     benchmark:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/post_clean/{sample_name}.{interval}.second_base_recal.benchmark.txt"
     resources:
@@ -432,10 +424,7 @@ rule post_base_recalibrator:
                 -I {input.final_bam} \
                 --use-original-qualities \
                 -O {output.recal_csv} \
-                --known-sites {params.dbsnp_snp_vcf} \
-                --known-sites {params.broad_snp_vcf} \
-                --known-sites {params.axelsson_snp_vcf} \
-                --known-sites {params.dbsnp_indels_vcf} \
+                --known-sites {params.sites} \
                 -L {params.ival}
         '''
 

@@ -14,6 +14,11 @@
         "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.readgroup_name}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.readgroup_name}/%j.{rule}.err"
     },
+    "bwa_index" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    },
     "sam_to_fastq_and_bwa_mem" :
     {
         "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.readgroup_name}/%j.{rule}.out",
@@ -63,6 +68,16 @@
     {
         "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
+    "scatter_intervals" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    },
+    "split_intervals" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
     },
     "haplotype_caller" :
     {
