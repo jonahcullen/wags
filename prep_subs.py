@@ -245,10 +245,12 @@ def main(dog_meta, outdir, fq_dir, ref):
            #print(f"FQ_DIR={fq_dir}",file=f)
            #print(f"PROC_DIR={outdir}\n",file=f)
 
+            if ref not in refs:
+                print("REF_DIR={ref_dir}",file=f)
+
             print(
                 textwrap.dedent(
                     f"""
-                    REF_DIR={ref_dir}
                     FQ_DIR={fq_dir}
                     PROC_DIR={outdir} 
                     """
