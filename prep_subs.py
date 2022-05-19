@@ -99,26 +99,26 @@ def main(dog_meta, outdir, fq_dir, ref):
                     ]
                 )
             
-            d[line[0]]["work_dir"]    = os.path.join(outdir,line[1],line[0],ref)
-            d[line[0]]["breed"]       = line[1]
-            d[line[0]]["df"]          = pd.DataFrame(dog_input, columns=cols)
-            
-            # save breed and sample name
-            breed       = line[1]
-            sample_name = line[0]
+            d[line[0]]['work_dir']    = os.path.join(outdir,line[1],line[0],ref)
+            d[line[0]]['breed']       = line[1]
+            d[line[0]]['df']          = pd.DataFrame(dog_input, columns=cols)
             
     # copy pipeline input and slurm file
     for k,v in d.items():
-        os.makedirs(v["work_dir"], exist_ok=True)
+        # sample_name and breed
+        sample_name = k
+        breed = v['breed']        
+
+        os.makedirs(v['work_dir'], exist_ok=True)
 
         # create jobs dir if not exist
-        jobs = os.path.join(v["work_dir"],"slurm_logs")
+        jobs = os.path.join(v['work_dir'],"slurm_logs")
         if not os.path.exists(jobs):
             os.makedirs(jobs)
    
         # write dog input to working directory
-        with open(os.path.join(v["work_dir"],"input.tsv"),"w") as out:
-            v["df"].to_csv(out,sep='\t',index=False)
+        with open(os.path.join(v['work_dir'],"input.tsv"),"w") as out:
+            v['df'].to_csv(out,sep='\t',index=False)
        
         # input templates
         pipeline  = "GoProcessWGS"
@@ -216,7 +216,7 @@ def main(dog_meta, outdir, fq_dir, ref):
                     
         # slurm destination
         job_name = snake_n.split('.')[0]
-        slurm = os.path.join(v['work_dir'],f"{v['breed']}_{k}.{job_name}.slurm")
+        slurm = os.path.join(v['work_dir'],f"{breed}_{sample_name}.{job_name}.slurm")
         
         # SBATCH directives 
         header = (
@@ -311,7 +311,7 @@ def main(dog_meta, outdir, fq_dir, ref):
                     textwrap.dedent(
                         f"""
                         mc cp --recursive ./slurm_logs/ \\
-                            s3Fried/{bucket}/wgs/{breed}/{sample_name}/canfam4/
+                            {alias}/{bucket}/wgs/{breed}/{sample_name}/canfam4/
                         """
                     ),file=f
                 )
