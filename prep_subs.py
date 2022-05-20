@@ -437,7 +437,8 @@ if __name__ == '__main__':
         help=textwrap.dedent(f'''\
             select reference to use: {", ".join(refs)}.
             if using custom reference, ensure provided name
-            matches name used for prep_custom_ref.py
+            is exact matche to name (--ref) used with 
+            prep_custom_ref.py
         '''),
         metavar=""
     )
