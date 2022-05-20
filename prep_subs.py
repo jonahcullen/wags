@@ -311,7 +311,7 @@ def main(dog_meta, outdir, fq_dir, ref):
                     textwrap.dedent(
                         f"""
                         mc cp --recursive ./slurm_logs/ \\
-                            {alias}/{bucket}/wgs/{breed}/{sample_name}/canfam4/
+                            {alias}/{bucket}/wgs/{breed}/{sample_name}/{ref}/
                         """
                     ),file=f
                 )
