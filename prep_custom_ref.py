@@ -86,7 +86,7 @@ if __name__ == '__main__':
         "-r", "--ref",
         nargs="?",
         metavar="",
-        help="reference name",
+        help="reference name (e.g. equcab3, canfam4)",
     )
     required.add_argument(
         "-s", "--species",
@@ -98,7 +98,7 @@ if __name__ == '__main__':
         "-f", "--fasta",
         nargs="?",
         metavar="",
-        help="path to fasta to be used with --ref custom"
+        help="path to reference fasta to be used with --ref custom"
     )
     optional.add_argument(
         "-o", "--out",
@@ -121,7 +121,7 @@ if __name__ == '__main__':
     )
     
     args    = parser.parse_args()
-    ref     = args.ref.lower()
+    ref     = args.ref
     species = args.species
     fasta   = os.path.expanduser(args.fasta) \
         if "~" in args.fasta else os.path.abspath(args.fasta)
