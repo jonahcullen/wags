@@ -502,7 +502,7 @@ if __name__ == '__main__':
     email      = args.email
     account    = args.account
     sif        = args.sif
-    ref        = args.ref.lower()
+    ref        = args.ref
     ref_dir    = os.path.expanduser(args.ref_dir) \
         if "~" in args.ref_dir else os.path.abspath(args.ref_dir)
     alias      = args.alias
