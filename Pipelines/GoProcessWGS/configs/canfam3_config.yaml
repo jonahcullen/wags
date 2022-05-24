@@ -6,7 +6,7 @@ bucket  : wags
 alias   : s3
 
 # SINGULARITY IMAGE
-sif : /path/to/WAGS/wags.sif
+sif : /path/to/wags.sif
 
 # SORTSAM TEMP DIR
 sort_tmp : /path/to/proc/dir

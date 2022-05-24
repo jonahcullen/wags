@@ -5,19 +5,26 @@ import gzip
 import shutil
 import textwrap
 import argparse
+import fileinput
 
 def main():
+    global profile
     # prepare outdir
     ref_home = os.path.join(outdir,species,ref)
     ref_res  = os.path.join(ref_home,"resources")
     ref_fa   = os.path.join(ref_home,os.path.basename(fasta))
 
     # generate custom reference and resource directories
-    os.makedirs(ref_res,exist_ok=True)
+    os.makedirs(ref_home,exist_ok=True)
+    
+    # create jobs dir if not exist
+    jobs = os.path.join(ref_home,f"{profile}_logs")
+    os.makedirs(jobs,exist_ok=True)
     
     # custom known sites
     d_sites = {}
     if sites:
+        os.makedirs(ref_res,exist_ok=True)
         with open(os.path.abspath(sites),'r') as f:
             for line in f:
                 name,vcf = line.strip().split(',')
@@ -25,29 +32,43 @@ def main():
                 # copy known site to outdir (default ~/.wags/SPECIES/REF/resources)
                 vcf_out = os.path.join(ref_res,os.path.basename(vcf))
                 shutil.copy(vcf,vcf_out)
-                # add updated locatio to dictionary
+                # add updated location to dictionary
                 d_sites[name] = vcf_out
    
+    # copy reference fasta to outdir
+    if not os.path.isfile(ref_fa):
+        shutil.copy(fasta,ref_home)
+    
+    # copy and profile
+    profile_dir = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        f"Profiles/{profile}/{profile}.go_wags"
+    )
+    
+    shutil.copytree(profile_dir,os.path.join(ref_home,f"{profile}.go_wags"),dirs_exist_ok=True)
+    
+    job_sub = os.path.join(ref_home,f"{profile}.go_wags/{profile}-submit.py")
+    with fileinput.FileInput(job_sub,inplace=True,backup=".bak") as file:
+        for line in file:
+            line = line.replace("DUMMY_PAR",partition)
+            line = line.replace("DUMMY_ACC",account)
+            print(line,end='')
+    
+    # custom config to modify
     config = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
-        "Pipelines/GoProcessWGS/configs/custom_config.yaml"
+        "Pipelines/GoPrepRef/configs/custom_config.yaml"
     )
-
-    # copy reference fasta to outdir
-    shutil.copy(fasta,ref_home)
 
     # modify config file
     with open(config) as f:
         doc = yaml.safe_load(f)
     # update sif and other cli args
-    doc['ref']       = ref
-    doc['species']   = species
-    doc['ref_dict']  = f"{os.path.splitext(ref_fa)[0]}.dict"
-    # adjust ref_dict if fasta gzipped
-   #if ref_fa.endswith(".gz"):
-        
+    doc['sif']      = sif
+    doc['ref']      = ref
+    doc['species']  = species
+    doc['ref_dict'] = f"{os.path.splitext(ref_fa)[0]}.dict"
     doc['ref_fasta'] = ref_fa
-
     # add known site resources if provided
     doc['known_sites'] = d_sites
 
@@ -55,6 +76,63 @@ def main():
     with open(os.path.join(ref_home,f"{ref}_config.yaml"),'w') as out:
         yaml.dump(doc,out,sort_keys=False)
 
+    # copy snake
+    smk = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "Pipelines/GoPrepRef/prep_wags.smk",
+    )
+    shutil.copy(smk,ref_home)
+
+    # submission destination
+    job_name = "prep_wags"
+    submiss = os.path.join(ref_home,f"{species}_{ref}.{job_name}.{profile}")
+    
+    # SBATCH directives 
+    header = (
+        "#!/bin/bash -l\n"
+        "#SBATCH -t 6:00:00\n"
+        "#SBATCH --nodes=1\n"
+        "#SBATCH --ntasks-per-node=1\n"
+        "#SBATCH --cpus-per-task=1\n"
+        "#SBATCH --mem=12gb\n"
+        "#SBATCH --mail-type=ALL\n"
+        f"#SBATCH --mail-user={email}\n"
+        f"#SBATCH --job-name {species}_{ref}.{job_name}.slurm\n"
+        f"#SBATCH -o slurm_logs/%j.{species}_{ref}.{job_name}.out\n"
+        f"#SBATCH -e slurm_logs/%j.{species}_{ref}.{job_name}.err\n"
+        f"#SBATCH -A {account}\n"
+    )             
+ 
+    # job submission body 
+    with open(submiss, "w") as f:
+        print(header, file=f)
+        print("set -e\n",file=f)
+        print(f"conda activate {snake_env}",file=f)
+        print("cd $SLURM_SUBMIT_DIR\n",file=f)
+
+        print(
+            textwrap.dedent(
+                f"""
+
+                REF_DIR={ref_home}
+
+                snakemake -s prep_wags.smk \\
+                    --use-singularity \\
+                    --singularity-args "-B $PWD,$REF_DIR" \\
+                    --profile {profile}.go_wags \\
+                    --configfile {ref}_config.yaml \\
+                    --keep-going
+                """
+            ),file=f
+        ) 
+
+    print(
+        textwrap.dedent(
+            f"""
+            submit {species}_{ref}.{job_name}.{profile} from {ref_home} 
+            to prep {ref} for wags
+        """)
+    )
 
 if __name__ == '__main__':
     
@@ -84,34 +162,76 @@ if __name__ == '__main__':
     
     required.add_argument(
         "-r", "--ref",
-        nargs="?",
-        metavar="",
+       #nargs="?",
+        metavar="\b",
         help="reference name (e.g. equcab3, canfam4)",
     )
     required.add_argument(
-        "-s", "--species",
-        nargs="?",
-        metavar="",
-        help="species name",
+        "-n", "--species",
+       #nargs="?",
+        metavar="\b",
+        help="species name (e.g. horse, dog)",
     )
     required.add_argument(
         "-f", "--fasta",
-        nargs="?",
-        metavar="",
-        help="path to reference fasta to be used with --ref custom"
+       #nargs="?",
+        metavar="\b",
+        help="path to reference fasta"
+    )
+    required.add_argument(
+        "-s", "--snake-env",
+        default=argparse.SUPPRESS,
+        metavar="\b",
+        required=True,
+        help="conda environment with snakemake"
+    )
+    required.add_argument(
+        "-p", "--partition",
+        default=argparse.SUPPRESS,
+        metavar="\b",
+        required=True,
+        help="default partition(s) to use (e.g. 'par1' or 'par1,par2'"
+    )
+    required.add_argument(
+        "-e", "--email",
+        default=argparse.SUPPRESS,
+        metavar="\b",
+        required=True,
+        help="email address for job logs"
+    )
+    required.add_argument(
+        "-a", "--account",
+        default=argparse.SUPPRESS,
+        metavar="\b",
+        required=True,
+        help="default scheduler account"
     )
     optional.add_argument(
         "-o", "--out",
         default=os.path.join(os.path.expanduser("~"),".wags/"),
-        help="path to custom reference out dir [default: ~/.wags/SPECIES/REF]"
+        metavar="",
+        help="path to custom reference out dir [default: ~/.wags]"
     )
     optional.add_argument(
         "--sites",
+        metavar="",
         help=textwrap.dedent('''\
             comma-separated file containing names (col 1) and
             paths to resource VCFs (and indices) (col 2) to be 
             used with --ref custom and --bqsr
         ''')
+    )
+    optional.add_argument(
+        "--profile",
+        default="slurm",
+        metavar="",
+        help="HPC job scheduler [default: slurm]",
+    )
+    optional.add_argument(
+        "--sif",
+        default=os.path.join(os.path.expanduser("~"),".sif/wags.sif"),
+        metavar="",
+        help="location of container image [default: ~/.sif/wags.sif]"
     )
     optional.add_argument(
         "-h", "--help",
@@ -120,13 +240,19 @@ if __name__ == '__main__':
         help="show this help message and exit"
     )
     
-    args    = parser.parse_args()
-    ref     = args.ref
-    species = args.species
-    fasta   = os.path.expanduser(args.fasta) \
+    args      = parser.parse_args()
+    ref       = args.ref
+    species   = args.species
+    fasta     = os.path.expanduser(args.fasta) \
         if "~" in args.fasta else os.path.abspath(args.fasta)
-    outdir  = args.out
-    sites   = args.sites
+    snake_env = args.snake_env
+    partition = args.partition
+    email     = args.email
+    account   = args.account
+    outdir    = args.out
+    sites     = args.sites
+    profile   = args.profile
+    sif       = args.sif
 
     # assert fasta exists
     assert os.path.isfile(fasta), "fasta not found, check path is correct"
@@ -138,6 +264,7 @@ if __name__ == '__main__':
             with gzip.open(fasta,'r') as f_in, open(uncomp_fasta,'wb') as f_out:
                 shutil.copyfileobj(f_in,f_out)
         fasta = uncomp_fasta 
+
     # if non default outdir
     if outdir != os.path.join(os.path.expanduser("~"),".wags/"):
         if "~" in outdir:
@@ -145,4 +272,24 @@ if __name__ == '__main__':
         else:
             outdir = os.path.abspath(outdir)
  
+    # if non default sif location
+    if sif != os.path.join(os.path.expanduser("~"),".sif/wags.sif"):
+        if "~" in sif:
+            sif = os.path.expanduser(sif)
+        else:
+            sif = os.path.abspath(sif)
+    
+    # confirm image exitst
+    if os.path.isfile(sif):
+        print("wags image found!")
+    else:
+        sif_dir = os.path.join(os.path.expanduser("~"),".sif")
+        print(
+            f"wags image not found at {os.path.abspath(sif)} -> downloading to {sif_dir}"
+        )
+        url = "https://s3.msi.umn.edu/wags/wags.sif"
+        os.makedirs(sif_dir,exist_ok=True)
+        wget.download(url,sif_dir)
+        sys.exit("\nrerun without --sif or point to directory containing wags.sif")
+    
     main()

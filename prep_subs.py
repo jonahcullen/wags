@@ -22,7 +22,7 @@ remotes = ["local","s3","sftp"]
 
 def extract_pu(s):
     """ extracts platform unit from fastq header """
-    with gzip.open(s, "rt") as f:
+    with gzip.open(s,"rt") as f:
         head = f.readline().strip()
         if head.startswith("@SRR"): # handle SRR fastqs from NCBI
             return f"{head.split('.')[0][1:]}.NA.NA"
@@ -37,7 +37,9 @@ def extract_pu(s):
             return f"{head[2]}.{head[3]}.{head[-1]}"
 
 
-def main(dog_meta, outdir, fq_dir, ref):
+#def main(dog_meta,outdir,fq_dir,ref,profile):
+def main():
+    global profile
    
     d = defaultdict(dict)
 
@@ -103,7 +105,7 @@ def main(dog_meta, outdir, fq_dir, ref):
             d[line[0]]['breed']       = line[1]
             d[line[0]]['df']          = pd.DataFrame(dog_input, columns=cols)
             
-    # copy pipeline input and slurm file
+    # copy pipeline input and submission file
     for k,v in d.items():
         # sample_name and breed
         sample_name = k
@@ -112,7 +114,7 @@ def main(dog_meta, outdir, fq_dir, ref):
         os.makedirs(v['work_dir'], exist_ok=True)
 
         # create jobs dir if not exist
-        jobs = os.path.join(v['work_dir'],"slurm_logs")
+        jobs = os.path.join(v['work_dir'],f"{profile}_logs")
         if not os.path.exists(jobs):
             os.makedirs(jobs)
    
@@ -125,14 +127,14 @@ def main(dog_meta, outdir, fq_dir, ref):
         rules     = "rules"
         snake_n   = "one_wags.smk"
         config_n  = f"{ref}_config.yaml"
-        profile_n = "slurm.go_wgs"
+        profile_n = f"{profile}.go_wags"
         # switch to money templates if true - NEEDS TO BE UPDATED STILL
         if money:
             pipeline  = "GoMakeMoney"
             rules     = "rules"
             snake_n   = "go_make_money.smk"
             config_n  = f"{ref}_money.yaml"
-            profile_n = "slurm.go_money"
+           #profile_n = "slurm.go_money"
  
         # copy snakefile, rules, config, and profile to working dir
         smk = os.path.join(
@@ -165,10 +167,9 @@ def main(dog_meta, outdir, fq_dir, ref):
             assert tmp, f"config not found for {ref}, ensure prep_custom_ref.py ran successfully and check ref_dir"
             config = tmp[0]
     
-        profile = os.path.join(
+        profile_dir = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
-            "Pipelines",
-            pipeline,
+            f"Profiles/{profile}",
             profile_n
         )
         
@@ -199,24 +200,24 @@ def main(dog_meta, outdir, fq_dir, ref):
         input_names = [snake_n,"rules",profile_n,"src"]
         dst_files = [os.path.join(v['work_dir'],i) for i in input_names]
         
-        for i in zip([smk,rules,profile,src],dst_files):
+        for i in zip([smk,rules,profile_dir,src],dst_files):
             if not os.path.exists(i[1]):
                 if os.path.isfile(i[0]):
                     shutil.copy(i[0],i[1])
                 else:
                     shutil.copytree(i[0],i[1])
-                    # modify profile slurm-submit.py for user-supplied parition
-                    if "slurm.go_wgs" in i[0]:
-                        slurm_sub = os.path.join(i[1],"slurm-submit.py")
-                        with fileinput.FileInput(slurm_sub,inplace=True,backup=".bak") as file:
+                    # modify profile profile-submit.py for user-supplied parition
+                    if f"{profile_n}.go_wags" in i[0]:
+                        job_sub = os.path.join(i[1],f"{profile_n}-submit.py")
+                        with fileinput.FileInput(job_sub,inplace=True,backup=".bak") as file:
                             for line in file:
                                 line = line.replace("DUMMY_PAR",partition)
                                 line = line.replace("DUMMY_ACC",account)
                                 print(line,end='')
                     
-        # slurm destination
+        # submission destination
         job_name = snake_n.split('.')[0]
-        slurm = os.path.join(v['work_dir'],f"{breed}_{sample_name}.{job_name}.slurm")
+        submiss = os.path.join(v['work_dir'],f"{breed}_{sample_name}.{job_name}.{profile_n}")
         
         # SBATCH directives 
         header = (
@@ -234,8 +235,8 @@ def main(dog_meta, outdir, fq_dir, ref):
             f"#SBATCH -A {account}\n"
         )             
      
-        # slurm submission body 
-        with open(slurm, "w") as f:
+        # job submission body 
+        with open(submiss, "w") as f:
             print(header, file=f)
             print("set -e\n",file=f)
             print(f"conda activate {snake_env}",file=f)
@@ -269,28 +270,28 @@ def main(dog_meta, outdir, fq_dir, ref):
                         """
                     ),file=f
                 )
-            elif not os.path.isfile(ref_dict):
-                print("# generate reference dict from fasta",end="",file=f)
-                print(
-                    textwrap.dedent(
-                        f"""
-                        singularity exec --bind $PWD,$REF_DIR {sif} \\
-                            gatk CreateSequenceDictionary -R {fasta}
-                        """
-                    ),file=f
-                )
+           #elif not os.path.isfile(ref_dict):
+           #    print("# generate reference dict from fasta",end="",file=f)
+           #    print(
+           #        textwrap.dedent(
+           #            f"""
+           #            singularity exec --bind $PWD,$REF_DIR {sif} \\
+           #                gatk CreateSequenceDictionary -R {fasta}
+           #            """
+           #        ),file=f
+           #    )
            
-            # generate fasta index if not available
-            if not os.path.isfile(f"{fasta}.fai") and ref not in refs:
-                print("# generate reference fasta index",end="",file=f)
-                print(
-                    textwrap.dedent(
-                        f"""
-                        singularity exec --bind $PWD,{ref_dir} {sif} \\
-                            samtools faidx {fasta}
-                        """
-                    ),file=f
-                )
+           ## generate fasta index if not available
+           #if not os.path.isfile(f"{fasta}.fai") and ref not in refs:
+           #    print("# generate reference fasta index",end="",file=f)
+           #    print(
+           #        textwrap.dedent(
+           #            f"""
+           #            singularity exec --bind $PWD,{ref_dir} {sif} \\
+           #                samtools faidx {fasta}
+           #            """
+           #        ),file=f
+           #    )
  
             print(
                 textwrap.dedent(
@@ -306,11 +307,11 @@ def main(dog_meta, outdir, fq_dir, ref):
             ) 
             
             if "s3" in remote:
-                print("# save slurm err/out logs",end="",file=f)
+                print(f"# save {profile} err/out logs",end="",file=f)
                 print(
                     textwrap.dedent(
                         f"""
-                        mc cp --recursive ./slurm_logs/ \\
+                        mc cp --recursive ./{profile}_logs/ \\
                             {alias}/{bucket}/wgs/{breed}/{sample_name}/{ref}/
                         """
                     ),file=f
@@ -365,6 +366,17 @@ if __name__ == '__main__':
         help="path to fastq directory"
     )
     required.add_argument(
+        "-r", "--ref",
+        default="canfam4",
+        help=textwrap.dedent(f'''\
+            select reference to use: {", ".join(refs)}.
+            if using custom reference, ensure provided name
+            is exact matche to name (--ref) used with 
+            prep_custom_ref.py
+        '''),
+        metavar=""
+    )
+    required.add_argument(
         "-o", "--out",
         default=argparse.SUPPRESS,
         metavar="\b",
@@ -397,7 +409,7 @@ if __name__ == '__main__':
         default=argparse.SUPPRESS,
         metavar="\b",
         required=True,
-        help="email address for slurm logs"
+        help="email address for job logs"
     )
     required.add_argument(
         "-a", "--account",
@@ -407,9 +419,17 @@ if __name__ == '__main__':
         help="default scheduler account"
     )
     optional.add_argument(
+        "--profile",
+       #nargs="?",
+       #const="slurm",
+        default="slurm",
+        help="HPC job scheduler [default: slurm]",
+        metavar=""
+    )
+    optional.add_argument(
         "--remote",
-        nargs="?",
-        const="local",
+       #nargs="?",
+       #const="local",
         default="local",
         choices=remotes,
         type=str.lower,
@@ -426,27 +446,16 @@ if __name__ == '__main__':
         action="store_true",
         help="left align analysis-ready bam  [default: off]"
     )
-    optional.add_argument(
-        "-r", "--ref",
-        nargs="?",
-        const="canfam4",
-        default="canfam4",
-       #choices=refs,
-       #help="select reference to use: "+ \
-       #    ", ".join(refs) + " [default: canfam4]",
-        help=textwrap.dedent(f'''\
-            select reference to use: {", ".join(refs)}.
-            if using custom reference, ensure provided name
-            is exact matche to name (--ref) used with 
-            prep_custom_ref.py
-        '''),
-        metavar=""
-    )
    #optional.add_argument(
-   #    "--fasta",
-   #   #default="",
-   #    nargs="?",
-   #    help="path to fasta to be used with --ref custom"
+   #    "-r", "--ref",
+   #    default="canfam4",
+   #    help=textwrap.dedent(f'''\
+   #        select reference to use: {", ".join(refs)}.
+   #        if using custom reference, ensure provided name
+   #        is exact matche to name (--ref) used with 
+   #        prep_custom_ref.py
+   #    '''),
+   #    metavar=""
    #)
     optional.add_argument(
         "--ref-dir",
@@ -457,8 +466,9 @@ if __name__ == '__main__':
             path to custom reference directory generated by
             prep_custom_ref.py - assumes multiple references
             from the same species have different names 
-            [default ~/.wags/SPECIES/REF]
-        ''')
+            [default ~/.wags]
+        '''),
+        metavar=""
     )
     optional.add_argument(
         "--sif",
@@ -495,10 +505,9 @@ if __name__ == '__main__':
     ref        = args.ref.lower()
     ref_dir    = os.path.expanduser(args.ref_dir) \
         if "~" in args.ref_dir else os.path.abspath(args.ref_dir)
-   #fasta      = args.fasta
-   #sites      = args.sites
     alias      = args.alias
     money      = args.money
+    profile    = args.profile
     remote     = args.remote.lower()
     no_bqsr    = args.no_bqsr
     left_align = args.left_align
@@ -553,6 +562,7 @@ if __name__ == '__main__':
         os.makedirs(outdir)
         print(f"{outdir} created!")
         
-    main(dog_meta,outdir,fq_dir,ref)    
+   #main(dog_meta,outdir,fq_dir,ref,profile)
+    main()
         
         
