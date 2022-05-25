@@ -8,15 +8,14 @@ alias   : s3
 # SINGULARITY IMAGE
 sif : /path/to/WAGS/wags.sif
 
-# SORTSAM TEMP DIR
-sort_tmp : /path/to/proc/dir
-
 # LEFT ALIGN BAM
 left_align : false
 
-# TMP DIRS - NOTE THIS NEEDS TO BE BASED ON PROC DIC + "sort_gather"
+# TMP DIRS - NOTE SORT AND SITES ONLY NEEDS TO BE BASED ON PROC DIC + "sort_gather"
 tmp_dir :
-    sites_only_gather_vcf : /scratch.global/friedlab_JOINT_CF3/sort_gather
+    sort_tmp                 : /scratch.global/friedlab_MONEY_TEST/.tmp/sort
+    sites_only_gather_vcf    : /scratch.global/friedlab_MONEY_TEST/.tmp/sites_gather
+    select_variants_to_table : /dev/shm/money_vars
 
 # BQSR INTERVAL PARAMS
 contig_n_size : 50
@@ -26,15 +25,16 @@ scatter_size : 50
 conda_envs :
     vep : ensembl-vep
 
-# POPULATION VCF
+# POPULATION VCF - NOTE PREP_JOINT WILL NEED pop_vcf AND THEN common_vcf WILL BE FIGUED OUT
+# NOTE pop_vcf DIR HAS TO BE BOUND WITH SINGULARITY
 pop_vcf : /path/to/pop.ref.vcf
-#pop_vcf     : /panfs/roc/groups/0/fried255/fried255/working/pipeline/20210512/VEP/joint_genotype.canfam3.20210512.vcf.gz
-#common_vars : /panfs/roc/groups/0/fried255/fried255/working/pipeline/20210512/VEP/CommonVars/joint_genotype.canfam3.vep.af_nonmajor.vcf.gz
-#common_vars_tbi : /panfs/roc/groups/0/fried255/fried255/working/pipeline/20210512/VEP/CommonVars/joint_genotype.canfam3.vep.af_nonmajor.vcf.gz.tbi
+#pop_vcf    : /panfs/roc/groups/0/fried255/fried255/working/pipeline/20210512/VEP/joint_genotype.canfam3.20210512.vcf.gz
+#common_vcf : /panfs/roc/groups/0/fried255/fried255/working/pipeline/20210512/VEP/CommonVars/joint_genotype.canfam3.vep.af_nonmajor.vcf.gz
+#common_tbi : /panfs/roc/groups/0/fried255/fried255/working/pipeline/20210512/VEP/CommonVars/joint_genotype.canfam3.vep.af_nonmajor.vcf.gz.tbi
 
 # REFERENCE FILES 
 ref_fasta : /home/refgen/dog/canfam3/canFam3.fa 
-ref_dict  : /home/refgen/dog/canfam3/canFam3.dict
+ref_dict  : canFam3.dict
 ref_gtf   : /home/refgen/dog/canfam3/Canis_lupus_familiaris.CanFam3.1.103.gtf.gz
 
 # RECAL
@@ -47,12 +47,12 @@ indel_filter_level : 99.7
 snp_filter_level   : 99.7
 
 # RESOURCE FILES (FROM CONTAINER)
-#known_sites :
-dbsnp_indels_vcf : /home/refgen/dog/canfam3/resources/dbsnp146.indel.vcf
-dbsnp_snp_vcf    : /home/refgen/dog/canfam3/resources/dbsnp146.snp.vcf
-broad_snp_vcf    : /home/refgen/dog/canfam3/resources/final.broad.snps.vcf
-axelsson_snp_vcf : /home/refgen/dog/canfam3/resources/final.axelsson.snps.vcf
-illumina_snp_vcf : /home/refgen/dog/canfam3/resources/illumina.snps.vcf
+known_sites :
+    dbsnp_indels_vcf : /home/refgen/dog/canfam3/resources/dbsnp146.indel.vcf
+    dbsnp_snp_vcf    : /home/refgen/dog/canfam3/resources/dbsnp146.snp.vcf
+    broad_snp_vcf    : /home/refgen/dog/canfam3/resources/final.broad.snps.vcf
+    axelsson_snp_vcf : /home/refgen/dog/canfam3/resources/final.axelsson.snps.vcf
+    illumina_snp_vcf : /home/refgen/dog/canfam3/resources/illumina.snps.vcf
 
 # RANDOM PARAMS
 excess_het_threshold : 54.69

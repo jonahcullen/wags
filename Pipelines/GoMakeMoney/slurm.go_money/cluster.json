@@ -1,13 +1,18 @@
 {
-    "fastqc" :
-    {
-        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.readgroup_name}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.readgroup_name}/%j.{rule}.err"
-    },
     "fastqs_to_ubam" :
     {
         "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.readgroup_name}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.readgroup_name}/%j.{rule}.err"
+    },
+    "mark_adapters" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.readgroup_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.readgroup_name}/%j.{rule}.err"
+    },
+    "bwa_index" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
     },
     "sam_to_fastq_and_bwa_mem" :
     {
@@ -49,30 +54,45 @@
         "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.ref}/%j.{rule}.err"
     },
-    "coverage_depth_and_flagstat" :
+    "scatter_intervals" :
     {
-        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.ref}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.ref}/%j.{rule}.err"
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    },
+    "split_intervals" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
     },
     "haplotype_caller" :
     {
-        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.hc_interval}/{wildcards.ref}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.hc_interval}/{wildcards.ref}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.sample_name}/money_00{wildcards.split}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/money_00{wildcards.split}/{wildcards.ref}/%j.{rule}.err"
     },
     "merge_gvcfs" :
     {
         "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.ref}/%j.{rule}.err"
     },
+    "post_base_recalibrator" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.interval}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.interval}/%j.{rule}.err"
+    },
+    "post_gather_bqsr_reports" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
     "genotype_gvcfs" :
     {
-        "output" : ".logs/{rule}/{wildcards.hc_interval}/{wildcards.ref}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.hc_interval}/{wildcards.ref}/%j.{rule}.err"
+        "output" : ".logs/{rule}/money_00{wildcards.split}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/money_00{wildcards.split}/{wildcards.ref}/%j.{rule}.err"
     },
     "fltr_make_sites_only" :
     {
-        "output" : ".logs/{rule}/{wildcards.hc_interval}/{wildcards.ref}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.hc_interval}/{wildcards.ref}/%j.{rule}.err"
+        "output" : ".logs/{rule}/money_00{wildcards.split}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/money_00{wildcards.split}/{wildcards.ref}/%j.{rule}.err"
     },
     "sites_only_gather_vcf" :
     {
@@ -91,10 +111,20 @@
     },
     "apply_recal" :
     {
-        "output" : ".logs/{rule}/{wildcards.hc_interval}/{wildcards.ref}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.hc_interval}/{wildcards.ref}/%j.{rule}.err"
+        "output" : ".logs/{rule}/money_00{wildcards.split}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/money_00{wildcards.split}/{wildcards.ref}/%j.{rule}.err"
     },
     "final_gather_vcfs" :
+    {
+        "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
+    },
+    "vep_by_interval" :
+    {
+        "output" : ".logs/{rule}/money_00{wildcards.split}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/money_00{wildcards.split}/{wildcards.ref}/%j.{rule}.err"
+    },
+    "final_gather_veps" :
     {
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
@@ -104,15 +134,10 @@
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
     },
-    "vep_final_vcf" :
-    {
-        "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
-    },
     "select_common_vars" :
     {
-        "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
     },
     "select_variants_to_table" :
     {
@@ -128,5 +153,40 @@
     {
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
-    }
+    },
+    "fastqc" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.readgroup_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.readgroup_name}/%j.{rule}.err"
+    },
+    "flagstat" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
+    "bqsr_analyze_covariates" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
+    "qualimap_bamqc" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
+    "collect_metrics_on_vcf" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
+    "bcftools_stats" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
+    "bcftools_plot" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
 }

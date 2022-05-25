@@ -13,8 +13,8 @@ SBATCH_DEFAULTS = """
                   ntasks=1 
                   mem=16g 
                   time=02:00:00 
-                  partition=small,amdsmall
-                  account=fried255
+                  partition=DUMMY_PAR
+                  account=DUMMY_ACC
                   """
 CLUSTER_CONFIG = "cluster.json"
 ADVANCED_ARGUMENT_CONVERSION = {"yes": True, "no": False}[
