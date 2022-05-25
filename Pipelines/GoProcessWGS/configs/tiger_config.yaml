@@ -4,6 +4,7 @@ species : tiger
 ref     : tiger
 bucket  : wags
 alias   : s3
+profile : slurm
 
 # SINGULARITY IMAGE
 sif : /path/to/wags.sif

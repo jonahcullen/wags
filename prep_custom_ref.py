@@ -214,7 +214,6 @@ if __name__ == '__main__':
     )
     optional.add_argument(
         "--sites",
-        metavar="",
         help=textwrap.dedent('''\
             comma-separated file containing names (col 1) and
             paths to resource VCFs (and indices) (col 2) to be 
@@ -224,13 +223,11 @@ if __name__ == '__main__':
     optional.add_argument(
         "--profile",
         default="slurm",
-        metavar="",
         help="HPC job scheduler [default: slurm]",
     )
     optional.add_argument(
         "--sif",
         default=os.path.join(os.path.expanduser("~"),".sif/wags.sif"),
-        metavar="",
         help="location of container image [default: ~/.sif/wags.sif]"
     )
     optional.add_argument(
