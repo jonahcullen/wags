@@ -207,8 +207,8 @@ def main():
                 else:
                     shutil.copytree(i[0],i[1])
                     # modify profile profile-submit.py for user-supplied parition
-                    if f"{profile_n}.go_wags" in i[0]:
-                        job_sub = os.path.join(i[1],f"{profile_n}-submit.py")
+                    if f"{profile}.go_wags" in i[0]:
+                        job_sub = os.path.join(i[1],f"{profile}-submit.py")
                         with fileinput.FileInput(job_sub,inplace=True,backup=".bak") as file:
                             for line in file:
                                 line = line.replace("DUMMY_PAR",partition)
