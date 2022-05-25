@@ -217,7 +217,7 @@ def main():
                     
         # submission destination
         job_name = snake_n.split('.')[0]
-        submiss = os.path.join(v['work_dir'],f"{breed}_{sample_name}.{job_name}.{profile_n}")
+        submiss = os.path.join(v['work_dir'],f"{breed}_{sample_name}.{job_name}.{profile}")
         
         # SBATCH directives 
         header = (
