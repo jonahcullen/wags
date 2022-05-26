@@ -42,7 +42,7 @@ def main():
     # copy and profile
     profile_dir = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
-        f"Profiles/{profile}/{profile}.go_wags"
+        f"profiles/{profile}/{profile}.go_wags"
     )
     
     shutil.copytree(profile_dir,os.path.join(ref_home,f"{profile}.go_wags"),dirs_exist_ok=True)
@@ -57,7 +57,7 @@ def main():
     # custom config to modify
     config = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
-        "Pipelines/GoPrepRef/configs/custom_config.yaml"
+        "pipelines/prep_ref/configs/custom_config.yaml"
     )
 
     # modify config file
@@ -79,7 +79,7 @@ def main():
     # copy snake
     smk = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
-        "Pipelines/GoPrepRef/prep_wags.smk",
+        "pipelines/prep_ref/prep_wags.smk",
     )
     shutil.copy(smk,ref_home)
 

@@ -123,14 +123,14 @@ def main():
             v['df'].to_csv(out,sep='\t',index=False)
        
         # input templates
-        pipeline  = "GoProcessWGS"
+        pipeline  = "process_wgs"
         rules     = "rules"
         snake_n   = "one_wags.smk"
         config_n  = f"{ref}_config.yaml"
         profile_n = f"{profile}.go_wags"
         # switch to money templates if true - NEEDS TO BE UPDATED STILL
         if money:
-            pipeline  = "GoMakeMoney"
+            pipeline  = "make_money"
             rules     = "rules"
             snake_n   = "go_make_money.smk"
             config_n  = f"{ref}_money.yaml"
@@ -139,7 +139,7 @@ def main():
         # copy snakefile, rules, config, and profile to working dir
         smk = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
-            "Pipelines",
+            "pipelines",
             pipeline,
             f"inputs/{remote}/{bqsr}",
             snake_n
@@ -147,7 +147,7 @@ def main():
         
         rules = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
-            "Pipelines",
+            "pipelines",
             pipeline,
             f"inputs/{remote}/{bqsr}",
             rules
@@ -155,7 +155,7 @@ def main():
         
         config = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
-            "Pipelines",
+            "pipelines",
             pipeline,
             "configs",
             config_n
@@ -169,13 +169,13 @@ def main():
     
         profile_dir = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
-            f"Profiles/{profile}",
+            f"profiles/{profile}",
             profile_n
         )
         
         src = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
-            "Pipelines",
+            "pipelines",
             pipeline,
             "src"
         )

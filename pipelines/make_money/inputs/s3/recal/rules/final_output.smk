@@ -78,15 +78,17 @@ rule manifest_and_archive:
          mem_mb = 16000
     run:
         with open(output.manifest, "w") as outfile:
-            s = f'''
-                Included files:
-                1) results/vep_final_vcf/{wildcards.breed}_{wildcards.sample_name}.{wildcards.ref}.vep.vcf.gz - annotated VCF and index (.tbi) for all {wildcards.sample_name} variants
-                2) results/select_vars_to_table/{wildcards.sample_name}.{wildcards.ref}.unique_vars.vcf.gz - annotated VCF and index (.tbi) for all unique {wildcards.sample_name} variants
-                3) results/select_vars_to_table/{wildcards.sample_name}.{wildcards.ref}.rare_vars.vcf.gz - annotated VCF and index (.tbi) for all rare {wildcards.sample_name} variants
-                4) results/final_output/{wildcards.sample_name}_{wildcards.ref}.tables.xlsx - contains two sheets
-                \t i) {wildcards.sample_name}_{wildcards.ref}.unique_vars - table version of item 2
-                \t ii) {wildcards.sample_name}_{wildcards.ref}.rare_vars - table version of item 3
-            '''
+            s = textwrap.dedent(
+                f'''
+                    Included files:
+                    1) results/vep_final_vcf/{wildcards.breed}_{wildcards.sample_name}.{wildcards.ref}.vep.vcf.gz - annotated VCF and index (.tbi) for all {wildcards.sample_name} variants
+                    2) results/select_vars_to_table/{wildcards.sample_name}.{wildcards.ref}.unique_vars.vcf.gz - annotated VCF and index (.tbi) for all unique {wildcards.sample_name} variants
+                    3) results/select_vars_to_table/{wildcards.sample_name}.{wildcards.ref}.rare_vars.vcf.gz - annotated VCF and index (.tbi) for all rare {wildcards.sample_name} variants
+                    4) results/final_output/{wildcards.sample_name}_{wildcards.ref}.tables.xlsx - contains two sheets
+                    \t i) {wildcards.sample_name}_{wildcards.ref}.unique_vars - table version of item 2
+                    \t ii) {wildcards.sample_name}_{wildcards.ref}.rare_vars - table version of item 3
+                '''
+            )
             print(s, file=outfile)
 
         shell('''
