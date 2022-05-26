@@ -85,8 +85,6 @@ rule all:
         ),
 
 # rules to include based on user setup
-include: "rules/qc.smk"
-include: "rules/index.smk"
 include: "rules/bam.smk"
 include: "rules/gvcf.smk"
 include: "rules/genotype.smk"
