@@ -91,7 +91,6 @@ rule generate_intervals:
                 with open(
                         os.path.join(
                             params.base,
-                           #f"wags_{str(ival).zfill(4)}.{k}_{i+1}of{len(d[k]['collapsed'])}.interval_list"),
                             f"wags_{str(ival).zfill(4)}.interval_list"),
                             "w"
                         ) as out:

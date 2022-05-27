@@ -1,12 +1,11 @@
+import os
 import pandas as pd
 from pathlib import Path
-import os
 
 localrules: input_list,
             scatter_intervals,
             generate_intervals,
 
-#configfile: "canfam4_config.yaml"
 singularity: config['sif']
 
 include: "src/get_gvcfs.py"
