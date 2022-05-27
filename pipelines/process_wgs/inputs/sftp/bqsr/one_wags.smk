@@ -21,7 +21,7 @@ cnopts = pysftp.CnOpts()
 cnopts.hostkeys = None
 
 SFTP = RemoteProvider(
-    username="cull0084",
+    username=server_user,
     password=server_pass,
     cnopts=cnopts,
     mkdir_remote=True
