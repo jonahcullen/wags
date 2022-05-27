@@ -349,7 +349,7 @@ if __name__ == '__main__':
             if using custom reference, ensure provided name
             is exact matche to name (--ref) used with 
             prep_custom_ref.py
-        '''),
+        ''')
     )
     required.add_argument(
         "-o", "--out",
@@ -363,7 +363,11 @@ if __name__ == '__main__':
         default=argparse.SUPPRESS,
         metavar="\b",
         required=True,
-        help="bucket name"
+        help=textwrap.dedent('''\
+            bucket name. if using sftp, bucket is the
+            host name and path to output director
+            (e.g. hostname/path/to/dir)
+        ''')
     )
     required.add_argument(
         "-s", "--snake-env",
