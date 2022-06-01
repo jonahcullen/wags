@@ -21,21 +21,15 @@ rule scatter_intervals:
             sed -i '/^chrUn/d' {output}
         '''
 
-rule generate_intervals:
+checkpoint generate_intervals:
     input:
-        ival_list = f"{config['bucket']}/wgs/pipeline/{config['ref']}/{config['date']}/intervals/acgt.N50.interval_list",
+        ival_list = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/acgt.N50.interval_list"
     output:
-        ivals = expand(
-            "{bucket}/wgs/pipeline/{ref}/{date}/intervals/import/wags_{interval}.interval_list",
-            bucket = config['bucket'],
-            ref = config['ref'],
-            date = config['date'],
-            interval = [str(i).zfill(4) for i in range(0,config['num_intervals']+1)]
-        ),
+        directory("{bucket}/wgs/pipeline/{ref}/{date}/intervals/import"),
+    params:
+        base      = f"{config['bucket']}/wgs/pipeline/{config['ref']}/{config['date']}/intervals/import",
         lengths   = f"{config['bucket']}/wgs/pipeline/{config['ref']}/{config['date']}/intervals/collapsed_lengths.csv",
         ivals_all = f"{config['bucket']}/wgs/pipeline/{config['ref']}/{config['date']}/intervals/wags_intervals.list",
-    params:
-        base = f"{config['bucket']}/wgs/pipeline/{config['ref']}/{config['date']}/intervals/import",
     run:
         # process interval file and collapse intervals by chromosome    
         d = {}
@@ -43,7 +37,7 @@ rule generate_intervals:
 
         with open(input.ival_list, "r") as f:
             for line in f:
-                
+                # NOTE: canfam specific - make option?
                 if "chrUn" in line:
                     continue
                 
@@ -75,23 +69,16 @@ rule generate_intervals:
             for k,v in d.items():
                 d[k]["collapsed"] = collapse_intervals(v["intervals"])
 
-        # write intervals to files
-       #os.makedirs(params.base,exist_ok=True)
-
         # get list of keys and apply natural sort
         sorted_keys = list(d.keys())
         natural_sort(sorted_keys)
 
-        print(sorted_keys)
-
         ival = 0
         for k in sorted_keys:
             for i,j in enumerate(d[k]["collapsed"]):
-               #print(k,j)
                 with open(
                         os.path.join(
                             params.base,
-                           #f"wags_{str(ival).zfill(4)}.{k}_{i+1}of{len(d[k]['collapsed'])}.interval_list"),
                             f"wags_{str(ival).zfill(4)}.interval_list"),
                             "w"
                         ) as out:
@@ -103,12 +90,12 @@ rule generate_intervals:
                           sep="\t",file=out)
          
         # generate file of import interval paths
-        with open(output.ivals_all,"w") as out:
+        with open(params.ivals_all,"w") as out:
             for ival in glob.glob(os.path.join(params.base,"*.interval_list")):
                 print(ival,file=out)
         
         # generate collapsed lengths
-        with open(output.lengths, "w") as out:
+        with open(params.lengths, "w") as out:
             print("chr","interval_number","interval_length",sep=",",file=out)
             for k,v in d.items():
                 for i,j in enumerate(v["collapsed"]):

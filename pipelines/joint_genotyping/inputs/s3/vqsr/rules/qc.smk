@@ -1,9 +1,11 @@
 
 rule plot_interval_lengths:
     input:
-        lengths = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/collapsed_lengths.csv"
+        final_vcf = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_genotype.{ref}.vcf.gz"),
     output:
         len_barplt = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/intervals/interval_lengths_mqc.tiff")
+    params:
+        lengths = f"{config['bucket']}/wgs/pipeline/{config['ref']}/{config['date']}/intervals/collapsed_lengths.csv",
     threads: 1
     resources:
          time   = 30,
@@ -78,17 +80,32 @@ rule bcftools_plot:
                 {input.all_stats}
         '''
 
+def get_vep_htmls(wildcards):
+    # interval dir from split intervals
+    ivals_dir = checkpoints.generate_intervals.get(**wildcards).output[0]
+    # variable number of intervals 
+    INTERVALS, = glob_wildcards(os.path.join(ivals_dir,"wags_{interval}.interval_list"))
+    # return list of recal vcfs
+    return expand(
+        "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/vep/wags_{interval}/recal.{interval}.vep.vcf_summary.html",
+        bucket=config['bucket'],
+        ref=config['ref'],
+        date=config['date'],
+        interval=INTERVALS
+    )
+
 rule qc_cohort:
     input:
-        html_veps = sorted(
-            expand(
-                "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/vep/wags_{interval}/recal.{interval}.vep.vcf_summary.html", 
-                bucket=config['bucket'],
-                ref=config['ref'],
-                date=config['date'],
-                interval=[str(i).zfill(4) for i in range(0,config['num_intervals']+1)]
-            )
-        ),
+        get_vep_htmls,
+       #html_veps = sorted(
+       #    expand(
+       #        "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/vep/wags_{interval}/recal.{interval}.vep.vcf_summary.html", 
+       #        bucket=config['bucket'],
+       #        ref=config['ref'],
+       #        date=config['date'],
+       #        interval=[str(i).zfill(4) for i in range(0,config['num_intervals']+1)]
+       #    )
+       #),
         len_barplt      = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/intervals/interval_lengths_mqc.tiff"),
         all_stats       = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort.{ref}.vchk"),
         summary         = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort/summary.pdf"),

@@ -1,7 +1,6 @@
 
 rule import_gvcfs:
     input:
-       #gvcf_list = "gvcfs.list",
         gvcf_list = "{bucket}/wgs/pipeline/{ref}/{date}/import_gvcfs/inputs.list",
         interval  = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/import/wags_{interval}.interval_list",
     output:

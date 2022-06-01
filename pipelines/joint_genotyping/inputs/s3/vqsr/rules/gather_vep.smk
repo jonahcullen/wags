@@ -1,20 +1,26 @@
 
+def get_recal_vcfs(wildcards):
+    # interval dir from split intervals
+    ivals_dir = checkpoints.generate_intervals.get(**wildcards).output[0]
+    # variable number of intervals 
+    INTERVALS, = glob_wildcards(os.path.join(ivals_dir,"wags_{interval}.interval_list"))
+    # return list of recal vcfs
+    return expand(
+        "{bucket}/wgs/pipeline/{ref}/{date}/var_recal/apply/wags_{interval}/recal.{interval}.vcf.gz",
+        bucket=config['bucket'],
+        ref=config['ref'],
+        date=config['date'],
+        interval=INTERVALS
+    )
+
 rule final_gather_vcfs:
     input:
-        recal_vcfs = sorted(
-            expand(
-                "{bucket}/wgs/pipeline/{ref}/{date}/var_recal/apply/wags_{interval}/recal.{interval}.vcf.gz", 
-                bucket=config['bucket'],
-                ref=config['ref'],
-                date=config['date'],
-                interval=[str(i).zfill(4) for i in range(0,config['num_intervals']+1)]
-            )
-        )
+        get_recal_vcfs
     output:
         final_vcf       = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_genotype.{ref}.vcf.gz"),
         final_vcf_index = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_genotype.{ref}.vcf.gz.tbi")
     params:
-        vcfs = lambda wildcards, input: " --input ".join(map(str,input.recal_vcfs)),
+        vcfs = lambda wildcards, input: " --input ".join(map(str,input)),
     threads: 4
     resources:
          time   = 240,
@@ -39,8 +45,9 @@ rule vep_by_interval:
     input:
         recal_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/var_recal/apply/wags_{interval}/recal.{interval}.vcf.gz", 
     output:
-        recal_vep     = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/vep/wags_{interval}/recal.{interval}.vep.vcf.gz", 
-        recal_vep_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/vep/wags_{interval}/recal.{interval}.vep.vcf.gz.tbi", 
+        recal_vep      = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/vep/wags_{interval}/recal.{interval}.vep.vcf.gz", 
+        recal_vep_tbi  = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/vep/wags_{interval}/recal.{interval}.vep.vcf.gz.tbi", 
+        recal_vep_html = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/vep/wags_{interval}/recal.{interval}.vep.vcf_summary.html", 
     params:
         out_name = lambda wildcards, output: os.path.splitext(output.recal_vep)[0],
         ref_fasta = config["ref_fasta"],
@@ -70,24 +77,29 @@ rule vep_by_interval:
             tabix -p vcf {output.recal_vep}
         '''
 
+def get_vep_vcfs(wildcards):
+    # interval dir from split intervals
+    ivals_dir = checkpoints.generate_intervals.get(**wildcards).output[0]
+    # variable number of intervals 
+    INTERVALS, = glob_wildcards(os.path.join(ivals_dir,"wags_{interval}.interval_list"))
+    # return list of recal vcfs
+    return expand(
+        "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/vep/wags_{interval}/recal.{interval}.vep.vcf.gz",
+        bucket=config['bucket'],
+        ref=config['ref'],
+        date=config['date'],
+        interval=INTERVALS
+    )
 
 rule final_gather_veps:
     input:
-        recal_veps = sorted(
-            expand(
-                "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/vep/wags_{interval}/recal.{interval}.vep.vcf.gz", 
-                bucket=config['bucket'],
-                ref=config['ref'],
-                date=config['date'],
-                interval=[str(i).zfill(4) for i in range(0,config['num_intervals']+1)]
-            )
-        )
+        get_vep_vcfs
     output:
         vep_vcf       = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_genotype.{ref}.vep.vcf.gz",keep_local=True),
         vep_vcf_index = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_genotype.{ref}.vep.vcf.gz.tbi",keep_local=True),
     params:
         vcf_tmp = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_genotype.{ref}.TMP.gz",
-        veps    = lambda wildcards, input: " --input ".join(map(str,input.recal_veps)),
+        veps    = lambda wildcards, input: " --input ".join(map(str,input)),
     threads: 24
     resources:
          time   = 1440,
