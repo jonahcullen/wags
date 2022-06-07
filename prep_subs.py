@@ -25,13 +25,16 @@ def extract_pu(s):
     with gzip.open(s,"rt") as f:
         head = f.readline().strip()
         if head.startswith("@SRR"): # handle SRR fastqs from NCBI
-            return f"{head.split('.')[0][1:]}.NA.NA"
+            return f"{head.split('.')[0][1:]}.NA.NA" # sample name in place of flowcell
         elif head.startswith("@HWI"): # older MiSeq (?) fastqs...
             head = head.split(":")
             if head[-1]:
                 return f"{head[2]}.{head[3]}.{head[-1]}"
             else:
                 return f"{head[2]}.{head[3]}.NA"
+        elif ":" not in head:
+            if head.startswith("@ERR"): # specific fix...unsure if consistent for all ERR
+                return f"{head.split('.')[0][1:]}.NA.NA" # sample name in place of flowcell
         else: # or "standard" illumina headers...
             head = head.split(":")
             return f"{head[2]}.{head[3]}.{head[-1]}"
