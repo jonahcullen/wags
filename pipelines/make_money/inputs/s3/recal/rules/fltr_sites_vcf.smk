@@ -33,7 +33,7 @@ def get_sites_only_vcfs(wildcards):
     SPLIT, = glob_wildcards(os.path.join(ivals_dir,"00{split}-scattered.interval_list"))
     # return list of split intervals var_filtered.vcf.gz
     return expand(
-        "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/genotype_gvcfs/money_00{split}/filtr.00{split}.variant_filtered.vcf.gz",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/genotype_gvcfs/money_00{split}/filtr.00{split}.sites_only.variant_filtered.vcf.gz",
         bucket = config['bucket'],
         breed=breed,
         sample_name = sample_name,

@@ -5,14 +5,14 @@ def get_recal_vcfs(wildcards):
     # variable number of intervals up to scatter_size set in config (default: 50)
     SPLIT, = glob_wildcards(os.path.join(ivals_dir,"00{split}-scattered.interval_list"))
     # return list of split intervals recal.vcf.gz
-    return expand(
+    return sorted(expand(
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/var_recal/apply/money_00{split}/recal.00{split}.vcf.gz",
         bucket = config['bucket'],
         breed=breed,
         sample_name = sample_name,
         ref = config['ref'],
         split = SPLIT
-    )
+    ))
 
 rule final_gather_vcfs:
     input:
@@ -83,14 +83,14 @@ def get_vep_vcfs(wildcards):
     # variable number of intervals up to scatter_size set in config (default: 50)
     SPLIT, = glob_wildcards(os.path.join(ivals_dir,"00{split}-scattered.interval_list"))
     # return list of split intervals recal.vcf.gz
-    return expand(
+    return sorted(expand(
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/money_00{split}/recal.00{split}.vep.vcf.gz",
         bucket = config['bucket'],
         breed=breed,
         sample_name = sample_name,
         ref = config['ref'],
         split = SPLIT
-    )
+    ))
 
 rule final_gather_veps:
     input:

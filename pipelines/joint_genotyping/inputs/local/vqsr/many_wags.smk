@@ -10,19 +10,7 @@ singularity: config['sif']
 include: "src/utils.py"
 # below is generate tsv of sample, breed, gvcf from s3 based on wags' fastq
 # processing pipeline - will not work for local...should be rethought...
-include: "src/get_gvcfs.py"
-
-# setup snakemake s3 remote provider
-from snakemake.remote.S3 import RemoteProvider as S3RemoteProvider
-
-s3_key_id = os.environ.get('AWS_ACCESS_KEY')
-s3_access_key = os.environ.get('AWS_SECRET_KEY')
-
-S3 = S3RemoteProvider(
-    endpoint_url='https://s3.msi.umn.edu',
-    access_key_id=s3_key_id,
-    secret_access_key=s3_access_key
-)
+#include: "src/get_gvcfs.py"
 
 units = pd.read_csv("gvcfs.list",sep="\t")
 

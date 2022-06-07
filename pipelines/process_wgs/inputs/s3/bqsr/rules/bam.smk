@@ -7,7 +7,7 @@ rule fastqs_to_ubam:
     params:
         java_opt          = "-Xms6000m",
         ref_fasta         = config['ref_fasta'],
-        tmp_dir           = f"/dev/shm/friedlab_{os.environ['USER']}/{{readgroup_name}}_{config['ref']}/",
+        tmp_dir           = f"/dev/shm/{os.environ['USER']}/{{readgroup_name}}_{config['ref']}/",
         library_name      = lambda wildcards: units.loc[units["readgroup_name"] == wildcards.readgroup_name,"library_name"].values[0],
         platform_unit     = lambda wildcards: units.loc[units["readgroup_name"] == wildcards.readgroup_name,"platform_unit"].values[0],
         run_date          = lambda wildcards: units.loc[units["readgroup_name"] == wildcards.readgroup_name,"run_date"].values[0],
@@ -45,7 +45,7 @@ rule mark_adapters:
         mark_adapt = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{readgroup_name}.mark_adapt.unmapped.bam",
         metrics    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{readgroup_name}.mark_adapt.metrics.txt"
     params:
-        tmp_dir = f"/dev/shm/friedlab_{os.environ['USER']}_mark_adapt/"
+        tmp_dir = f"/dev/shm/{os.environ['USER']}/{{readgroup_name}}_mark_adapt/"
     benchmark:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{readgroup_name}.mark_adapters.benchmark.txt"
     threads: 4
@@ -71,7 +71,7 @@ rule sam_to_fastq_and_bwa_mem:
         bwa_log = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{readgroup_name}.{ref}_aligned.unmerged.bwa.stderr.log",
         bam     = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{readgroup_name}.{ref}_aligned.unmerged.bam"
     params:
-        tmp_dir   = f"/dev/shm/friedlab_{os.environ['USER']}_sam_fastq/",
+        tmp_dir   = f"/dev/shm/{os.environ['USER']}/{{readgroup_name}}_sam_fastq/",
         java_opt  = "-Xms3000m",
         bwa_cl    = "mem -K 100000000 -p -v 3 -t 16 -Y",
         ref_fasta = config['ref_fasta'],

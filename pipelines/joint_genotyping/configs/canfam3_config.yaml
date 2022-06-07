@@ -1,19 +1,22 @@
 
-current_dogids : dogid_20220326.list
-bucket         : friedlab
-alias          : s3Fried
-ref            : canfam3
-date           : 20220401
+joint_cohort : dogid_20220326.list
+bucket       : friedlab
+alias        : s3Fried
+ref          : canfam3
+date         : 20220401
 
 # SINGULARITY IMAGE
 sif : /home/fried255/cull0084/.sif/wags.sif
+
+# OUTPUT OPTIONS
+var_table : true
+phasing   : false
 
 # CONDA ENV
 conda_envs :
     qc : bcftools
 
 # DB IMPORT
-num_intervals : 243
 batch_size    : 50
 
 # REFERENCE FILES

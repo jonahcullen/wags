@@ -66,8 +66,8 @@
     },
     "haplotype_caller" :
     {
-        "output" : ".logs/{rule}/{wildcards.sample_name}/money_00{wildcards.split}/{wildcards.ref}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.sample_name}/money_00{wildcards.split}/{wildcards.ref}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.sample_name}/00{wildcards.split}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/00{wildcards.split}/{wildcards.ref}/%j.{rule}.err"
     },
     "merge_gvcfs" :
     {
@@ -84,15 +84,25 @@
         "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
     },
+    "download_gvcfs" :
+    {
+        "output" : ".logs/{rule}/{wildcards.breed}/{wildcards.sample}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.breed}/{wildcards.sample}/%j.{rule}.err"
+    },
+    "import_gvcfs" :
+    {
+        "output" : ".logs/{rule}/00{wildcards.interval}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/00{wildcards.interval}/{wildcards.ref}/%j.{rule}.err"
+    },
     "genotype_gvcfs" :
     {
-        "output" : ".logs/{rule}/money_00{wildcards.split}/{wildcards.ref}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/money_00{wildcards.split}/{wildcards.ref}/%j.{rule}.err"
+        "output" : ".logs/{rule}/00{wildcards.interval}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/00{wildcards.interval}/{wildcards.ref}/%j.{rule}.err"
     },
     "fltr_make_sites_only" :
     {
-        "output" : ".logs/{rule}/money_00{wildcards.split}/{wildcards.ref}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/money_00{wildcards.split}/{wildcards.ref}/%j.{rule}.err"
+        "output" : ".logs/{rule}/00{wildcards.interval}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/00{wildcards.interval}/{wildcards.ref}/%j.{rule}.err"
     },
     "sites_only_gather_vcf" :
     {
@@ -111,8 +121,8 @@
     },
     "apply_recal" :
     {
-        "output" : ".logs/{rule}/money_00{wildcards.split}/{wildcards.ref}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/money_00{wildcards.split}/{wildcards.ref}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.interval}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.interval}/{wildcards.ref}/%j.{rule}.err"
     },
     "final_gather_vcfs" :
     {
@@ -121,8 +131,8 @@
     },
     "vep_by_interval" :
     {
-        "output" : ".logs/{rule}/money_00{wildcards.split}/{wildcards.ref}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/money_00{wildcards.split}/{wildcards.ref}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.interval}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.interval}/{wildcards.ref}/%j.{rule}.err"
     },
     "final_gather_veps" :
     {

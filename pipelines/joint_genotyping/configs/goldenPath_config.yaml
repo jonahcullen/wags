@@ -1,7 +1,7 @@
 
-joint_cohort : dogid_20220326.list
-ref          : canfam4
-date         : 20220401
+joint_cohort : cohort.csv
+ref          : goldenPath
+date         : 20220602
 bucket       : friedlab
 alias        : s3Fried
 profile      : slurm
@@ -21,9 +21,9 @@ conda_envs :
 batch_size : 50
 
 # REFERENCE FILES
-ref_fasta : /home/refgen/dog/canfam4/canFam4.fa
-ref_dict  : /home/refgen/dog/canfam4/canFam4.dict
-ref_gtf   : /home/refgen/dog/canfam4/UU_Cfam_GSD_1.0_ROSY.refSeq.ensformat.gtf.gz
+ref_fasta : /home/refgen/horse/goldenPath/goldenPath.Ec_build-3.0_wMSY.fa
+ref_dict  : goldenPath.Ec_build-3.0_wMSY.dict
+ref_gtf   : /WHICH/ANNOTATION/TO/USE.gtf
 
 # TMP DIRS - NOTE THIS NEEDS TO BE BASED ON SETUP
 tmp_dir :
@@ -42,14 +42,7 @@ snp_recalibration_annotation_values   : ["QD", "MQRankSum", "ReadPosRankSum", "F
 indel_filter_level : 99.7
 snp_filter_level   : 99.7
 
-# RESOURCE FILES (FROM CONTAINER)
-dbsnp_indels_vcf : /home/refgen/dog/canfam4/resources/canFam4.recoded.dbsnp.151.indels.sorted.fixed.header.chr.vcf
-dbsnp_snp_vcf    : /home/refgen/dog/canfam4/resources/canFam4.recoded.dbsnp.151.snps.sorted.fixed.header.chr.vcf
-broad_snp_vcf    : /home/refgen/dog/canfam4/resources/canFam4.final.broad.snps.sorted.fixed.header.chr.vcf
-axelsson_snp_vcf : /home/refgen/dog/canfam4/resources/canFam4.final.axelsson.snps.sorted.fixed.header.chr.vcf
-illumina_snp_vcf : /home/refgen/dog/canfam4/resources/canFam4.illumina.snps.sorted.fixed.header.chr.vcf
-
-# AF FREQ
-var_to_table_dir : /panfs/roc/groups/0/fried255/fried255/working/all_dogs
-
-
+# RESOURCE FILES FOR BQSR (OPTIONAL)
+known_sites :
+    dbsnp_snp_vcf  : /home/refgen/horse/goldenPath/resources/equus_caballus.chrIDmod.vcf.gz
+    mnec2m_snp_vcf : /home/refgen/horse/goldenPath/resources/MNEc2M.EquCab3.09182018.recode.rmGT.refseqnames.chrIDmod.vcf.gz
