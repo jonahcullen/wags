@@ -191,12 +191,19 @@ def main():
         ref_dict = doc['ref_dict']
         fasta    = doc['ref_fasta']
         # update sif and other cli args
-        doc['profile']    = profile
-        doc['sif']        = sif
-        doc['alias']      = alias
-        doc['bucket']     = bucket
-        doc['sort_tmp']   = os.path.join(outdir,".sort",breed,sample_name,".tmp")
+        doc['profile'] = profile
+        doc['sif']     = sif
+        doc['alias']   = alias
+        doc['bucket']  = bucket
         doc['left_align'] = left_align
+        # for private variant analysis, add common.vcf path
+        if money:
+            doc['tmp_dir']['sort_tmp']              = os.path.join(outdir,".sort",breed,sample_name,".tmp")
+            doc['tmp_dir']['sites_only_gather_vcf'] = os.path.join(outdir,".sort",breed,sample_name,".tmp")
+            doc['common_vcf'] = common
+            doc['common_tbi'] = f"{common}.tbi"
+        else:
+            doc['sort_tmp']  = os.path.join(outdir,".sort",breed,sample_name,".tmp")
         # dump
         with open(os.path.join(v['work_dir'],config_n),'w') as out:
             yaml.dump(doc,out,sort_keys=False)
@@ -452,6 +459,11 @@ if __name__ == '__main__':
         default=argparse.SUPPRESS,
         help="show this help message and exit"
     )
+    optional.add_argument(
+        "--common",
+        default=None,
+        help="path to common variants vcf [default: None]"
+    )
 
     args = parser.parse_args()
     dog_meta   = os.path.abspath(args.meta)
@@ -468,6 +480,7 @@ if __name__ == '__main__':
         if "~" in args.ref_dir else os.path.abspath(args.ref_dir)
     alias      = args.alias
     money      = args.money
+    common     = args.common
     profile    = args.profile
     remote     = args.remote.lower()
     no_bqsr    = args.no_bqsr
@@ -481,6 +494,12 @@ if __name__ == '__main__':
     bqsr = "bqsr"
     if no_bqsr:
         bqsr = "no_bqsr"
+
+    if money:
+        bqsr = "recal"
+        # require path to common.vcf
+        if common is None:
+            parser.error("--money requires --common")
 
     # if non default sif location
     if sif != os.path.join(os.path.expanduser("~"),".sif/wags.sif"):

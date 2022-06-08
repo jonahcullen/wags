@@ -8,29 +8,6 @@ def get_fastq(wildcards):
     
     return {'r1': fastqs.fastq_1, 'r2': fastqs.fastq_2}
 
-#def fastqc_out(d):
-#    '''
-#    Output fastqc names.
-#    '''
-#   #fastqs = units.loc[(wildcards.readgroup_name), ['fastq_1', 'fastq_2']].dropna()
-#    qc_list = []
-#   #for v in d.values():
-#   #    qc_list.append(v.replace(".fastq.gz","_")+"fastqc.zip")
-#    qc_list.append(d)    
-#
-#    return qc_list
-
-#def fastqc_out(wildcards):
-#    '''
-#    Output fastqc names.
-#    '''
-#    fastqs = units.loc[(wildcards.readgroup_name), ['fastq_1', 'fastq_2']].dropna()
-#    
-#    return {
-#        'r1': fastqs.fastq_1.replace(".fastq.gz","_")+"fastqc.zip",
-#        'r2': fastqs.fastq_2.replace(".fastq.gz","_")+"fastqc.zip"
-#    }
-
 def sequence_grouping(base,ref_dict):
     '''
     Placeholder

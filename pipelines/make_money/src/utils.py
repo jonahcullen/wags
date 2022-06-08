@@ -4,11 +4,11 @@ def get_fastq(wildcards):
     '''
     Get fastq files of given sample-unit.
     '''
-    fastqs = units.loc[(wildcards.readgroup_name), ["fastq_1", "fastq_2"]].dropna()
+    fastqs = units.loc[(wildcards.readgroup_name), ['fastq_1', 'fastq_2']].dropna()
     
-    return {"r1": fastqs.fastq_1, "r2": fastqs.fastq_2}
+    return {'r1': fastqs.fastq_1, 'r2': fastqs.fastq_2}
 
-def sequence_grouping(ref_dict):
+def sequence_grouping(base,ref_dict):
     '''
     Placeholder
     '''
@@ -38,18 +38,18 @@ def sequence_grouping(ref_dict):
 
     # write sequence group list to interval files
     seq_group = tsv_string.split("\n")
-    if not os.path.isdir("results/seq_group/no_unmap"):
-        os.makedirs("results/seq_group/no_unmap",exist_ok=True)
+    if not os.path.isdir(f"{base}/seq_group/no_unmap"):
+        os.makedirs(f"{base}/seq_group/no_unmap",exist_ok=True)
         for i,v in enumerate(seq_group):
-            with open(os.path.join("results/seq_group/no_unmap",f"group_{i}.tsv"),"w") as f:
+            with open(os.path.join(f"{base}/seq_group/no_unmap",f"group_{i}.tsv"),"w") as f:
                 print(v,file=f)
 
     # write sequence group list with unmapped to interval file so they are recalibrated as well
     tsv_string += '\n' + "unmapped"
     seq_group_unmapped = tsv_string.split("\n")
-    if not os.path.isdir("results/seq_group/with_unmap"):
-        os.makedirs("results/seq_group/with_unmap",exist_ok=True)
+    if not os.path.isdir(f"{base}/seq_group/with_unmap"):
+        os.makedirs(f"{base}/seq_group/with_unmap",exist_ok=True)
         for i,v in enumerate(seq_group_unmapped):
-            with open(os.path.join("results/seq_group/with_unmap",f"group_{i}.tsv"),"w") as f:
+            with open(os.path.join(f"{base}/seq_group/with_unmap",f"group_{i}.tsv"),"w") as f:
                 print(v,file=f)
     

@@ -23,7 +23,7 @@ if not os.path.isfile(config['common_vcf']):
 
 rule select_variants_to_table:
     input:            
-        final_vcf   = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz"),
+        final_vcf  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz"),
         common_vcf = config['common_vcf'],
     output:
         unique_vars           = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.unique_vars.vcf",
