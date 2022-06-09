@@ -75,16 +75,16 @@ rule snps_var_recal:
 
 rule apply_recal:
     input:
-        var_filtrd_vcf  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/genotype_gvcfs/money_00{split}/filtr.00{split}.variant_filtered.vcf.gz",
+        var_filtrd_vcf  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/genotype_gvcfs/money_00{interval}/filtr.00{interval}.variant_filtered.vcf.gz",
         indels_recal    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/var_recal/indels.recal",
         indels_tranches = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/var_recal/indels.tranches",
         snps_recal      = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/var_recal/snps.recal",
         snps_tranches   = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/var_recal/snps.tranches",
     output:
-        recal_vcf       = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/var_recal/apply/money_00{split}/recal.00{split}.vcf.gz",
-        recal_vcf_index = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/var_recal/apply/money_00{split}/recal.00{split}.vcf.gz.tbi"
+        recal_vcf       = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/var_recal/apply/money_00{interval}/recal.00{interval}.vcf.gz",
+        recal_vcf_index = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/var_recal/apply/money_00{interval}/recal.00{interval}.vcf.gz.tbi"
     params:
-        apply_recal_dir    = lambda wildcards: f"{config['bucket']}/wgs/{breed}/{sample_name}/{config['ref']}/money/var_recal/apply/money_00{wildcards.split}",
+        apply_recal_dir    = lambda wildcards: f"{config['bucket']}/wgs/{breed}/{sample_name}/{config['ref']}/money/var_recal/apply/money_00{wildcards.interval}",
         indel_filter_level = config["indel_filter_level"],
         snp_filter_level   = config["snp_filter_level"]
     resources:

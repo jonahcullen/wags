@@ -1,10 +1,10 @@
 
 rule fltr_make_sites_only:
     input:
-        vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/genotype_gvcfs/money_{split}/output.vcf.gz",
+        vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/genotype_gvcfs/money_{interval}/output.vcf.gz",
     output:
-        var_filtrd_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/genotype_gvcfs/money_00{split}/filtr.00{split}.variant_filtered.vcf.gz",
-        sites_only_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/genotype_gvcfs/money_00{split}/filtr.00{split}.sites_only.variant_filtered.vcf.gz"
+        var_filtrd_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/genotype_gvcfs/money_00{interval}/filtr.00{interval}.variant_filtered.vcf.gz",
+        sites_only_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/genotype_gvcfs/money_00{interval}/filtr.00{interval}.sites_only.variant_filtered.vcf.gz"
     params:
         excess_het = config['excess_het_threshold'],
         ref_fasta  = config['ref_fasta']
@@ -30,15 +30,15 @@ def get_sites_only_vcfs(wildcards):
     # interval dir from split intervals
     ivals_dir = checkpoints.split_intervals.get(**wildcards).output[0]
     # variable number of intervals up to scatter_size set in config (default: 50)
-    SPLIT, = glob_wildcards(os.path.join(ivals_dir,"00{split}-scattered.interval_list"))
+    INTERVALS, = glob_wildcards(os.path.join(ivals_dir,"00{interval}-scattered.interval_list"))
     # return list of split intervals var_filtered.vcf.gz
     return expand(
-        "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/genotype_gvcfs/money_00{split}/filtr.00{split}.sites_only.variant_filtered.vcf.gz",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/genotype_gvcfs/money_00{interval}/filtr.00{interval}.sites_only.variant_filtered.vcf.gz",
         bucket = config['bucket'],
         breed=breed,
         sample_name = sample_name,
         ref = config['ref'],
-        split = SPLIT
+        interval = INTERVALS
     )
 
 rule sites_only_gather_vcf:

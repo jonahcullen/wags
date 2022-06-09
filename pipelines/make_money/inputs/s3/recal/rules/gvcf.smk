@@ -96,7 +96,7 @@ rule merge_gvcfs:
          mem_mb = 4000
     shell:
         '''
-            gatk --java-options {params.java_opt}  \
+            gatk --java-options {params.java_opt} \
                 MergeVcfs \
                 --INPUT {params.gvcfs} \
                 --OUTPUT {output.final_gvcf}

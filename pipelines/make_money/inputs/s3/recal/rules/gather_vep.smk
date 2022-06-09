@@ -3,15 +3,15 @@ def get_recal_vcfs(wildcards):
     # interval dir from split intervals
     ivals_dir = checkpoints.split_intervals.get(**wildcards).output[0]
     # variable number of intervals up to scatter_size set in config (default: 50)
-    SPLIT, = glob_wildcards(os.path.join(ivals_dir,"00{split}-scattered.interval_list"))
+    INTERVALS, = glob_wildcards(os.path.join(ivals_dir,"00{interval}-scattered.interval_list"))
     # return list of split intervals recal.vcf.gz
     return sorted(expand(
-        "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/var_recal/apply/money_00{split}/recal.00{split}.vcf.gz",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/var_recal/apply/money_00{interval}/recal.00{interval}.vcf.gz",
         bucket = config['bucket'],
         breed=breed,
         sample_name = sample_name,
         ref = config['ref'],
-        split = SPLIT
+        interval = INTERVALS
     ))
 
 rule final_gather_vcfs:
@@ -44,10 +44,10 @@ rule final_gather_vcfs:
 
 rule vep_by_interval:
     input:
-        recal_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/var_recal/apply/money_00{split}/recal.00{split}.vcf.gz",
+        recal_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/var_recal/apply/money_00{interval}/recal.00{interval}.vcf.gz",
     output:
-        recal_vep     = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/money_00{split}/recal.00{split}.vep.vcf.gz", 
-        recal_vep_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/money_00{split}/recal.00{split}.vep.vcf.gz.tbi", 
+        recal_vep     = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/money_00{interval}/recal.00{interval}.vep.vcf.gz", 
+        recal_vep_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/money_00{interval}/recal.00{interval}.vep.vcf.gz.tbi", 
     params:
         out_name  = lambda wildcards, output: os.path.splitext(output.recal_vep)[0],
         ref_fasta = config["ref_fasta"],
@@ -81,15 +81,15 @@ def get_vep_vcfs(wildcards):
     # interval dir from split intervals
     ivals_dir = checkpoints.split_intervals.get(**wildcards).output[0]
     # variable number of intervals up to scatter_size set in config (default: 50)
-    SPLIT, = glob_wildcards(os.path.join(ivals_dir,"00{split}-scattered.interval_list"))
+    INTERVALS, = glob_wildcards(os.path.join(ivals_dir,"00{interval}-scattered.interval_list"))
     # return list of split intervals recal.vcf.gz
     return sorted(expand(
-        "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/money_00{split}/recal.00{split}.vep.vcf.gz",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/money_00{interval}/recal.00{interval}.vep.vcf.gz",
         bucket = config['bucket'],
         breed=breed,
         sample_name = sample_name,
         ref = config['ref'],
-        split = SPLIT
+        interval = INTERVALS
     ))
 
 rule final_gather_veps:

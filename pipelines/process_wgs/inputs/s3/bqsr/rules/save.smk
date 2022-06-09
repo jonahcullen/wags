@@ -47,7 +47,7 @@ rule upload_pipe_and_logs:
             mc cp --recursive ./{params.profile}.go_wgs/ \
                 {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/pipeline/
 
-            mc cp {wildcards.ref}_config.yaml {wildcards.breed}_{wildcards.sample_name}.one_wags.{params.slurm} one_wags.smk input.tsv \
+            mc cp {wildcards.ref}_config.yaml {wildcards.breed}_{wildcards.sample_name}.one_wags.{params.profile} one_wags.smk input.tsv \
                 {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/pipeline/
 
             mc cp --recursive ./.logs/ \

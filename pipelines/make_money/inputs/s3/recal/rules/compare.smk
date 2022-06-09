@@ -34,7 +34,7 @@ rule select_variants_to_table:
     params:
         tmp_dir   = config['tmp_dir']['select_variants_to_table'],
         ref_fasta = config['ref_fasta'],
-        pop_vcf   = config['pop_vcf']
+        pop_vcf   = config['common_vcf']
     threads: 4
     resources:
          time   = 2880,

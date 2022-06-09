@@ -41,14 +41,6 @@ checkpoint split_intervals:
                 -O {output}
         '''
 
-def get_gvcfs(wildcards):
-    # interval dir from split intervals
-    ivals_dir = checkpoints.split_intervals.get(**wildcards).output[0]
-    # variable number of intervals up to scatter_size set in config (default: 50)
-    SPLIT, = glob_wildcards(os.path.join(ivals_dir,"00{split}-scattered.interval_list"))
-    # return list of split intervals
-    return expand(os.path.join(ivals_dir,"{sample_name}.00{split}.g.vcf.gz"),sample_name=sample_name,split=SPLIT)
-
 rule haplotype_caller:
     input:
         final_bam = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bam")
@@ -78,6 +70,14 @@ rule haplotype_caller:
                 -contamination 0 -ERC GVCF
         '''
 
+def get_gvcfs(wildcards):
+    # interval dir from split intervals
+    ivals_dir = checkpoints.split_intervals.get(**wildcards).output[0]
+    # variable number of intervals up to scatter_size set in config (default: 50)
+    SPLIT, = glob_wildcards(os.path.join(ivals_dir,"00{split}-scattered.interval_list"))
+    # return list of split intervals
+    return expand(os.path.join(ivals_dir,"{sample_name}.00{split}.g.vcf.gz"),sample_name=sample_name,split=SPLIT)
+
 rule merge_gvcfs:
     input:
         get_gvcfs
@@ -96,7 +96,7 @@ rule merge_gvcfs:
          mem_mb = 4000
     shell:
         '''
-            gatk --java-options {params.java_opt}  \
+            gatk --java-options {params.java_opt} \
                 MergeVcfs \
                 --INPUT {params.gvcfs} \
                 --OUTPUT {output.final_gvcf}
