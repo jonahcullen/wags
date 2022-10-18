@@ -4,9 +4,8 @@ if not os.path.isfile(config['common_vcf']):
     rule select_common_vars:
         output:
             common_vcf = config['common_vcf'],
-            common_tbi = config['common_tbi']
         params:
-            pop_vcf     = config['pop_vcf'],
+            pop_vcf = config['pop_vcf'],
         threads: 8
         resources:
              time   = 2160,
@@ -24,6 +23,7 @@ if not os.path.isfile(config['common_vcf']):
 rule select_variants_to_table:
     input:            
         final_vcf  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz"),
+        final_tbi  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz.tbi"),
         common_vcf = config['common_vcf'],
     output:
         unique_vars           = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.unique_vars.vcf",
@@ -34,7 +34,7 @@ rule select_variants_to_table:
     params:
         tmp_dir   = config['tmp_dir']['select_variants_to_table'],
         ref_fasta = config['ref_fasta'],
-        pop_vcf   = config['common_vcf']
+        pop_vcf   = config['pop_vcf']
     threads: 4
     resources:
          time   = 2880,

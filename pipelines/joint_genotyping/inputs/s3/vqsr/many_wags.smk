@@ -24,7 +24,7 @@ S3 = S3RemoteProvider(
     secret_access_key=s3_access_key
 )
 
-units = pd.read_csv("gvcfs.list",sep="\t")
+#units = pd.read_csv("gvcfs.list",sep="\t")
 
 
 rule all:

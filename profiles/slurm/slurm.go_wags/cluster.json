@@ -186,17 +186,17 @@
     },
     "collect_metrics_on_vcf" :
     {
-        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
     },
     "bcftools_stats" :
     {
-        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
     },
     "bcftools_plot" :
     {
-        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
     },
 }

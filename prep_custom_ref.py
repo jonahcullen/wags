@@ -25,7 +25,7 @@ def main():
     d_sites = {}
     if sites:
         os.makedirs(ref_res,exist_ok=True)
-        with open(os.path.abspath(sites),'r') as f:
+        with open(os.path.realpath(os.path.expanduser(sites)),'r') as f:
             for line in f:
                 name,vcf = line.strip().split(',')
                 assert os.path.isfile(vcf), f"{name} was not found, check path is correct"
@@ -41,7 +41,7 @@ def main():
     
     # copy and profile
     profile_dir = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
+        os.path.dirname(os.path.realpath(__file__)),
         f"profiles/{profile}/{profile}.go_wags"
     )
     
@@ -56,7 +56,7 @@ def main():
     
     # custom config to modify
     config = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
+        os.path.dirname(os.path.realpath(__file__)),
         "pipelines/prep_ref/configs/custom_config.yaml"
     )
 
@@ -78,7 +78,7 @@ def main():
 
     # copy snake
     smk = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
+        os.path.dirname(os.path.realpath(__file__)),
         "pipelines/prep_ref/prep_wags.smk",
     )
     shutil.copy(smk,ref_home)
@@ -240,8 +240,9 @@ if __name__ == '__main__':
     args      = parser.parse_args()
     ref       = args.ref
     species   = args.species
-    fasta     = os.path.expanduser(args.fasta) \
-        if "~" in args.fasta else os.path.abspath(args.fasta)
+   #fasta     = os.path.expanduser(args.fasta) \
+   #    if "~" in args.fasta else os.path.abspath(args.fasta)
+    fasta     = os.path.realpath(os.path.expanduser(args.fasta)
     snake_env = args.snake_env
     partition = args.partition
     email     = args.email
@@ -264,17 +265,19 @@ if __name__ == '__main__':
 
     # if non default outdir
     if outdir != os.path.join(os.path.expanduser("~"),".wags/"):
-        if "~" in outdir:
-            outdir = os.path.expanduser(outdir)
-        else:
-            outdir = os.path.abspath(outdir)
+        outdir = os.path.realpath(os.path.expanduser(outdir)
+       #if "~" in outdir:
+       #    outdir = os.path.expanduser(outdir)
+       #else:
+       #    outdir = os.path.abspath(outdir)
  
     # if non default sif location
     if sif != os.path.join(os.path.expanduser("~"),".sif/wags.sif"):
-        if "~" in sif:
-            sif = os.path.expanduser(sif)
-        else:
-            sif = os.path.abspath(sif)
+        sif = os.path.realpath(os.path.expanduser(sif)
+       #if "~" in sif:
+       #    sif = os.path.expanduser(sif)
+       #else:
+       #    sif = os.path.abspath(sif)
     
     # confirm image exitst
     if os.path.isfile(sif):

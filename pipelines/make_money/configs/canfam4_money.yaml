@@ -27,7 +27,9 @@ conda_envs :
 
 # POPULATION VCF - NOTE PREP_JOINT WILL NEED pop_vcf AND THEN common_vcf WILL BE FIGUED OUT
 # NOTE pop_vcf DIR HAS TO BE BOUND WITH SINGULARITY
-pop_vcf : /path/to/pop.ref.vcf
+pop_vcf    : /path/to/pop.ref.vcf
+common_vcf : /path/to/common.vcf
+#common_tbi : /path/to/common.vcf.tbi
 #pop_vcf    : /panfs/jay/groups/0/fried255/fried255/working/pipeline/canfam4/20220401/joint_genotype.canfam4.vcf.gz
 #common_vcf : /panfs/jay/groups/0/fried255/fried255/working/pipeline/canfam4/20220401/common_var/joint_genotype.canfam4.af_nonmajor.vcf.gz
 #common_tbi : /panfs/jay/groups/0/fried255/fried255/working/pipeline/canfam4/20220401/common_var/joint_genotype.canfam4.af_nonmajor.vcf.gz.tbi

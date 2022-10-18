@@ -9,6 +9,7 @@ import yaml
 import glob
 import shutil
 import string
+import pathlib
 import textwrap
 import argparse
 import fileinput
@@ -141,7 +142,7 @@ def main():
  
         # copy snakefile, rules, config, and profile to working dir
         smk = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
+            os.path.dirname(os.path.realpath(__file__)),
             "pipelines",
             pipeline,
             f"inputs/{remote}/{bqsr}",
@@ -149,7 +150,7 @@ def main():
         )
         
         rules = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
+            os.path.dirname(os.path.realpath(__file__)),
             "pipelines",
             pipeline,
             f"inputs/{remote}/{bqsr}",
@@ -157,7 +158,7 @@ def main():
         )
         
         config = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
+            os.path.dirname(os.path.realpath(__file__)),
             "pipelines",
             pipeline,
             "configs",
@@ -171,13 +172,13 @@ def main():
             config = tmp[0]
     
         profile_dir = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
+            os.path.dirname(os.path.realpath(__file__)),
             f"profiles/{profile}",
             profile_n
         )
         
         src = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
+            os.path.dirname(os.path.realpath(__file__)),
             "pipelines",
             pipeline,
             "src"
@@ -196,12 +197,12 @@ def main():
         doc['alias']   = alias
         doc['bucket']  = bucket
         doc['left_align'] = left_align
-        # for private variant analysis, add common.vcf path
+        # for private variant analysis, add pop.vcf and common.vcf path
         if money:
             doc['tmp_dir']['sort_tmp']              = os.path.join(outdir,".sort",breed,sample_name,".tmp")
             doc['tmp_dir']['sites_only_gather_vcf'] = os.path.join(outdir,".sort",breed,sample_name,".tmp")
+            doc['pop_vcf']    = pop
             doc['common_vcf'] = common
-            doc['common_tbi'] = f"{common}.tbi"
         else:
             doc['sort_tmp']  = os.path.join(outdir,".sort",breed,sample_name,".tmp")
         # dump
@@ -254,7 +255,9 @@ def main():
             print("cd $SLURM_SUBMIT_DIR\n",file=f)
 
             if ref not in refs:
-                print(f"REF_DIR={ref_dir}",file=f)
+                print(f"REF_DIR={ref_dir}",end="",file=f)
+            if money:
+                print(f"\nPOP_VCF={os.path.dirname(pop)}",end="",file=f)
 
             print(
                 textwrap.dedent(
@@ -283,7 +286,7 @@ def main():
                     f"""
                     snakemake -s {snake_n} \\
                         --use-singularity \\
-                        --singularity-args "-B $PWD,$REF_DIR,$FQ_DIR,$PROC_DIR" \\
+                        --singularity-args "-B $PWD,$REF_DIR,$POP_VCF,$FQ_DIR,$PROC_DIR" \\
                         --profile {profile_n} \\
                         --configfile {config_n} \\
                         --keep-going
@@ -459,16 +462,21 @@ if __name__ == '__main__':
         default=argparse.SUPPRESS,
         help="show this help message and exit"
     )
+   #optional.add_argument(
+   #    "--common",
+   #    default=None,
+   #    help="path to common variants vcf (money pipeline) [default: None]"
+   #)
     optional.add_argument(
-        "--common",
+        "--pop",
         default=None,
-        help="path to common variants vcf [default: None]"
+        help="path to population variants vcf (money pipeline) [default: None]"
     )
 
     args = parser.parse_args()
-    dog_meta   = os.path.abspath(args.meta)
-    fq_dir     = os.path.abspath(args.fastqs)
-    outdir     = os.path.abspath(args.out)
+    dog_meta   = os.path.realpath(os.path.expanduser(args.meta))
+    fq_dir     = os.path.realpath(os.path.expanduser(args.fastqs))
+    outdir     = os.path.realpath(os.path.expanduser(args.out))
     bucket     = args.bucket
     snake_env  = args.snake_env
     partition  = args.partition
@@ -476,11 +484,13 @@ if __name__ == '__main__':
     account    = args.account
     sif        = args.sif
     ref        = args.ref
-    ref_dir    = os.path.expanduser(args.ref_dir) \
-        if "~" in args.ref_dir else os.path.abspath(args.ref_dir)
+   #ref_dir    = os.path.realpath(os.path.expanduser(args.ref_dir))
+    ref_dir    = os.path.realpath(os.path.expanduser(args.ref_dir))
     alias      = args.alias
     money      = args.money
-    common     = args.common
+   #common     = args.common
+   #pop        = os.path.realpath(os.path.expanduser(args.pop))
+    pop        = args.pop
     profile    = args.profile
     remote     = args.remote.lower()
     no_bqsr    = args.no_bqsr
@@ -497,16 +507,29 @@ if __name__ == '__main__':
 
     if money:
         bqsr = "recal"
-        # require path to common.vcf
-        if common is None:
-            parser.error("--money requires --common")
+        # require path to pop
+        if pop is None:
+            parser.error("--money requires --pop")
+        else:
+            pop = os.path.realpath(os.path.expanduser(args.pop))
+            # generate path to common vars assuming pop vcf was generated by
+            # the joint pipeline
+            p = pathlib.Path(pop)
+            # create directory common_vars within pop vcf directory
+            base = os.path.join(str(pathlib.Path(*p.parts[:-1])),"common_vars")
+            os.makedirs(base,exist_ok=True)
+            # generate the common vcf name and set variable
+            common_name = f"{p.parts[-1].rsplit('.',2)[0]}.af_nonmajor.vcf.gz"
+            common = os.path.join(base,common_name)
+            
 
     # if non default sif location
     if sif != os.path.join(os.path.expanduser("~"),".sif/wags.sif"):
-        if "~" in sif:
-            sif = os.path.expanduser(sif)
-        else:
-            sif = os.path.abspath(sif)
+        sif = os.path.realpath(os.path.expanduser(sif))
+       #if "~" in sif:
+       #    sif = os.path.expanduser(sif)
+       #else:
+       #    sif = os.path.abspath(sif)
     
     # confirm image exitst
     if os.path.isfile(sif):
@@ -514,7 +537,7 @@ if __name__ == '__main__':
     else:
         sif_dir = os.path.join(os.path.expanduser("~"),".sif")
         print(
-            f"wags image not found at {os.path.abspath(sif)} -> downloading to {sif_dir}"
+            f"wags image not found at {os.path.realpath(sif)} -> downloading to {sif_dir}"
         )
         url = "https://s3.msi.umn.edu/wags/wags.sif"
         os.makedirs(sif_dir,exist_ok=True)

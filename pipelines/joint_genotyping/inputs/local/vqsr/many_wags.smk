@@ -12,7 +12,7 @@ include: "src/utils.py"
 # processing pipeline - will not work for local...should be rethought...
 #include: "src/get_gvcfs.py"
 
-units = pd.read_csv("gvcfs.list",sep="\t")
+#units = pd.read_csv("gvcfs.list",sep="\t")
 
 
 rule all:

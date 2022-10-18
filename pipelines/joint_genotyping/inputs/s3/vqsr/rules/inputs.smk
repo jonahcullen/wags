@@ -2,15 +2,15 @@
 rule download_gvcfs:
     input:
         S3.remote(
-            "{bucket}/wgs/{breed}/{dogid}/{ref}/gvcf/{dogid}.{ref}.g.vcf.gz",
+            "{bucket}/wgs/{breed}/{sample}/{ref}/gvcf/{sample}.{ref}.g.vcf.gz",
             keep_local=True
         ),
         S3.remote(
-            "{bucket}/wgs/{breed}/{dogid}/{ref}/gvcf/{dogid}.{ref}.g.vcf.gz.tbi",
+            "{bucket}/wgs/{breed}/{sample}/{ref}/gvcf/{sample}.{ref}.g.vcf.gz.tbi",
             keep_local=True
         )
     output:
-        gvcf = "{bucket}/wgs/{breed}/{dogid}/{ref}/gvcf/{dogid}.{ref}.done"
+        gvcf = "{bucket}/wgs/{breed}/{sample}/{ref}/gvcf/{sample}.{ref}.done"
     threads: 1
     resources:
          time   = 60,
@@ -20,9 +20,10 @@ rule download_gvcfs:
 rule input_list:
     input:
         gvcfs = expand(
-            "{bucket}/wgs/{u.breed}/{u.dogid}/{ref}/gvcf/{u.dogid}.{ref}.done",
+            "{bucket}/wgs/{u.breed}/{u.sample}/{ref}/gvcf/{u.sample}.{ref}.done",
             u=units.itertuples(),
-            ref=config["ref"],
+            bucket=config['bucket'],
+            ref=config['ref'],
         )
     output:
         gvcf_list = "{bucket}/wgs/pipeline/{ref}/{date}/import_gvcfs/inputs.list"

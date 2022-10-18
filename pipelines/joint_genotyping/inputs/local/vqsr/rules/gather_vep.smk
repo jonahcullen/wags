@@ -5,13 +5,13 @@ def get_recal_vcfs(wildcards):
     # variable number of intervals 
     INTERVALS, = glob_wildcards(os.path.join(ivals_dir,"wags_{interval}.interval_list"))
     # return list of recal vcfs
-    return expand(
+    return sorted(expand(
         "{bucket}/wgs/pipeline/{ref}/{date}/var_recal/apply/wags_{interval}/recal.{interval}.vcf.gz",
         bucket=config['bucket'],
         ref=config['ref'],
         date=config['date'],
         interval=INTERVALS
-    )
+    ))
 
 rule final_gather_vcfs:
     input:
@@ -83,13 +83,13 @@ def get_vep_vcfs(wildcards):
     # variable number of intervals 
     INTERVALS, = glob_wildcards(os.path.join(ivals_dir,"wags_{interval}.interval_list"))
     # return list of recal vcfs
-    return expand(
+    return sorted(expand(
         "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/vep/wags_{interval}/recal.{interval}.vep.vcf.gz",
         bucket=config['bucket'],
         ref=config['ref'],
         date=config['date'],
         interval=INTERVALS
-    )
+    ))
 
 rule final_gather_veps:
     input:
