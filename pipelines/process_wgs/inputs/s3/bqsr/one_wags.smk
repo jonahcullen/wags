@@ -65,7 +65,7 @@ rule all:
         ),
         # upload fastqs
         expand(
-            "{bucket}/fastqc/{breed}/{sample_name}/{readgroup_name}.upload",
+            "{bucket}/fastqc/{breed}/{sample_name}/{u.readgroup_name}.upload",
             u=units.itertuples(), 
             bucket=config['bucket'],
             breed=breed,
