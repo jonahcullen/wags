@@ -18,7 +18,11 @@ from datetime import datetime
 from collections import defaultdict
 
 
-refs    = ["canfam3","canfam4","goldenPath","tiger"]
+refs = [
+    "canfam3","canfam4","UU_Cfam_GSD_1.0_ROSY",
+    "goldenPath",
+    "tiger"
+]
 #remotes = ["local","s3","sftp"]
 
 def extract_pu(s):

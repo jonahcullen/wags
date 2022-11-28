@@ -111,24 +111,28 @@ rule qualimap_bamqc:
 
 rule multiqc:
     input:
-        r1_zip      = S3.remote(expand(
+        r1_zip       = S3.remote(expand(
             "{{bucket}}/wgs/{{breed}}/{{sample_name}}/fastqc/{{sample_name}}/{u.flowcell}/{u.readgroup_name}_R1_fastqc.zip",
             u=units.itertuples()
         )),
-        r2_zip      = S3.remote(expand(
+        r2_zip       = S3.remote(expand(
             "{{bucket}}/wgs/{{breed}}/{{sample_name}}/fastqc/{{sample_name}}/{u.flowcell}/{u.readgroup_name}_R2_fastqc.zip",
             u=units.itertuples()
         )),
-        flagstat    = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/{sample_name}.{ref}.flagstat.txt"),
-        bqsr_before = "{bucket}/wgs/{breed}/{sample_name}/{ref}/logs/{sample_name}.{ref}.recal_data.txt",
-        bqsr_after  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/logs/{sample_name}.{ref}.second_recal_data.txt",
-        ac_csv      = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/{sample_name}.{ref}.analyze_cov.csv"),
-        metrics     = expand(
+        flagstat     = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/{sample_name}.{ref}.flagstat.txt"),
+        bqsr_before  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/logs/{sample_name}.{ref}.recal_data.txt",
+        bqsr_after   = "{bucket}/wgs/{breed}/{sample_name}/{ref}/logs/{sample_name}.{ref}.second_recal_data.txt",
+        ac_csv       = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/{sample_name}.{ref}.analyze_cov.csv"),
+        metrics      = expand(
             "{{bucket}}/wgs/{{breed}}/{{sample_name}}/{{ref}}/bam/{u.readgroup_name}.mark_adapt.metrics.txt",
             u=units.itertuples()
         ),
-        report_txt  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/qualimap/genome_results.txt"),
-        raw_dat     = rules.qualimap_bamqc.output.raw_dat,
+        report_txt   = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/qualimap/genome_results.txt"),
+        raw_dat      = rules.qualimap_bamqc.output.raw_dat,
+       #delly_calls  = rules.merge_delly_calls.sv_gz,
+       #gridss_calls = rules.sv_gridss.sv_gz,
+       #lumpy_calls  = rules.sv_lumpy.sv_gz,
+       #manta_calls  = rules.sv_manta.sv_gz,
     output: 
         S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report.html"),
         mqc_log    = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc.log"),

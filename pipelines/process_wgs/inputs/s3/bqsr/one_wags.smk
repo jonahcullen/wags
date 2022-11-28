@@ -41,7 +41,7 @@ rule all:
         expand(
             "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.{interval}.aligned.duplicates_marked.recalibrated.bam"
                 if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.{interval}.left_aligned.duplicates_marked.recalibrated.bam",
-            bucket=config["bucket"],
+            bucket=config['bucket'],
             breed=breed,
             sample_name=sample_name,
             ref=config['ref'],
@@ -53,7 +53,7 @@ rule all:
             bucket=config['bucket'],
             breed=breed,
             sample_name=sample_name,
-            ref=config["ref"],
+            ref=config['ref'],
             
         ),
         # multiqc
@@ -62,24 +62,23 @@ rule all:
             bucket=config['bucket'],
             breed=breed,
             sample_name=sample_name,
-            ref=config["ref"],
-            
+            ref=config['ref'],
         ),
         # upload fastqs
         expand(
             "{bucket}/fastqc/{breed}_{sample_name}/{u.readgroup_name}.upload",
             u=units.itertuples(), 
-            bucket=config["bucket"],
+            bucket=config['bucket'],
             breed=breed,
             sample_name=sample_name,
         ),
         # upload pipeline, and logs
         expand(
             "{bucket}/{breed}_{sample_name}_{ref}.done",
-            bucket=config["bucket"],
+            bucket=config['bucket'],
             breed=breed,
             sample_name=sample_name,
-            ref=config["ref"],
+            ref=config['ref'],
         ),
 
 # rules to include based on user setup
