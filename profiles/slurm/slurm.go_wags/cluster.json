@@ -54,6 +54,11 @@
         "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.ref}/%j.{rule}.err"
     },
+    "bam_to_cram" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.ref}/%j.{rule}.err"
+    },
     "scatter_intervals" :
     {
         "output" : ".logs/{rule}/%j.{rule}.out",
@@ -198,5 +203,45 @@
     {
         "output" : ".logs/{rule}/%j.{rule}.out",
         "error"  : ".logs/{rule}/%j.{rule}.err"
+    },
+    "filter_x_chrom" :
+    {
+        "output" : ".logs/{rule}/{wildcards.ref}/{wildcards.chrom}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.ref}/{wildcards.chrom}/%j.{rule}.err"
+    },
+    "phase_x_chrom" :
+    {
+        "output" : ".logs/{rule}/{wildcards.ref}/{wildcards.chrom}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.ref}/{wildcards.chrom}/%j.{rule}.err"
+    },
+    "concat_phased" :
+    {
+        "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
+    },
+    "sv_delly" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
+    "merge_delly_calls" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
+    "sv_gridss" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
+    "sv_lumpy" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
+    "sv_manta" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
     },
 }
