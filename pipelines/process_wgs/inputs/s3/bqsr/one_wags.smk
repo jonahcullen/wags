@@ -54,7 +54,6 @@ rule all:
             breed=breed,
             sample_name=sample_name,
             ref=config['ref'],
-            
         ),
         # multiqc
         expand(
@@ -66,7 +65,7 @@ rule all:
         ),
         # upload fastqs
         expand(
-            "{bucket}/fastqc/{breed}_{sample_name}/{u.readgroup_name}.upload",
+            "{bucket}/fastqc/{breed}/{sample_name}/{readgroup_name}.upload",
             u=units.itertuples(), 
             bucket=config['bucket'],
             breed=breed,
@@ -74,7 +73,7 @@ rule all:
         ),
         # upload pipeline, and logs
         expand(
-            "{bucket}/{breed}_{sample_name}_{ref}.done",
+            "{bucket}/{ref}/{breed}/{sample_name}/{ref}/pipe_and_logs.upload",
             bucket=config['bucket'],
             breed=breed,
             sample_name=sample_name,

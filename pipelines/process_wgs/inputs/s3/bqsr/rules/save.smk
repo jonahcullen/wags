@@ -3,7 +3,7 @@ rule upload_fastqs:
     input:
         unpack(get_fastq)
     output:
-        touch("{bucket}/fastqc/{breed}_{sample_name}/{readgroup_name}.upload")
+        touch("{bucket}/fastqc/{breed}/{sample_name}/{readgroup_name}.upload")
     params:
         alias    = config['alias'],
         flowcell = lambda wildcards: units.loc[units['readgroup_name'] == wildcards.readgroup_name,'flowcell'].values[0],
@@ -26,7 +26,7 @@ rule upload_pipe_and_logs:
         final_gvcf     = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/{sample_name}.{ref}.g.vcf.gz"),
         final_gvcf_tbi = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/{sample_name}.{ref}.g.vcf.gz.tbi"),
     output:
-        touch("{bucket}/{breed}_{sample_name}_{ref}.done"),
+        touch("{bucket}/{ref}/{breed}/{sample_name}/{ref}/pipe_and_logs.upload"),
     params:
         alias   = config['alias'],
         profile = config['profile']
