@@ -1,6 +1,6 @@
 # rescuer
 
-Placeholder (description of the pipeline)
+Placeholder (description of the pipelines)
 
 ## Dependencies
 
@@ -57,10 +57,6 @@ placeholder
 ```
 
 ## Reference genome
-
-placeholder
-
-## Pipelines
 
 placeholder
 
