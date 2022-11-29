@@ -60,7 +60,13 @@ placeholder
 
 placeholder
 
-## Prepare pipeline submissions
+## Pipelines
+
+placeholder
+
+## FASTQ to GVCF (OneWag)
+
+**Prepare pipeline submissions**
 
 The executable `prep_subs.py` is responsible for generating all required pipeline inputs to be submitted to the cluster scheduler. The required input is a CSV file containing sample name, breed, sex (if known), and the associated FASTQ file prefix. The prefix should be the portion of the paired FASTQ name that distinguishes a given sample across multiple paired FASTQs (e.g. a sample split across multiple lanes). For example, if the input CSV was
 
