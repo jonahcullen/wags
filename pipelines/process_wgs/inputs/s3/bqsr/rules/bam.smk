@@ -265,7 +265,7 @@ rule base_recalibrator:
     input:
         sorted_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam"
             if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.duplicate_marked.sorted.bam",
-        interval   = "{bucket}/seq_group/no_unmap/{interval}.tsv"
+        interval   = "{bucket}/seq_group/with_unmap/{interval}.tsv"
     output:
         recal_csv = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.{interval}.recal_data.csv"
     params:
@@ -299,7 +299,7 @@ rule gather_bqsr_reports:
                 breed=breed,
                 sample_name=sample_name,
                 ref=config["ref"],
-                interval=intervals
+                interval=intervals[:-1]
             ), key=lambda item: int(os.path.basename(item).split(".")[-3].split("_")[1])
         )
     output:
@@ -367,7 +367,7 @@ rule gather_bam_files:
                 breed=breed,
                 sample_name=sample_name,
                 ref=config["ref"],
-                interval=unmap_intervals
+                interval=intervals
             ), key=lambda item: int(os.path.basename(item).split(".")[-5].split("_")[1])
         )
     output:
@@ -432,7 +432,7 @@ rule post_base_recalibrator:
             if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bam",
         final_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai"
             if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai",
-        interval  = "{bucket}/seq_group/no_unmap/{interval}.tsv"
+        interval  = "{bucket}/seq_group/with_unmap/{interval}.tsv"
     output:
         recal_csv = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/post_clean/{sample_name}.{ref}.{interval}.second_recal_data.csv"
     params:
@@ -466,7 +466,7 @@ rule post_gather_bqsr_reports:
                 breed=breed,
                 sample_name=sample_name,
                 ref=config["ref"],
-                interval=intervals
+                interval=intervals[:-1]
             ), key=lambda item: int(os.path.basename(item).split(".")[-3].split("_")[1])
         )
     output:
