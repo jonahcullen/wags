@@ -375,8 +375,6 @@ rule gather_bam_files:
             if not config['left_align'] else temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bam"),
         final_bai = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai")
             if not config['left_align'] else temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai"),
-        final_md5 = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bam.md5")
-            if not config['left_align'] else temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.md5"),
     params:
         bams     = lambda wildcards, input: " -I ".join(map(str,input.recal_bams)),
         java_opt = "-Xms2000m",
@@ -403,17 +401,17 @@ rule bam_to_cram:
         final_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai"
             if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai",
     output:
-        final_cram = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.cram")
-            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.cram"),
-        final_crai = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.crai")
-            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.crai"),
-        final_md5 = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.cram.md5")
-            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.md5"),
+        final_cram = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.cram")
+            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.left_aligned.cram"),
+        final_crai = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.cram.bai")
+            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.left_aligned.cram.bai"),
+        final_md5 = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.cram.md5")
+            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.left_aligned.cram.md5"),
     params:
         ref_fasta = config['ref_fasta'],
         java_opt  = "-Xmx6000g",
     benchmark:
-        "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.bam_to_cram.benchmark.txt"
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.bam_to_cram.benchmark.txt"
     threads: 4
     resources:
          time   = 180,
@@ -445,7 +443,7 @@ rule post_base_recalibrator:
     benchmark:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/post_clean/{sample_name}.{interval}.second_base_recal.benchmark.txt"
     resources:
-         time   = 30,
+         time   = 120,
          mem_mb = 20000
     shell:
         '''

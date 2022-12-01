@@ -18,6 +18,8 @@ The `wags` Singularity container includes the following tools:
 
 **1. Install dependencies**
 
+If you do not have `conda` already installed, the Snakemake developers **recommend** to install via [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge).
+
 ```
 # download Mambaforge installer (assuming Unix-like platform)
 wget "https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-$(uname)-$(uname -m).sh"
@@ -28,6 +30,19 @@ mamba update mamba -c conda-forge
 
 # create a Snakemake environment which includes all Snakemake dependencies in
 # addition to the miscellaneous modules above
+mamba create \
+    -c conda-forge -c bioconda \
+    -n snakemake \ # name of the environment
+    snakemake pyaml wget xlsxwriter
+```
+
+Alternatively, if you are already familiar with `conda` and creating environments, it is suggested to install `mamba` in your base environment and use that to build your environment.
+
+```
+# install mamba
+conda install -n base -c conda-forge mamba
+
+# create a Snakemake environment
 mamba create \
     -c conda-forge -c bioconda \
     -n snakemake \ # name of the environment

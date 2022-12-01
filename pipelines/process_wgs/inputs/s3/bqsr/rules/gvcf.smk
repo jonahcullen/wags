@@ -43,10 +43,10 @@ checkpoint split_intervals:
 
 rule haplotype_caller:
     input:
-        final_bam = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bam")
-            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bam"),
-        final_bai = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai")
-            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai"),
+        final_cram = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.cram")
+            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.left_aligned.cram"),
+        final_crai = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.cram.bai")
+            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.left_aligned.cram.bai"),
         interval  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/00{split}-scattered.interval_list"
     output:
         hc_gvcf = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/{sample_name}.00{split}.g.vcf.gz")
@@ -64,7 +64,7 @@ rule haplotype_caller:
             gatk --java-options "{params.java_opt}" \
                 HaplotypeCaller \
                 -R {params.ref_fasta} \
-                -I {input.final_bam} \
+                -I {input.final_cram} \
                 -L {input.interval} \
                 -O {output.hc_gvcf} \
                 -contamination 0 -ERC GVCF
