@@ -5,7 +5,8 @@ import os
 # S3 with BQSR ########################
 #######################################
 
-localrules: multiqc,
+localrules: sv_done,
+            multiqc,
             upload_fastqs,
             upload_pipe_and_logs
 
@@ -38,6 +39,14 @@ rule all:
         # gvcf
         expand(
             "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/{sample_name}.{ref}.g.vcf.gz",
+            bucket=config['bucket'],
+            breed=breed,
+            sample_name=sample_name,
+            ref=config['ref'],
+        ),
+        # structural variants
+        expand(
+            "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/sv.done",
             bucket=config['bucket'],
             breed=breed,
             sample_name=sample_name,
