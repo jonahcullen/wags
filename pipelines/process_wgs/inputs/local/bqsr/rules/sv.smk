@@ -54,8 +54,8 @@ rule merge_delly_calls:
             sv_type=["BND","DEL","DUP","INS","INV"],
         )
     output:
-        sv_gz  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz"),
-        sv_tbi = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz.tbi")
+        sv_gz  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz",
+        sv_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz.tbi"
     params:
         sv_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf"
     benchmark:
@@ -84,8 +84,8 @@ rule sv_gridss:
         final_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai"
             if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai",
     output:
-        sv_gz  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz"),
-        sv_tbi = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz.tbi")
+        sv_gz  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz",
+        sv_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz.tbi"
     params:
         gridss_tmp  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.tmp.vcf",
         gridss_bam  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.bam",
@@ -131,8 +131,8 @@ rule sv_lumpy:
         final_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai"
             if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai",
     output:
-        sv_gz  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.gz"),
-        sv_tbi = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.gz.tbi")
+        sv_gz  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.gz",
+        sv_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.gz.tbi"
     params:
         lumpy_tmp  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.tmp",
         lumpy_filt = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.tmp.filt",
@@ -181,11 +181,11 @@ rule sv_manta:
         final_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai"
             if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai",
     output:
-        sv_gz      = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/{sample_name}.manta.diploidSV.{ref}.vcf.gz"),
-        sv_tbi     = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/{sample_name}.manta.diploidSV.{ref}.vcf.gz.tbi"),
-        cand_stat  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/svCandidateGenerationStats.tsv"),
-        graph_stat = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/svLocusGraphStats.tsv"),
-        align_stat = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/alignmentStatsSummary.txt"),
+        sv_gz      = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/{sample_name}.manta.diploidSV.{ref}.vcf.gz",
+        sv_tbi     = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/{sample_name}.manta.diploidSV.{ref}.vcf.gz.tbi",
+        cand_stat  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/svCandidateGenerationStats.tsv",
+        graph_stat = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/svLocusGraphStats.tsv",
+        align_stat = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/alignmentStatsSummary.txt",
     params:
         manta_tmp  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/variants/diploidSV.vcf.gz",
         manta_filt = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/variants/diploidSV.filt.vcf.gz",
@@ -232,17 +232,17 @@ rule sv_manta:
 
 rule sv_done:
     input:
-        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz"),
-        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz.tbi"),
-        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz"),
-        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz.tbi"),
-        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.gz"),
-        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.gz.tbi"),
-        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/{sample_name}.manta.diploidSV.{ref}.vcf.gz"),
-        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/{sample_name}.manta.diploidSV.{ref}.vcf.gz.tbi"),
-        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/svCandidateGenerationStats.tsv"),
-        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/svLocusGraphStats.tsv"),
-        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/alignmentStatsSummary.txt"),
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz.tbi",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz.tbi",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.gz",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.gz.tbi",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/{sample_name}.manta.diploidSV.{ref}.vcf.gz",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/{sample_name}.manta.diploidSV.{ref}.vcf.gz.tbi",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/svCandidateGenerationStats.tsv",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/svLocusGraphStats.tsv",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/alignmentStatsSummary.txt",
     output:
         touch("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/sv.done")
 

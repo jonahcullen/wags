@@ -6,7 +6,7 @@ rule fastqc:
         r1_zip  = "{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}_R1_fastqc.zip",
         r1_html = "{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}_R1_fastqc.html",
         r2_zip  = "{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}_R2_fastqc.zip",
-        r2_html = "{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}_R2_fastqc.html",
+        r2_html = "{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}_R2_fastqc.html")
     params:
         outdir = "{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}",
         r1_html = lambda wildcards, input: os.path.basename(input.r1.replace(".fastq.gz","_fastqc.html")),
@@ -40,7 +40,7 @@ rule flagstat:
         final_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai"
             if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai",
     output:
-        flagstat = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/{sample_name}.{ref}.flagstat.txt",
+        flagstat = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/{sample_name}.{ref}.flagstat.txt"),
     benchmark:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/{sample_name}.flagstat.benchmark.txt"
     threads: 8
@@ -131,15 +131,15 @@ rule multiqc:
         raw_dat     = rules.qualimap_bamqc.output.raw_dat,
     output: 
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report.html",
-        mqc_log    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc.log",
-        mqc_bamqc  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_qualimap_bamqc_genome_results.txt",
-        mqc_dups   = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_picard_dups.txt",
-       #mqc_adapt  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_picard_mark_illumina_adapters.txt",
-        mqc_flag   = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_samtools_flagstat.txt",
-        mqc_fastqc = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_fastqc.txt",
-        mqc_gen    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_general_stats.txt",
-        mqc_src    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_sources.txt",
-        mqc_json   = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_data.json",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc.log",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_qualimap_bamqc_genome_results.txt",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_picard_dups.txt",
+       #"{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_picard_mark_illumina_adapters.txt",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_samtools_flagstat.txt",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_fastqc.txt",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_general_stats.txt",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_sources.txt",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_data.json",
     params:
         outdir = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc"
     shell:

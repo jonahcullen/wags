@@ -1,10 +1,10 @@
 
 rule scatter_intervals:
     output:
-        acgt_ivals  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/acgt.N50.interval_list",
+        acgt_ivals = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/acgt.N50.interval_list",
     params:
-        ref_fasta    = config['ref_fasta'],
-        contig_ns    = config['contig_n_size'],
+        ref_fasta = config['ref_fasta'],
+        contig_ns = config['contig_n_size'],
     threads: 1
     resources:
          time   = 20,
@@ -21,7 +21,7 @@ rule scatter_intervals:
 
 checkpoint split_intervals:
     input:
-        acgt_ivals  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/acgt.N50.interval_list",
+        acgt_ivals = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/acgt.N50.interval_list",
     output:
         directory("{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered")
     params:
@@ -43,13 +43,13 @@ checkpoint split_intervals:
 
 rule haplotype_caller:
     input:
-        final_bam = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bam")
-            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bam"),
-        final_bai = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai")
-            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai"),
-        interval  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/00{split}-scattered.interval_list"
+        final_cram = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.cram")
+            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.left_aligned.cram"),
+        final_crai = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.cram.bai")
+            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.left_aligned.cram.bai"),
+        interval   = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/00{split}-scattered.interval_list"
     output:
-        hc_gvcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/{sample_name}.00{split}.g.vcf.gz"
+        hc_gvcf = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/{sample_name}.00{split}.g.vcf.gz")
     params:
         java_opt  = "-Xmx10G -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10",
         ref_fasta = config['ref_fasta'],
@@ -57,14 +57,14 @@ rule haplotype_caller:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/benchmarks/{sample_name}.00{split}.hc.benchmark.txt"
     threads: 4
     resources:
-         time   = 720,
+         time   = 1080,
          mem_mb = 8000
     shell:
         '''
             gatk --java-options "{params.java_opt}" \
                 HaplotypeCaller \
                 -R {params.ref_fasta} \
-                -I {input.final_bam} \
+                -I {input.final_cram} \
                 -L {input.interval} \
                 -O {output.hc_gvcf} \
                 -contamination 0 -ERC GVCF

@@ -1,10 +1,10 @@
 
 rule scatter_intervals:
     output:
-        acgt_ivals  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/acgt.N50.interval_list",
+        acgt_ivals = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/acgt.N50.interval_list",
     params:
-        ref_fasta    = config['ref_fasta'],
-        contig_ns    = config['contig_n_size'],
+        ref_fasta = config['ref_fasta'],
+        contig_ns = config['contig_n_size'],
     threads: 1
     resources:
          time   = 20,
@@ -21,13 +21,12 @@ rule scatter_intervals:
 
 checkpoint split_intervals:
     input:
-        acgt_ivals  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/acgt.N50.interval_list",
+        acgt_ivals = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/acgt.N50.interval_list",
     output:
         directory("{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered")
     params:
         ref_fasta    = config['ref_fasta'],
         scatter_size = config['scatter_size'],
-       #split_dir    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered"
     threads: 1
     resources:
          time   = 20,
@@ -52,10 +51,10 @@ def get_gvcfs(wildcards):
 
 rule haplotype_caller:
     input:
-        sorted_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam" 
-            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.duplicate_marked.sorted.bam",
-        sorted_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bai"
-            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.duplicate_marked.sorted.bai",
+        final_cram = "{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.cram"
+            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.left_aligned.cram",
+        final_crai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.cram.bai"
+            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.left_aligned.cram.bai",
         interval  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/00{split}-scattered.interval_list"
     output:
         hc_gvcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/{sample_name}.00{split}.g.vcf.gz"
@@ -73,7 +72,7 @@ rule haplotype_caller:
             gatk --java-options "{params.java_opt}" \
                 HaplotypeCaller \
                 -R {params.ref_fasta} \
-                -I {input.sorted_bam} \
+                -I {input.final_cram} \
                 -L {input.interval} \
                 -O {output.hc_gvcf} \
                 -contamination 0 -ERC GVCF

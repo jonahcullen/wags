@@ -131,15 +131,15 @@ rule multiqc:
         raw_dat     = rules.qualimap_bamqc.output.raw_dat,
     output: 
         S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report.html"),
-        mqc_log    = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc.log"),
-        mqc_bamqc  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_qualimap_bamqc_genome_results.txt"),
-        mqc_dups   = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_picard_dups.txt"),
-       #mqc_adapt  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_picard_mark_illumina_adapters.txt"),
-        mqc_flag   = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_samtools_flagstat.txt"),
-        mqc_fastqc = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_fastqc.txt"),
-        mqc_gen    = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_general_stats.txt"),
-        mqc_src    = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_sources.txt"),
-        mqc_json   = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_data.json"),
+        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc.log"),
+        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_qualimap_bamqc_genome_results.txt"),
+        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_picard_dups.txt"),
+       #S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_picard_mark_illumina_adapters.txt"),
+        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_samtools_flagstat.txt"),
+        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_fastqc.txt"),
+        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_general_stats.txt"),
+        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_sources.txt"),
+        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_data.json"),
     params:
         outdir = "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc"
     shell:

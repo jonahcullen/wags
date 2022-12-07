@@ -10,7 +10,7 @@ rule sv_delly:
         sv_bcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.{sv_type}.{ref}.bcf.gz",
         sv_csi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.{sv_type}.{ref}.bcf.gz.csi"
     params:
-        delly_tmp = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/tmp.{sv_type}.bcf",
+        delly_tmp = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/tmp.{sv_type}.bcf"),
         conda_env = config['conda_envs']['delly'],
         ref_fasta = config['ref_fasta'],
     benchmark:
@@ -57,7 +57,7 @@ rule merge_delly_calls:
         sv_gz  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz"),
         sv_tbi = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz.tbi")
     params:
-        sv_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf"
+        sv_vcf = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf")
     benchmark:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.merge_delly_calls.benchmark.txt"
     threads: 4
@@ -87,9 +87,9 @@ rule sv_gridss:
         sv_gz  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz"),
         sv_tbi = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz.tbi")
     params:
-        gridss_tmp  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.tmp.vcf",
-        gridss_bam  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.bam",
-        gridss_filt = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.tmp.filt.vcf",
+        gridss_tmp  = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.tmp.vcf"),
+        gridss_bam  = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.bam"),
+        gridss_filt = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.tmp.filt.vcf"),
         work_dir    = lambda wildcards, output: os.path.dirname(output.sv_gz),
         conda_env   = config['conda_envs']['gridss'],
         ref_fasta   = config['ref_fasta'],
@@ -134,9 +134,9 @@ rule sv_lumpy:
         sv_gz  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.gz"),
         sv_tbi = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.gz.tbi")
     params:
-        lumpy_tmp  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.tmp",
-        lumpy_filt = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.tmp.filt",
-        lumpy_sort = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.tmp.filt.vcf",
+        lumpy_tmp  = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.tmp"),
+        lumpy_filt = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.tmp.filt"),
+        lumpy_sort = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.tmp.filt.vcf"),
         work_dir   = lambda wildcards, output: os.path.basename(output.sv_gz),
         conda_env  = config['conda_envs']['lumpy'],
         ref_fasta  = config['ref_fasta'],
