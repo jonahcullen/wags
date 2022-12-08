@@ -202,7 +202,7 @@ rule sort_and_fix_tags:
         sorted_bai = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bai")
     params:
         java_opt  = "-Xms4000m",
-        tmp_dir   = config['sort_tmp'],
+        tmp_dir   = config['tmp_dir']['sort_tmp'],
         ref_fasta = config['ref_fasta']
     benchmark:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.merge_bams.benchmark.txt"

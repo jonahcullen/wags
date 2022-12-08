@@ -59,6 +59,12 @@ known_sites :
 # RANDOM PARAMS
 excess_het_threshold : 54.69
 
+# SV CONDA ENVS
+conda_envs :
+    delly  : delly
+    gridss : gridss
+    lumpy  : lumpy
+    manta  : manta
 
 # INTERVALS - NOTE GENERATE AS PART OF PIPELINE
 #hc_intervals       : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/intervals/Splint100/
