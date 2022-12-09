@@ -281,7 +281,7 @@ rule bam_to_cram:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.bam_to_cram.benchmark.txt"
     threads: 4
     resources:
-         time   = 180,
+         time   = 600,
          mem_mb = 8000
     shell:
         '''
