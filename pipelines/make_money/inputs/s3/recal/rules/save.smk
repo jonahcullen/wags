@@ -42,14 +42,14 @@ rule upload_pipe_and_logs:
             set -e
 
             mc cp --recursive ./src/ \
-                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/money/pipeline/
+                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/money/pipeline/src
 
             mc cp --recursive ./{params.profile}.go_wags/ \
-                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/money/pipeline/
+                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/money/pipeline/{params.profile}.go_wags
 
             mc cp {wildcards.ref}_money.yaml {wildcards.breed}_{wildcards.sample_name}.go_make_money.{params.profile} go_make_money.smk input.tsv \
                 {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/money/pipeline/
 
             mc cp --recursive ./.logs/ \
-                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/money/
+                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/money/.logs
         ''')
