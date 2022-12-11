@@ -43,6 +43,9 @@ rule upload_pipe_and_logs:
 
             mc cp --recursive ./src/ \
                 {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/pipeline/src
+            
+            mc cp --recursive ./rules/ \
+                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/pipeline/rules
 
             mc cp --recursive ./{params.profile}.go_wags/ \
                 {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/pipeline/{params.profile}.go_wags
