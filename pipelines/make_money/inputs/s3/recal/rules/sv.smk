@@ -84,11 +84,11 @@ rule sv_gridss:
         final_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai"
             if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai",
     output:
-        sv_gz  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz"),
-        sv_tbi = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz.tbi")
+        gridss_bam = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.bam"),
+        sv_gz      = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz"),
+        sv_tbi     = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz.tbi")
     params:
         gridss_tmp  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.tmp.vcf",
-        gridss_bam  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.bam",
         gridss_filt = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.tmp.filt.vcf",
         work_dir    = lambda wildcards, output: os.path.dirname(output.sv_gz),
         conda_env   = config['conda_envs']['gridss'],
@@ -107,16 +107,17 @@ rule sv_gridss:
                 -t 8 \
                 -r {params.ref_fasta} \
                 -o {params.gridss_tmp} \
-                -a {params.gridss_bam} \
+                -a {output.gridss_bam} \
                 --jvmheap 32g \
                 -w {params.work_dir} \
                 {input.final_bam} \
 
+            # removed -i "FILTER == '.'" as no records were returned
+            # unclear if issue sample or larger...
             # filter for pass and save as uncompressed vcf
             bcftools filter \
                 -O v \
                 -o {params.gridss_filt} \
-                -i "FILTER == '.'" \
                 {params.gridss_tmp}
             
             # bgzip and index
@@ -187,7 +188,7 @@ rule sv_manta:
         graph_stat = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/svLocusGraphStats.tsv"),
         align_stat = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/alignmentStatsSummary.txt"),
     params:
-        manta_tmp  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/variants/diploidSV.vcf.gz",
+        manta_tmp  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/variants/diploidSV.vcf",
         manta_filt = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/variants/diploidSV.filt.vcf.gz",
         work_dir    = lambda wildcards, output: os.path.dirname(output.sv_gz),
         conda_env   = config['conda_envs']['manta'],
