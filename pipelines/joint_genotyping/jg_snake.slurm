@@ -7,19 +7,19 @@
 #SBATCH --mail-type=ALL  
 #SBATCH --mail-user=cull0084@umn.edu 
 #SBATCH --job-name jg_snake
-#SBATCH -o ./Jobs/%j.jg_snake.out
-#SBATCH -e ./Jobs/%j.jg_snake.err
+#SBATCH -o %j.jg_snake.out
+#SBATCH -e %j.jg_snake.err
 #SBATCH -p small,amdsmall
 
 set -e
 
-conda activate snake73
+conda activate snake718
 cd $SLURM_SUBMIT_DIR
 
 
-snakemake -s joint_genotyping.smk \
+snakemake -s many_wags.smk \
     --use-singularity \
-    --profile slurm.go_joint/ \
+    --profile slurm.go_wags/ \
     --configfile canfam4_config.yaml \
     --keep-going
 

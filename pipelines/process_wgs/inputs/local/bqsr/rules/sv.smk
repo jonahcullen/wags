@@ -188,8 +188,8 @@ rule sv_manta:
         graph_stat = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/svLocusGraphStats.tsv",
         align_stat = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/alignmentStatsSummary.txt",
     params:
-        manta_tmp  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/variants/diploidSV.vcf",
-        manta_filt = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/variants/diploidSV.filt.vcf.gz",
+        manta_tmp  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/variants/diploidSV.vcf.gz",
+        manta_filt = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/variants/diploidSV.filt.vcf",
         work_dir    = lambda wildcards, output: os.path.dirname(output.sv_gz),
         conda_env   = config['conda_envs']['manta'],
         ref_fasta   = config['ref_fasta'],
