@@ -277,6 +277,7 @@ rule bam_to_cram:
     params:
         ref_fasta = config['ref_fasta'],
         java_opt  = "-Xmx6000g",
+        tmp_dir   = "/dev/shm/{sample_name}_{ref}.cram.tmp"
     benchmark:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.bam_to_cram.benchmark.txt"
     threads: 4
@@ -285,8 +286,11 @@ rule bam_to_cram:
          mem_mb = 8000
     shell:
         '''
+            mkdir -p {params.tmp_dir}
+
             gatk --java-options {params.java_opt} \
                 PrintReads \
+                --tmp-dir {params.tmp_dir} \
                 -R {params.ref_fasta} \
                 -I {input.final_bam} \
                 -O {output.final_cram} \
