@@ -416,7 +416,7 @@ rule bam_to_cram:
     threads: 4
     resources:
          time   = 600,
-         mem_mb = 8000
+         mem_mb = 60000
     shell:
         '''
             mkdir -p {params.tmp_dir}

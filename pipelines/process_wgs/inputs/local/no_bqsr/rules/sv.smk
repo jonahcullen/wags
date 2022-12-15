@@ -148,7 +148,7 @@ rule sv_lumpy:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.sv_lumpy.benchmark.txt"
     threads: 8
     resources:
-         time   = 480,
+         time   = 720,
          mem_mb = 36000
     shell:
         '''
