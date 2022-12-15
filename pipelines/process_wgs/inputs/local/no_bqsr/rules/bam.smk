@@ -263,21 +263,19 @@ if config['left_align']:
 
 rule bam_to_cram:
     input:
-        final_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam" 
-            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.duplicate_marked.sorted.bam",
-        final_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bai"
-            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.duplicate_marked.sorted.bam",
+        final_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bam"
+            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bam",
+        final_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai"
+            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai",
     output:
-        final_cram = "{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.cram"
-            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.left_aligned.cram",
-        final_crai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.cram.bai"
-            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.left_aligned.cram.bai",
-        final_md5 = "{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.cram.md5"
-            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.left_aligned.cram.md5",
+        final_cram = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.cram")
+            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.left_aligned.cram"),
+        final_crai = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.cram.crai")
+            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.left_aligned.cram.crai"),
+        final_md5 = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.cram.md5")
+            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.left_aligned.cram.md5"),
     params:
         ref_fasta = config['ref_fasta'],
-        java_opt  = "-Xmx6000g",
-        tmp_dir   = "/dev/shm/{sample_name}_{ref}.cram.tmp"
     benchmark:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.bam_to_cram.benchmark.txt"
     threads: 4
@@ -286,13 +284,12 @@ rule bam_to_cram:
          mem_mb = 60000
     shell:
         '''
-            mkdir -p {params.tmp_dir}
+            samtools view \
+                -C \
+                -T {params.ref_fasta} \
+                -o {output.final_cram} \
+                {input.final_bam}
 
-            gatk --java-options {params.java_opt} \
-                PrintReads \
-                --tmp-dir {params.tmp_dir} \
-                -R {params.ref_fasta} \
-                -I {input.final_bam} \
-                -O {output.final_cram} \
-                --create-output-bam-md5
+            samtools index {output.final_cram}
+            md5sum {output.final_cram} > {output.final_md5}
         '''
