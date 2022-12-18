@@ -249,6 +249,7 @@ def main():
             f"#SBATCH -o slurm_logs/%j.{v['breed']}_{k}.{job_name}.out\n"
             f"#SBATCH -e slurm_logs/%j.{v['breed']}_{k}.{job_name}.err\n"
             f"#SBATCH -A {account}\n"
+            f"#SBATCH -p {partition}\n"
         )             
      
         # job submission body 
