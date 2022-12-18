@@ -41,18 +41,18 @@ rule upload_pipe_and_logs:
         shell('''
             set -e
 
-            mc cp --recursive ./src/ \
-                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/pipeline/src
+            mc cp ./src/* \
+                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/pipeline/src/
             
-            mc cp --recursive ./rules/ \
-                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/pipeline/rules
+            mc cp ./rules/* \
+                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/pipeline/rules/
 
-            mc cp --recursive ./{params.profile}.go_wags/ \
-                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/pipeline/{params.profile}.go_wags
+            mc cp ./{params.profile}.go_wags/* \
+                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/pipeline/{params.profile}.go_wags/
 
             mc cp {wildcards.ref}_config.yaml {wildcards.breed}_{wildcards.sample_name}.one_wags.{params.slurm} one_wags.smk input.tsv \
                 {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/pipeline/
 
-            mc cp --recursive ./.logs/ \
-                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/.logs
+            mc cp ./.logs/* \
+                {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/.logs/
         ''')
