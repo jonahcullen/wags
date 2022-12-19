@@ -61,13 +61,13 @@ rule all:
             ref=config['ref'],
         ),
         # upload fastqs
-        expand(
-            "{bucket}/fastqc/{breed}/{sample_name}/{u.readgroup_name}.upload",
-            u=units.itertuples(), 
-            bucket=config['bucket'],
-            breed=breed,
-            sample_name=sample_name,
-        ),
+       #expand(
+       #    "{bucket}/fastqc/{breed}/{sample_name}/{u.readgroup_name}.upload",
+       #    u=units.itertuples(), 
+       #    bucket=config['bucket'],
+       #    breed=breed,
+       #    sample_name=sample_name,
+       #),
         # upload pipeline, and logs
         expand(
             "{bucket}/{ref}/{breed}/{sample_name}/{ref}/pipe_and_logs.upload",
