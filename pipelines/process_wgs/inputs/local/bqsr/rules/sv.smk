@@ -17,7 +17,7 @@ rule sv_delly:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.{sv_type}.delly.benchmark.txt"
     threads: 12
     resources:
-         time   = 480,
+         time   = 720,
          mem_mb = 60000
     shell:
         '''
@@ -146,7 +146,7 @@ rule sv_lumpy:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.sv_lumpy.benchmark.txt"
     threads: 8
     resources:
-         time   = 720,
+         time   = 2880,
          mem_mb = 36000
     shell:
         '''
