@@ -305,8 +305,8 @@ def main():
                 print(
                     textwrap.dedent(
                         f"""
-                        mc cp --recursive ./{profile}_logs/ \\
-                            {alias}/{bucket}/wgs/{breed}/{sample_name}/{ref}/{profile}_logs
+                        mc cp ./{profile}_logs/* \\
+                            {alias}/{bucket}/wgs/{breed}/{sample_name}/{ref}/{profile}_logs/
                         """
                     ),file=f
                 )

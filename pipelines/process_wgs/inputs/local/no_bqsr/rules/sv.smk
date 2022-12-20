@@ -98,7 +98,7 @@ rule sv_gridss:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.sv_gridss.benchmark.txt"
     threads: 8
     resources:
-         time   = 480,
+         time   = 720,
          mem_mb = 36000
     shell:
         '''
