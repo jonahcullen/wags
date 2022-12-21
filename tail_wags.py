@@ -151,7 +151,7 @@ def meta_prep(alias, samples, outdir, outfile):
                 flow = tmp[5]
                 fq_copy = (
                     f'mc cp {os.path.join(alias, j)} '
-                    f'{os.path.join(fastq_dir,breed,dogid,flow)}'
+                    f'{os.path.join(fastq_dir,breed,dogid,flow)+"/"}'
                 )
                 print(fq_copy, file=out)
     print('Done!')
