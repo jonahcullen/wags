@@ -142,7 +142,7 @@ def meta_prep(alias, samples, outdir, outfile):
     fqs = list(chain(*[v['fastqs'] for v in d.values()]))
     for ind, i in enumerate(np.array_split(fqs, math.ceil(len(d.keys()) / 2))):
         with open(os.path.join(slurm_dir, f'fastqs_{str(ind).zfill(4)}.slurm'), 'w') as out:
-            print(top, file=out)
+            print(top.replace('JOB_NAME', f'fastqs_{str(ind).zfill(4)}'), file=out)
             for j in i:
                 # get breed, id, and flowcell from j to ensure fastqs with same
                 # on different runs to not get overwritten
