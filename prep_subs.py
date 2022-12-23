@@ -250,6 +250,7 @@ def main():
             f"#SBATCH -e slurm_logs/%j.{v['breed']}_{k}.{job_name}.err\n"
             f"#SBATCH -A {account}\n"
             f"#SBATCH -p {partition}\n"
+            "#SBATCH --exclude cn0229,cn1025,cn0128,cn0134,cn0418,cn0522,cn0346,cn0602,cn0499,cn0241,cn0287,cn0281,cn0275,cn0009\n"
         )             
      
         # job submission body 
