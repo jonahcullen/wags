@@ -53,6 +53,6 @@ rule upload_pipe_and_logs:
             mc cp {wildcards.ref}_config.yaml {wildcards.breed}_{wildcards.sample_name}.one_wags.{params.profile} one_wags.smk input.tsv \
                 {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/pipeline/
 
-            mc cp ./.logs/* \
+            mc cp -r .logs/ \
                 {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/.logs/
         ''')
