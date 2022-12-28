@@ -11,8 +11,10 @@ import math
 import click
 import textwrap
 import numpy as np
+import pandas as pd
 from minio import Minio
 from itertools import chain
+from datetime import datetime
 from collections import defaultdict
 
 # setup minio client
@@ -77,10 +79,14 @@ def messages():
 
 
 @click.command()
-@click.option('--alias', default='s3', help='minio client alias for friedlab bucket')
-@click.option('--samples', default='', help='sample IDs (comma separated) or file with one ID per row')
-@click.option('--outdir', default='./', help='directory to send meta file')
-@click.option('--outfile', default='dog_ids.csv', help='meta file name (default dog_ids.csv')
+@click.option('--alias', default='s3',
+              help='minio client alias for friedlab bucket')
+@click.option('--samples', default='',
+              help='sample IDs (comma separated) or file with one ID per row')
+@click.option('--outdir', default='./',
+              help='directory to send meta file')
+@click.option('--outfile', default='dog_ids.csv',
+              help='meta file name (default dog_ids.csv')
 def meta_prep(alias, samples, outdir, outfile):
     """
     generate metadata from a sample ID (separated by commas) or
@@ -151,15 +157,17 @@ def meta_prep(alias, samples, outdir, outfile):
                 flow = tmp[5]
                 fq_copy = (
                     f'mc cp {os.path.join(alias, j)} '
-                    f'{os.path.join(fastq_dir,breed,dogid,flow)+"/"}'
+                    f'{os.path.join(fastq_dir, breed, dogid, flow) + "/"}'
                 )
                 print(fq_copy, file=out)
     print('Done!')
 
 
 @click.command()
-@click.option('--samples', default='', help='sample ID and breed ("sample,breed") or file with one ID per row')
-@click.option('--ref', default='UU_Cfam_GSD_1.0_ROSY', help='reference to check against (default: UU_Cfam_GSD_1.0_ROSY)')
+@click.option('--samples', default='',
+              help='sample ID and breed ("sample,breed") or file with one ID per row')
+@click.option('--ref', default='UU_Cfam_GSD_1.0_ROSY',
+              help='reference to check against (default: UU_Cfam_GSD_1.0_ROSY)')
 def all_done(samples, ref):
     """
     check if all done dog
@@ -180,6 +188,7 @@ def all_done(samples, ref):
     l_all_done = []
     d_not_done = {}
 
+    done_outs = ''  # added to stop referenced before assignment warning
     for k, v in d.items():
         # expected files for an all done dog
         done_outs = [
@@ -193,7 +202,7 @@ def all_done(samples, ref):
             f'{k}.{ref}.flagstat.txt',
             f'multiqc.log',
             f'multiqc_data.json',
-           #f'multiqc_fastqc.txt',
+            # f'multiqc_fastqc.txt',
             f'multiqc_general_stats.txt',
             f'multiqc_picard_dups.txt',
             f'multiqc_qualimap_bamqc_genome_results.txt',
@@ -228,7 +237,7 @@ def all_done(samples, ref):
             os.path.basename(i.object_name)
             for i in objects
             if i.object_name.split('/')[4] in ['cram', 'gvcf', 'svar', 'qc']
-            and 'multiqc_fastqc.txt' not in i.object_name
+               and 'multiqc_fastqc.txt' not in i.object_name
         ]
 
         # check dog is done
@@ -246,39 +255,92 @@ def all_done(samples, ref):
             print(k, f'({len(done_outs) - len(v)}/{len(done_outs)})')
 
 
+@click.command()
+@click.option('--samples', default='',
+              help='sample ID and breed ("sample,breed") or file with one ID per row')
+@click.option('--ref', default='UU_Cfam_GSD_1.0_ROSY',
+              help='reference to check against (default: UU_Cfam_GSD_1.0_ROSY)')
+@click.option('--outdir', default='./fetched_logs',
+              help='directory to send logs and multiqc report')
+def fetch_logs(samples, ref, outdir):
+    """
+    fetch slurm run logs and mean depth from multiqc text file
+    """
+    # get dogs and breeds into d
+    d = defaultdict(dict)
+
+    # list all object paths in bucket that begin with my-prefixname.
+    objects = list(
+        s3client.list_objects('friedlab',
+                              prefix='wgs/',
+                              recursive=True)
+    )
+
+    ref_objects = list(filter(lambda x: ref in x.object_name, objects))
+
+    if os.path.exists(samples):
+        with open(samples, 'r') as infile:
+            for line in infile:
+                d[line.strip()]['logs'] = []
+                d[line.strip()]['depth'] = []
+    else:
+        fq_list = [samples]
+        for i in fq_list:
+            d[i]['logs'] = []
+            d[i]['depth'] = []
+
+    # get all logs and depth files into d
+    for i in ref_objects:
+        breed, dogid = i.object_name.split('/')[1:3]
+        if dogid in d:
+            d[dogid]['breed'] = breed
+            if i.object_name.endswith('one_wags.err'):
+                d[dogid]['logs'].append(i.object_name)
+            if 'multiqc_general_stats.txt' in os.path.basename(i.object_name):
+                d[dogid]['depth'].append(i.object_name)
+
+    # filter d exclude dogs with more than one run file (ie took multiple restarts)
+    filt_d = {k: v for k, v in d.items() if len(v['logs']) == 1}
+
+    # loop through filt_d and download/parse the slurm logs and qc file for depth
+    depth_col = 'QualiMap_mqc-generalstats-qualimap-mean_coverage'
+    for k, v in filt_d.items():
+        print(k, v['breed'])
+        fetched_dir = os.path.join(outdir, v['breed'], k)
+        os.makedirs(fetched_dir, exist_ok=True)
+        # slurm log
+        slurm_err = os.path.join(fetched_dir, os.path.basename(v['logs'][0]))
+        if not os.path.isfile(slurm_err):
+            s3client.fget_object('friedlab', v['logs'][0], slurm_err)
+        # parse for processing time
+        log_times = []
+        with open(slurm_err, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith('['):
+                    log_times.append(line)
+            # time stamp format from err files
+            fmt = '[%a %b %d %H:%M:%S %Y]'
+            runtime = datetime.strptime(log_times[-1], fmt) - datetime.strptime(log_times[0], fmt)
+            filt_d[k]['runtime'] = (runtime.days * 24 * 60) + (runtime.seconds / 60)
+        # qualimap mean coverage log
+        depth_txt = os.path.join(fetched_dir, 'multiqc_general_stats.txt')
+        if not os.path.isfile(depth_txt):
+            s3client.fget_object('friedlab', v['depth'][0], depth_txt)
+        # parse for mean depth
+        df = pd.read_csv(depth_txt, sep='\t')
+        filt_d[k]['mean_depth'] = df[depth_col].dropna().to_list()[0]
+
+    # write to file
+    with open(os.path.join(outdir, 'fetched.tsv'), 'w') as out:
+        print('breed\tsample\tmean_depth\trun_time', file=out)
+        for k, v in filt_d.items():
+            print(v['breed'], k, v['mean_depth'], v['runtime'], sep='\t', file=out)
+
+
 messages.add_command(meta_prep)
 messages.add_command(all_done)
+messages.add_command(fetch_logs)
 
 if __name__ == '__main__':
     messages()
-
-# either write something to download them in parallel or write a function to
-# generate a suitable number of slurm submissions...
-# s3client.fget_object("friedlab", "wgs/gldr/D06264/fastq/HLCNLDSXX/S_2007_S94_R1_001.fastq.gz",
-#                      "./S_2007_S94_R1_001.fastq.gz")
-
-# and i.obje¥ct_name.count("/") == 6
-
-# this is not entirely safe...requires a bunch of hand annotation to fix fastq names...
-
-# f = "/Users/jonahcullen/projects/friedenberg/gatk_pipeline/PerformEval/random_100.fastqs.list"
-#
-# d = defaultdict(list)
-#
-# with open(f, "r") as infile:
-#     for line in infile:
-#         line = line.strip().split("/")
-#         breed, sample = line[3:5]
-#         fq = re.search(r"(.*)_(R1|1|R2|2)_{0,1}(.*)\.(f.*q)(\..*){0,1}", line[-1]).group(1)
-#         print(fq)
-#         if "L00" in fq:
-#             fq = fq[:-5]
-#         key = f"{sample}_{breed}"
-#         d[key].append(fq)
-#
-# meta = "/Users/jonahcullen/projects/friedenberg/gatk_pipeline/PerformEval/dog_ids.csv"
-#
-# with open(meta, "w") as out:
-#     for k, v in d.items():
-#         sample, breed = k.split("_")
-#         print(sample, breed, "", v[0], sep=",", file=out)
