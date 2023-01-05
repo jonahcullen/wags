@@ -1,37 +1,37 @@
 
-#rule fastqc:
-#    input:
-#        unpack(get_fastq)
-#    output:
-#        r1_zip  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}_R1_fastqc.zip"),
-#        r1_html = S3.remote("{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}_R1_fastqc.html"),
-#        r2_zip  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}_R2_fastqc.zip"),
-#        r2_html = S3.remote("{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}_R2_fastqc.html"),
-#    params:
-#        outdir = "{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}",
-#        r1_html = lambda wildcards, input: os.path.basename(input.r1.replace(".fastq.gz","_fastqc.html")),
-#        r1_zip  = lambda wildcards, input: os.path.basename(input.r1.replace(".fastq.gz","_fastqc.zip")),
-#        r2_html = lambda wildcards, input: os.path.basename(input.r2.replace(".fastq.gz","_fastqc.html")),
-#        r2_zip  = lambda wildcards, input: os.path.basename(input.r2.replace(".fastq.gz","_fastqc.zip")),
-#    benchmark:
-#        "{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}.fastqc.benchmark.txt"
-#    threads: 6
-#    resources:
-#         time   = 360,
-#         mem_mb = 6000, 
-#    shell:
-#        '''
-#            set -e
-#
-#            fastqc -t {threads} \
-#                --outdir {params.outdir} \
-#                {input.r1} {input.r2}
-#
-#            mv {params.outdir}/{params.r1_html} {output.r1_html}
-#            mv {params.outdir}/{params.r2_html} {output.r2_html}
-#            mv {params.outdir}/{params.r1_zip} {output.r1_zip}
-#            mv {params.outdir}/{params.r2_zip} {output.r2_zip}
-#        '''
+ rule fastqc:
+     input:
+         unpack(get_fastq)
+     output:
+         r1_zip  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}_R1_fastqc.zip"),
+         r1_html = S3.remote("{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}_R1_fastqc.html"),
+         r2_zip  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}_R2_fastqc.zip"),
+         r2_html = S3.remote("{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}_R2_fastqc.html"),
+     params:
+         outdir = "{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}",
+         r1_html = lambda wildcards, input: os.path.basename(input.r1.replace(".fastq.gz","_fastqc.html")),
+         r1_zip  = lambda wildcards, input: os.path.basename(input.r1.replace(".fastq.gz","_fastqc.zip")),
+         r2_html = lambda wildcards, input: os.path.basename(input.r2.replace(".fastq.gz","_fastqc.html")),
+         r2_zip  = lambda wildcards, input: os.path.basename(input.r2.replace(".fastq.gz","_fastqc.zip")),
+     benchmark:
+         "{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}.fastqc.benchmark.txt"
+     threads: 6
+     resources:
+          time   = 360,
+          mem_mb = 6000, 
+     shell:
+         '''
+             set -e
+ 
+             fastqc -t {threads} \
+                 --outdir {params.outdir} \
+                 {input.r1} {input.r2}
+ 
+             mv {params.outdir}/{params.r1_html} {output.r1_html}
+             mv {params.outdir}/{params.r2_html} {output.r2_html}
+             mv {params.outdir}/{params.r1_zip} {output.r1_zip}
+             mv {params.outdir}/{params.r2_zip} {output.r2_zip}
+         '''
 
 rule flagstat:
     input:
@@ -111,14 +111,14 @@ rule qualimap_bamqc:
 
 rule multiqc:
     input:
-       #r1_zip      = S3.remote(expand(
-       #    "{{bucket}}/wgs/{{breed}}/{{sample_name}}/fastqc/{{sample_name}}/{u.flowcell}/{u.readgroup_name}_R1_fastqc.zip",
-       #    u=units.itertuples()
-       #)),
-       #r2_zip      = S3.remote(expand(
-       #    "{{bucket}}/wgs/{{breed}}/{{sample_name}}/fastqc/{{sample_name}}/{u.flowcell}/{u.readgroup_name}_R2_fastqc.zip",
-       #    u=units.itertuples()
-       #)),
+        r1_zip      = S3.remote(expand(
+            "{{bucket}}/wgs/{{breed}}/{{sample_name}}/fastqc/{{sample_name}}/{u.flowcell}/{u.readgroup_name}_R1_fastqc.zip",
+            u=units.itertuples()
+        )),
+        r2_zip      = S3.remote(expand(
+            "{{bucket}}/wgs/{{breed}}/{{sample_name}}/fastqc/{{sample_name}}/{u.flowcell}/{u.readgroup_name}_R2_fastqc.zip",
+            u=units.itertuples()
+        )),
         flagstat    = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/{sample_name}.{ref}.flagstat.txt"),
         bqsr_before = "{bucket}/wgs/{breed}/{sample_name}/{ref}/logs/{sample_name}.{ref}.recal_data.txt",
         bqsr_after  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/logs/{sample_name}.{ref}.second_recal_data.txt",
@@ -136,7 +136,7 @@ rule multiqc:
         S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_picard_dups.txt"),
        #S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_picard_mark_illumina_adapters.txt"),
         S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_samtools_flagstat.txt"),
-       #S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_fastqc.txt"),
+        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_fastqc.txt"),
         S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_general_stats.txt"),
         S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_sources.txt"),
         S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_data/multiqc_data.json"),
