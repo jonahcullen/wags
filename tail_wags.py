@@ -337,10 +337,92 @@ def fetch_logs(samples, ref, outdir):
         for k, v in filt_d.items():
             print(v['breed'], k, v['mean_depth'], v['runtime'], sep='\t', file=out)
 
+@click.command()
+@click.option('--alias', default='s3',
+              help='minio client alias for friedlab bucket')
+@click.option('--samples', default='',
+              help='sample ID and breed ("sample,breed") or file with one ID per row')
+@click.option('--ref', default='UU_Cfam_GSD_1.0_ROSY',
+              help='reference to check against (default: UU_Cfam_GSD_1.0_ROSY)')
+@click.option('--outdir', default='./fetched_gvcfs',
+              help='directory to send logs and multiqc report (default: fetched_gvcfs)')
+@click.option('--outfile', default='gvcfs.list',
+              help='list of gvcfs locations (default: gvcfs.list)')
+def fetch_gvcfs(alias, samples, ref, outdir, outfile):
+    """
+    fetch gvcfs from samples ids, prepare slurm submissions to download, and
+    output file containing path to downloaded gvcfs (following submission of
+    the prepared slurm jobs)
+    """
+    # get dogs and breeds into d
+    d = defaultdict(dict)
+    if os.path.exists(samples):
+        with open(samples, 'r') as infile:
+            for line in infile:
+                d[line.strip()]['gvcf'] = ''
+    else:
+        fq_list = [samples]
+        for i in fq_list:
+            d[i]['gvcf'] = ''
+
+    # list all object paths in bucket that begin with my-prefixname
+    objects = list(
+        s3client.list_objects('friedlab',
+                              prefix='wgs/',
+                              recursive=True)
+    )
+    # filter to include only those with ref
+    ref_objects = list(filter(lambda x: ref in x.object_name, objects))
+    # get absolute path of outdir
+    out_dir = os.path.abspath(os.path.expanduser(outdir))
+
+    # write slurm submissions to download all gvcfs
+    slurm_dir = os.path.join(out_dir, 'jobs')
+    os.makedirs(slurm_dir, exist_ok=True)
+    gvcfs_dir = os.path.join(out_dir, 'gvcfs')
+    os.makedirs(gvcfs_dir, exist_ok=True)
+    print(f'Generating slurm submissions in {slurm_dir}')
+    # get gvcfs and indices
+    for i in ref_objects:
+        if i.object_name.endswith('.g.vcf.gz'):
+            breed, dogid = i.object_name.split('/')[1:3]
+            if dogid in d:
+                d[dogid]['breed'] = breed
+                d[dogid]['gvcf'] = [i.object_name]
+                d[dogid]['gvcf'].append(i.object_name.replace('g.vcf.gz', 'g.vcf.gz.tbi'))
+                # keep gvcf downloads organized
+                fetched_dir = os.path.join(gvcfs_dir, breed, dogid)
+                os.makedirs(fetched_dir, exist_ok=True)
+
+    # get all fastqs into list
+    gvcfs = list(chain(*[v['gvcf'] for v in d.values()]))
+    # prepare slurm submissions to download all gvcfs
+    for ind, i in enumerate(np.array_split(gvcfs, math.ceil(len(d.keys()) / 2))):
+        with open(os.path.join(slurm_dir, f'gvcfs_{str(ind).zfill(4)}.slurm'), 'w') as out:
+            print(top, file=out)
+            for j in i:
+                # get breed and sample
+                tmp = j.split('/')
+                breed, dogid = tmp[-5:-3]
+                gvcf_copy = (
+                    f'mc cp {os.path.join(alias, j)} '
+                    f'{os.path.join(gvcfs_dir, breed, dogid) + "/"}'
+                )
+                print(gvcf_copy, file=out)
+
+    # write gvcfs.list for input to joint genotyping
+    with open(os.path.join(outdir, outfile), 'w') as out:
+        for k, v in d.items():
+            tmp = v['gvcf'][0].split('/')
+            breed, dogid = tmp[-5:-3]
+            print(os.path.join(gvcfs_dir, breed, dogid, os.path.basename(tmp[-1])), file=out)
+    print('Done!')
+
 
 messages.add_command(meta_prep)
 messages.add_command(all_done)
 messages.add_command(fetch_logs)
+messages.add_command(fetch_gvcfs)
 
 if __name__ == '__main__':
     messages()
