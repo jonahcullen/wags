@@ -51,10 +51,10 @@ def get_gvcfs(wildcards):
 
 rule haplotype_caller:
     input:
-        final_cram = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.cram")
-            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.left_aligned.cram"),
-        final_crai = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.cram.crai")
-            if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.left_aligned.cram.crai"),
+        final_cram = "{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.cram"
+            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.left_aligned.cram",
+        final_crai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.cram.crai"
+            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.left_aligned.cram.crai",
         interval  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/00{split}-scattered.interval_list"
     output:
         hc_gvcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/{sample_name}.00{split}.g.vcf.gz"
