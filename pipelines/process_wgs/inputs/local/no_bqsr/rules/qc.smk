@@ -84,7 +84,7 @@ rule qualimap_bamqc:
                 -bam {input.sorted_bam} \
                 -outdir {params.out_dir} \
                 -outformat PDF:HTML \
-                -nt 12 \
+                -nt {threads} \
                 --java-mem-size=24G
         '''
 
