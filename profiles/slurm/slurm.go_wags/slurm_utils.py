@@ -162,7 +162,7 @@ def submit_job(jobscript, **sbatch_options):
     """Submit jobscript and return jobid."""
     options = format_sbatch_options(**sbatch_options)
     try:
-        cmd = ["sbatch"] + ["--parsable"] + options + ["--exclude=cn0229,cn1025,cn0128,cn0134,cn0418,cn0522,cn0346,cn0602,cn0499,cn0241,cn0287,cn0281,cn0275,cn0009,cn0372,cn0538,cn0106,cn0244,cn0605,cn0401,cn0370,cn0407,cn1060,cn0030,cn0039,cn0109,cn1039,cn1032,cn0461,cn1131,cn0253,cn0124,cn1157,cn1026,cn1162,cn0010,cn1144"] + [jobscript]
+        cmd = ["sbatch"] + ["--parsable"] + options + [jobscript]
         res = sp.check_output(cmd)
     except sp.CalledProcessError as e:
         raise e
