@@ -340,6 +340,8 @@ def fetch_logs(samples, ref, outdir):
 @click.command()
 @click.option('--alias', default='s3',
               help='minio client alias for friedlab bucket')
+@click.option('--bucket', default='',
+              help='bucket name')
 @click.option('--samples', default='',
               help='sample ID and breed ("sample,breed") or file with one ID per row')
 @click.option('--ref', default='UU_Cfam_GSD_1.0_ROSY',
@@ -348,7 +350,7 @@ def fetch_logs(samples, ref, outdir):
               help='directory to send logs and multiqc report (default: fetched_gvcfs)')
 @click.option('--outfile', default='gvcfs.list',
               help='list of gvcfs locations (default: gvcfs.list)')
-def fetch_gvcfs(alias, samples, ref, outdir, outfile):
+def fetch_gvcfs(alias, bucket, samples, ref, outdir, outfile):
     """
     fetch gvcfs from samples ids, prepare slurm submissions to download, and
     output file containing path to downloaded gvcfs (following submission of
@@ -367,7 +369,7 @@ def fetch_gvcfs(alias, samples, ref, outdir, outfile):
 
     # list all object paths in bucket that begin with my-prefixname
     objects = list(
-        s3client.list_objects('friedlab',
+        s3client.list_objects(bucket,
                               prefix='wgs/',
                               recursive=True)
     )
@@ -399,13 +401,13 @@ def fetch_gvcfs(alias, samples, ref, outdir, outfile):
     # prepare slurm submissions to download all gvcfs
     for ind, i in enumerate(np.array_split(gvcfs, math.ceil(len(d.keys()) / 2))):
         with open(os.path.join(slurm_dir, f'gvcfs_{str(ind).zfill(4)}.slurm'), 'w') as out:
-            print(top, file=out)
+            print(top.replace('JOB_NAME', f'gvcfs_{str(ind).zfill(4)}'), file=out)
             for j in i:
                 # get breed and sample
                 tmp = j.split('/')
                 breed, dogid = tmp[-5:-3]
                 gvcf_copy = (
-                    f'mc cp {os.path.join(alias, j)} '
+                    f'mc cp {os.path.join(alias, bucket, j)} '
                     f'{os.path.join(gvcfs_dir, breed, dogid) + "/"}'
                 )
                 print(gvcf_copy, file=out)
@@ -415,7 +417,7 @@ def fetch_gvcfs(alias, samples, ref, outdir, outfile):
         for k, v in d.items():
             tmp = v['gvcf'][0].split('/')
             breed, dogid = tmp[-5:-3]
-            print(os.path.join(gvcfs_dir, breed, dogid, os.path.basename(tmp[-1])), file=out)
+            print(dogid, os.path.join(gvcfs_dir, breed, dogid, os.path.basename(tmp[-1])), sep='\t', file=out)
     print('Done!')
 
 
