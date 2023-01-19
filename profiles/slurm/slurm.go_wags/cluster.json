@@ -104,6 +104,11 @@
         "output" : ".logs/{rule}/00{wildcards.interval}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/00{wildcards.interval}/{wildcards.ref}/%j.{rule}.err"
     },
+    "gather_unfltr_vcf" :
+    {
+        "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
+    },
     "fltr_make_sites_only" :
     {
         "output" : ".logs/{rule}/00{wildcards.interval}/{wildcards.ref}/%j.{rule}.out",
@@ -114,22 +119,42 @@
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
     },
-    "indels_var_recal" :
+    "select_nonsnps" :
     {
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
+    },
+    "nonsnp_hard_fltr" :
+    {
+        "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
+    },
+    "select_snps" :
+    {
+        "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
+    },
+    "fltr_snps_only_var_filtrd" :
+    {
+        "output" : ".logs/{rule}/{wildcards.interval}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.interval}/{wildcards.ref}/%j.{rule}.err"
     },
     "snps_var_recal" :
     {
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
     },
-    "apply_recal" :
+    "snps_apply_recal" :
     {
         "output" : ".logs/{rule}/{wildcards.interval}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.interval}/{wildcards.ref}/%j.{rule}.err"
     },
-    "final_gather_vcfs" :
+    "gather_snp_recal_vcfs" :
+    {
+        "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
+    },
+    "combine_snps_nonsnps" :
     {
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
@@ -195,6 +220,11 @@
         "error"  : ".logs/{rule}/%j.{rule}.err"
     },
     "bcftools_stats" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    },
+    "plot_interval_lengths" :
     {
         "output" : ".logs/{rule}/%j.{rule}.out",
         "error"  : ".logs/{rule}/%j.{rule}.err"
