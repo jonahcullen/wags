@@ -171,20 +171,22 @@ def all_done(samples, ref):
     check if all done dog
     """
     # get dogs and breeds into d
-    d = {}
+    d = defaultdict(dict)
 
     if os.path.exists(samples):
         with open(samples, 'r') as infile:
             next(infile)
             for line in infile:
-                sample, breed = line.strip().split(',')[:2]
-                d[sample] = breed
+                line = line.strip().split(',')
+                sample, breed = line[:2]
+                d[sample]['breed'] = breed
+                d[sample]['fastq_prefix'] = line[-1]
     else:
         sample, breed = samples.strip().split(',')
-        d[sample] = breed
+        d[sample]['breed'] = breed
 
     l_all_done = []
-    d_not_done = {}
+    d_not_done = defaultdict(dict)
 
     done_outs = ''  # added to stop referenced before assignment warning
     for k, v in d.items():
@@ -225,7 +227,7 @@ def all_done(samples, ref):
         # list all object paths in bucket that begin with my-prefixname.
         objects = list(
             s3client.list_objects('friedlab',
-                                  prefix=f'wgs/{v}/{k}/{ref}',
+                                  prefix=f'wgs/{v["breed"]}/{k}/{ref}',
                                   recursive=True)
         )
 
@@ -237,25 +239,28 @@ def all_done(samples, ref):
             if i.object_name.split('/')[4] in ['cram', 'gvcf', 'svar', 'qc']
                and 'multiqc_fastqc.txt' not in i.object_name
         ]
-
         # check dog is done
         if set(done_outs) == set(is_done):
             l_all_done.append(k)
         else:
-            d_not_done[k] = list(set(done_outs) - set(is_done))
+            d_not_done[k]['files_done'] = list(set(done_outs) - set(is_done))
+            d_not_done[k]['breed'] = v['breed']
+            d_not_done[k]['fastq_prefix'] = v['fastq_prefix']
 
     # print to stdout
     print('----all done dogs----')
     print('\n'.join(l_all_done))
     if d_not_done.keys():
         print('--NOT all done dogs--')
-        for k, v in d_not_done.items():
-            print(k, f'({len(done_outs) - len(v)}/{len(done_outs)})')
-
+        with open('dog_ids.not_done.csv', 'w') as f:
+            print('dogid,breed,sex,fastq', file=f)
+            for k, v in d_not_done.items():
+                print(k, f'({len(done_outs) - len(v["files_done"])}/{len(done_outs)})')
+                print(k, v['breed'], '', v['fastq_prefix'], sep=',', file=f)
 
 @click.command()
 @click.option('--samples', default='',
-              help='sample ID and breed ("sample,breed") or file with one ID per row')
+              help='sample ID with one ID per row')
 @click.option('--ref', default='UU_Cfam_GSD_1.0_ROSY',
               help='reference to check against (default: UU_Cfam_GSD_1.0_ROSY)')
 @click.option('--outdir', default='./fetched_logs',
