@@ -1,3 +1,6 @@
+# unclear why this is required now...double check container def
+.libPaths("/usr/local/lib/R/site-library")
+
 suppressPackageStartupMessages({
     library(tidyverse)
     library(scales)
