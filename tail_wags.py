@@ -300,11 +300,13 @@ def fetch_logs(samples, ref, outdir):
                 d[dogid]['logs'].append(i.object_name)
             if 'multiqc_general_stats.txt' in os.path.basename(i.object_name):
                 d[dogid]['depth'].append(i.object_name)
+            if 'input.tsv' in i.object_name:
+                d[dogid]['input_fqs'] = i.object_name
 
     # filter d exclude dogs with more than one run file (ie took multiple restarts)
     filt_d = {k: v for k, v in d.items() if len(v['logs']) == 1}
 
-    # loop through filt_d and download/parse the slurm logs and qc file for depth
+    # loop through filt_d and download/parse the slurm logs, inputs, and qc file for depth
     depth_col = 'QualiMap_mqc-generalstats-qualimap-mean_coverage'
     for k, v in filt_d.items():
         print(k, v['breed'])
@@ -325,6 +327,11 @@ def fetch_logs(samples, ref, outdir):
             fmt = '[%a %b %d %H:%M:%S %Y]'
             runtime = datetime.strptime(log_times[-1], fmt) - datetime.strptime(log_times[0], fmt)
             filt_d[k]['runtime'] = (runtime.days * 24 * 60) + (runtime.seconds / 60)
+        # inputs
+        input_fastqs = os.path.join(fetched_dir, 'input.tsv')
+        if not os.path.isfile(input_fastqs):
+            s3client.fget_object('friedlab', v['input_fqs'], input_fastqs)
+        filt_d[k]['fq_num'] = pd.read_csv(input_fastqs, sep='\t').shape[0]
         # qualimap mean coverage log
         depth_txt = os.path.join(fetched_dir, 'multiqc_general_stats.txt')
         if not os.path.isfile(depth_txt):
@@ -335,9 +342,9 @@ def fetch_logs(samples, ref, outdir):
 
     # write to file
     with open(os.path.join(outdir, 'fetched.tsv'), 'w') as out:
-        print('breed\tsample\tmean_depth\trun_time', file=out)
+        print('breed\tsample\tinput_fqs\tmean_depth\trun_time', file=out)
         for k, v in filt_d.items():
-            print(v['breed'], k, v['mean_depth'], v['runtime'], sep='\t', file=out)
+            print(v['breed'], k, v['fq_num'], v['mean_depth'], v['runtime'], sep='\t', file=out)
 
 
 @click.command()
