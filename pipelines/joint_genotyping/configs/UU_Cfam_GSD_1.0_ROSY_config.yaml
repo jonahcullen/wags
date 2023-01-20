@@ -8,10 +8,6 @@ alias        : s3Fried
 # SINGULARITY IMAGE
 sif : /home/fried255/cull0084/.sif/wags.sif
 
-# OUTPUT OPTIONS
-var_table : false
-phasing   : false
-
 # CONDA ENV
 conda_envs :
   qc : bcftools
@@ -34,16 +30,20 @@ snp_recalibration_tranche_values    : [
   "100.0", "99.95", "99.9", "99.5", "99.0", "98.0", 
   "97.0", "96.0", "95.0", "94.0", "93.0", "92.0", "91.0", "90.0"]
 snp_recalibration_annotation_values : ["QD", "MQRankSum", "ReadPosRankSum", "FS", "MQ", "SOR", "DP"]
-
 snp_filter_level   : 99.0
+
+indel_recalibration_tranche_values    : [
+  "100.0", "99.95", "99.9", "99.5", "99.0", "98.0", 
+  "97.0", "96.0", "95.0", "94.0", "93.0", "92.0", "91.0", "90.0"]
+indel_recalibration_annotation_values : ["FS", "ReadPosRankSum", "MQRankSum", "QD", "SOR", "DP"]
+indel_filter_level : 99.0
 
 # RESOURCE FILES (FROM CONTAINER)
 k9hd_axiom_vcf : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/SRZ189891_722g.simp.header.CanineHDandAxiom_K9_HD.GSD_1.0.vcf.gz
 coverage_sites : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/SRZ189891_722g.simp.header.CanineHD.names.GSD_1.0.filter.vcf.gz
 
-# AF FREQ
-var_to_table_dir : /panfs/roc/groups/0/fried255/fried255/working/all_dogs
-
-# PHASING LINKAGE MAP
+# OUTPUT OPTIONS
+# PHASING
+phasing  : false
 link_map : /home/refgen/dog/canfam3/canFam3.linkage.map.wgs
 

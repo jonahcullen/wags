@@ -44,8 +44,6 @@ def extract_pu(s):
             head = head.split(":")
             return f"{head[2]}.{head[3]}.{head[-1]}"
 
-
-#def main(dog_meta,outdir,fq_dir,ref,profile):
 def main():
     global profile
    
@@ -337,7 +335,6 @@ if __name__ == '__main__':
             "FASTQ pair), wags outputs a directory structure organized by \n"
             "breed, wherein GATK pipeline input are contained by sample ID."
         ),
-       #formatter_class=argparse.RawDescriptionHelpFormatter
         formatter_class=argparse.RawTextHelpFormatter
     )
     
@@ -365,7 +362,7 @@ if __name__ == '__main__':
         help=textwrap.dedent(f'''\
             select reference to use: {", ".join(refs)}.
             if using custom reference, ensure provided name
-            is exact matche to name (--ref) used with 
+            is exact match to name (--ref) used with 
             prep_custom_ref.py
         ''')
     )
@@ -467,11 +464,6 @@ if __name__ == '__main__':
         default=argparse.SUPPRESS,
         help="show this help message and exit"
     )
-   #optional.add_argument(
-   #    "--common",
-   #    default=None,
-   #    help="path to common variants vcf (money pipeline) [default: None]"
-   #)
     optional.add_argument(
         "--pop",
         default=None,
@@ -489,12 +481,9 @@ if __name__ == '__main__':
     account    = args.account
     sif        = args.sif
     ref        = args.ref
-   #ref_dir    = os.path.realpath(os.path.expanduser(args.ref_dir))
     ref_dir    = os.path.realpath(os.path.expanduser(args.ref_dir))
     alias      = args.alias
     money      = args.money
-   #common     = args.common
-   #pop        = os.path.realpath(os.path.expanduser(args.pop))
     pop        = args.pop
     profile    = args.profile
     remote     = args.remote.lower()
@@ -531,10 +520,6 @@ if __name__ == '__main__':
     # if non default sif location
     if sif != os.path.join(os.path.expanduser("~"),".sif/wags.sif"):
         sif = os.path.realpath(os.path.expanduser(sif))
-       #if "~" in sif:
-       #    sif = os.path.expanduser(sif)
-       #else:
-       #    sif = os.path.abspath(sif)
     
     # confirm image exitst
     if os.path.isfile(sif):
@@ -554,7 +539,6 @@ if __name__ == '__main__':
         os.makedirs(outdir)
         print(f"{outdir} created!")
         
-   #main(dog_meta,outdir,fq_dir,ref,profile)
     main()
         
         
