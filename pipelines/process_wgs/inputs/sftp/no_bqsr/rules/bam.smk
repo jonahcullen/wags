@@ -18,7 +18,7 @@ rule fastqs_to_ubam:
     threads: 4
     resources:
          time   = 400,
-         mem_mb = lambda wildcards, attempt: 2**(attempt-1)*120000,
+         mem_mb = lambda wildcards, attempt: 2**(attempt-1)*60000,
     shell:
         '''
             mkdir -p {params.tmp_dir}
@@ -80,7 +80,7 @@ rule sam_to_fastq_and_bwa_mem:
     threads: 16
     resources:
          time   = 1440,
-         mem_mb = lambda wildcards, attempt: 2**(attempt-1)*60000,
+         mem_mb = lambda wildcards, attempt: 2**(attempt-1)*40000,
     shell:
         '''
             set -o pipefail
