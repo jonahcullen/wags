@@ -18,7 +18,7 @@ rule fastqs_to_ubam:
     threads: 4
     resources:
          time   = 400,
-         mem_mb = lambda wildcards, attempt: 2**(attempt-1)*120000,
+         mem_mb = lambda wildcards, attempt: 2**(attempt-1)*40000,
     shell:
         '''
             mkdir -p {params.tmp_dir}
