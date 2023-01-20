@@ -1,10 +1,10 @@
 
 rule all_var_to_table:
     input:
-        vep_vcf       = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_genotype.{ref}.vep.vcf.gz",keep_local=True),
-        vep_vcf_index = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_genotype.{ref}.vep.vcf.gz.tbi",keep_local=True),
+        vep_vcf = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vep.vcf.gz"),
+        vep_tbi = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vep.vcf.gz.tbi"),
     output:
-        all_vars_table = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/var_to_table/all.{date}.{ref}.table")
+        all_vars_table = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/var_to_table/all.{ref}.{date}.table")
     params:
         ref_fasta = config['ref_fasta'],
     threads: 12

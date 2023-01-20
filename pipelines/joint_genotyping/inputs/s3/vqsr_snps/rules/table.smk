@@ -4,7 +4,7 @@ rule all_var_to_table:
         vep_vcf = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vep.vcf.gz"),
         vep_tbi = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vep.vcf.gz.tbi"),
     output:
-        all_vars_table = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/var_to_table/all.{date}.{ref}.table")
+        all_vars_table = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/var_to_table/all.{ref}.{date}.table")
     params:
         ref_fasta = config['ref_fasta'],
     threads: 12

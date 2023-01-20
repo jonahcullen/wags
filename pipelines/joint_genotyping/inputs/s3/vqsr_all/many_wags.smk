@@ -36,13 +36,13 @@ rule all:
             ref=config['ref'],
             date=config['date'],
         ),
-       ## variant table
-       #expand(
-       #    "{bucket}/wgs/pipeline/{ref}/{date}/var_to_table/all.{date}.{ref}.table",
-       #    bucket=config['bucket'],
-       #    ref=config['ref'],
-       #    date=config['date'],
-       #),
+        # variant table
+        expand(
+            "{bucket}/wgs/pipeline/{ref}/{date}/var_to_table/all.{ref}.{date}.table",
+            bucket=config['bucket'],
+            ref=config['ref'],
+            date=config['date'],
+        ),
        ## phasing
        #expand(
        #    "{bucket}/wgs/pipeline/{ref}/{date}/phasing/joint_genotype.{ref}.snps.phased.vcf.gz",
