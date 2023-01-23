@@ -138,7 +138,7 @@ rule sv_lumpy:
         lumpy_tmp  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.tmp",
         lumpy_filt = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.tmp.filt",
         lumpy_sort = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.tmp.filt.vcf",
-        work_dir   = lambda wildcards, output: os.path.basename(output.sv_gz),
+        work_dir   = lambda wildcards, output: os.path.dirname(output.sv_gz),
         conda_env  = config['conda_envs']['lumpy'],
         ref_fasta  = config['ref_fasta'],
         ref_dict   = config['ref_dict']
