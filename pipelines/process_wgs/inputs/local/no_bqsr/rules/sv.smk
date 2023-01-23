@@ -218,6 +218,9 @@ rule sv_manta:
                 -m local \
                 -j {threads}
 
+            # remove workflow script in case rerun needed
+            rm -f ./runWorkflow.py
+
             # cd back to working dir
             cd -
 
