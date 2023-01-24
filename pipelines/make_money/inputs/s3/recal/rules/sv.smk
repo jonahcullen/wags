@@ -150,7 +150,7 @@ rule sv_lumpy:
     threads: 8
     resources:
          time   = 2880,
-         mem_mb = 36000
+         mem_mb = lambda wildcards, attempt: 2**(attempt-1)*60000
     shell:
         '''
             set -e
