@@ -75,7 +75,7 @@ rule qualimap_bamqc:
     threads: 12
     resources:
          time   = 120,
-         mem_mb = 24000
+         mem_mb = 60000
     shell:
         '''
             unset DISPLAY
@@ -84,8 +84,8 @@ rule qualimap_bamqc:
                 -bam {input.sorted_bam} \
                 -outdir {params.out_dir} \
                 -outformat PDF:HTML \
-                -nt 12 \
-                --java-mem-size=24G
+                -nt {threads} \
+                --java-mem-size=60G
         '''
 
 rule multiqc:
