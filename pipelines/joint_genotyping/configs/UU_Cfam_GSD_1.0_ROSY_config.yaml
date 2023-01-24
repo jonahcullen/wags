@@ -1,9 +1,11 @@
 # NOTE ALL OF THESE INCLUDING JOINT_COHORT AND DATE SHOULD BE PART OF SETUP
 joint_cohort : gvcfs.list
+species      : dog
 ref          : UU_Cfam_GSD_1.0_ROSY
-date         : 20230117
-bucket       : friedlab
-alias        : s3Fried
+date         : ''
+bucket       : ''
+alias        : s3
+profile      : ''
 
 # SINGULARITY IMAGE
 sif : /home/fried255/cull0084/.sif/wags.sif

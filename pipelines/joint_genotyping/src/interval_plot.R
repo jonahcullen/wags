@@ -7,7 +7,7 @@ suppressPackageStartupMessages({
 })
 
 # read in variables
-ivals      <- read.csv(snakemake@input[[1]])
+ivals      <- read.csv(snakemake@params[[1]])
 len_barplt <- snakemake@output[['len_barplt']]
 
 # rank interval length per chr
