@@ -21,6 +21,7 @@ rule sv_delly:
          mem_mb = 60000
     shell:
         '''
+            set -e
             source activate {params.conda_env}
 
             export OMP_NUM_THREADS={threads}
@@ -66,6 +67,7 @@ rule merge_delly_calls:
          mem_mb = 60000
     shell:
         '''
+            set -e
             bcftools concat \
                 -a \
                 -O v \
@@ -102,6 +104,7 @@ rule sv_gridss:
          mem_mb = 36000
     shell:
         '''
+            set -e
             source activate {params.conda_env}
 
             gridss \
@@ -152,6 +155,7 @@ rule sv_lumpy:
          mem_mb = 36000
     shell:
         '''
+            set -e
             source activate {params.conda_env}
 
             lumpyexpress \
@@ -203,6 +207,7 @@ rule sv_manta:
          mem_mb = 36000
     shell:
         '''
+            set -e
             source activate {params.conda_env}
 
             configManta.py \
