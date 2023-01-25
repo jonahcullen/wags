@@ -1,10 +1,10 @@
 
 rule all_var_to_table:
     input:
-        vep_vcf       = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_genotype.{ref}.vep.vcf.gz",
-        vep_vcf_index = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_genotype.{ref}.vep.vcf.gz.tbi",
+        vep_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vep.vcf.gz",
+        vep_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vep.vcf.gz.tbi",
     output:
-        all_vars_table = "{bucket}/wgs/pipeline/{ref}/{date}/var_to_table/all.{date}.{ref}.table"
+        all_vars_table = "{bucket}/wgs/pipeline/{ref}/{date}/var_to_table/all.{ref}.{date}.table"
     params:
         ref_fasta = config['ref_fasta'],
     threads: 12

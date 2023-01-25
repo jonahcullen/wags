@@ -1,7 +1,7 @@
 
 rule plot_interval_lengths:
     input:
-        final_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_genotype.{ref}.vcf.gz",
+        final_snp_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/snps.{ref}.vcf.gz",
     output:
         len_barplt = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/interval_lengths_mqc.tiff"
     params:
@@ -15,14 +15,14 @@ rule plot_interval_lengths:
 
 rule collect_metrics_on_vcf:
     input:
-        final_vcf       = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_genotype.{ref}.vcf.gz",
-        final_vcf_index = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_genotype.{ref}.vcf.gz.tbi",
+        final_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz",
+        final_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz.tbi",
         eval_ival_list  = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/acgt.N50.interval_list"
     output:
         detail_metrics  = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort.variant_calling_detail_metrics",
         summary_metrics = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort.variant_calling_summary_metrics",
     params:
-        dbsnp_snp_vcf  = config['dbsnp_snp_vcf'],
+        known_sites    = config['coverage_sites'],
         ref_dict       = config['ref_dict'],
         metrics_prefix = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort"
     threads: 8
@@ -34,7 +34,7 @@ rule collect_metrics_on_vcf:
             gatk --java-options "-Xmx18g -Xms6g" \
                 CollectVariantCallingMetrics \
                 --INPUT {input.final_vcf} \
-                --DBSNP {params.dbsnp_snp_vcf} \
+                --DBSNP {params.known_sites} \
                 --SEQUENCE_DICTIONARY {params.ref_dict} \
                 --OUTPUT {params.metrics_prefix} \
                 --THREAD_COUNT 8 \
@@ -43,7 +43,7 @@ rule collect_metrics_on_vcf:
 
 rule bcftools_stats:
     input:
-        final_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_genotype.{ref}.vcf.gz",
+        final_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz",
     output:
         all_stats = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort.{ref}.vchk",
     params:
@@ -87,7 +87,7 @@ def get_vep_htmls(wildcards):
     INTERVALS, = glob_wildcards(os.path.join(ivals_dir,"wags_{interval}.interval_list"))
     # return list of recal vcfs
     return expand(
-        "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/vep/wags_{interval}/recal.{interval}.vep.vcf_summary.html",
+        "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/vep/wags_{interval}/joint_call.{interval}.vep.vcf_summary.html",
         bucket=config['bucket'],
         ref=config['ref'],
         date=config['date'],
@@ -97,15 +97,6 @@ def get_vep_htmls(wildcards):
 rule qc_cohort:
     input:
         get_vep_htmls,
-       #html_veps = sorted(
-       #    expand(
-       #        "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/vep/wags_{interval}/recal.{interval}.vep.vcf_summary.html", 
-       #        bucket=config['bucket'],
-       #        ref=config['ref'],
-       #        date=config['date'],
-       #        interval=[str(i).zfill(4) for i in range(0,config['num_intervals']+1)]
-       #    )
-       #),
         len_barplt      = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/interval_lengths_mqc.tiff",
         all_stats       = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort.{ref}.vchk",
         summary         = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort/summary.pdf",
