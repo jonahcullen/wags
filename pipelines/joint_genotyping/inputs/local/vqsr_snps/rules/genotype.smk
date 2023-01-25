@@ -1,7 +1,7 @@
 
 rule import_gvcfs:
     input:
-        gvcf_list = "{bucket}/wgs/pipeline/{ref}/{date}/import_gvcfs/inputs.list",
+        gvcf_list = config["joint_cohort"],
         interval  = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/import/wags_{interval}.interval_list",
     output:
         directory("{bucket}/wgs/pipeline/{ref}/{date}/import_gvcfs/wags_{interval}")

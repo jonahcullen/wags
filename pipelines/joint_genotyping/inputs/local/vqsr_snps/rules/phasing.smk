@@ -1,8 +1,8 @@
 
 rule filter_x_chrom:
     input:
-        final_vcf       = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_genotype.{ref}.vcf.gz",
-        final_vcf_index = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_genotype.{ref}.vcf.gz.tbi"
+        final_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz",
+        final_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz.tbi",
     output:
         chrom_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/filtered/joint_genotype.{ref}.{chrom}.vcf.gz",
     threads: 4
@@ -38,14 +38,13 @@ rule phase_x_chrom:
         phase_vcf       = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/phased/joint_genotype.{ref}.{chrom}.phased.vcf.gz",
         phase_vcf_index = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/phased/joint_genotype.{ref}.{chrom}.phased.vcf.gz.tbi",
     params:
-        link_map     = "/home/refgen/dog/canfam3/canFam3.linkage.map.wgs",
+        link_map     = config["link_map"],
         eff_pop_size = 200,
         window       = 120,
         overlap      = 10,
         out_prefix   = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/phased/joint_genotype.{ref}.{chrom}.phased",
     threads: 24
     resources:
-        partition = config['partitions']['phasing'],
         time      = 480,
         mem_mb    = 248000
     shell:
@@ -64,7 +63,7 @@ rule phase_x_chrom:
 
 rule concat_phased:
     input:
-        phase_vcf       = expand(
+        phase_vcf = expand(
             "{bucket}/wgs/pipeline/{ref}/{date}/phasing/phased/joint_genotype.{ref}.{chrom}.phased.vcf.gz",
             bucket=config['bucket'],
             ref=config['ref'],

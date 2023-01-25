@@ -1,8 +1,8 @@
-
 import pandas as pd
 import os
 import glob
 
+# NOTE WE ARE DUMPING chrUn...OPTION OR SKIP?
 rule scatter_intervals:
     output:
         "{bucket}/wgs/pipeline/{ref}/{date}/intervals/acgt.N50.interval_list",
