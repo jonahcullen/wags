@@ -1,50 +1,8 @@
 
-def get_recal_vcfs(wildcards):
-    # interval dir from split intervals
-    ivals_dir = checkpoints.generate_intervals.get(**wildcards).output[0]
-    # variable number of intervals 
-    INTERVALS, = glob_wildcards(os.path.join(ivals_dir,"wags_{interval}.interval_list"))
-    # return list of recal vcfs
-    return sorted(expand(
-        "{bucket}/wgs/pipeline/{ref}/{date}/var_recal/apply/wags_{interval}/recal_snps.{interval}.vcf.gz",
-        bucket=config['bucket'],
-        ref=config['ref'],
-        date=config['date'],
-        interval=INTERVALS
-    ))
-
-rule gather_snp_recal_vcfs:
-    input:
-        get_recal_vcfs
-    output:
-        final_snp_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/snps.{ref}.vcf.gz",
-        final_snp_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/snps.{ref}.vcf.gz.tbi"
-    params:
-        vcfs = lambda wildcards, input: " --input ".join(map(str,input)),
-    threads: 4
-    resources:
-         time   = 240,
-         mem_mb = 22000
-    shell:
-        '''
-            set -e
-
-            gatk --java-options "-Xmx18g -Xms6g" \
-                GatherVcfsCloud \
-                --ignore-safety-checks \
-                --gather-type BLOCK \
-                --input {params.vcfs} \
-                --output {output.final_snp_vcf}
-
-            gatk --java-options "-Xmx18g -Xms6g" \
-                IndexFeatureFile \
-                --input {output.final_snp_vcf}
-        '''
-
 rule combine_snps_nonsnps:
     input:
-        final_snp_vcf       = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/snps.{ref}.vcf.gz",
-        final_snp_tbi       = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/snps.{ref}.vcf.gz.tbi",
+        snp_filtered_vcf    = "{bucket}/wgs/pipeline/{ref}/{date}/hardflt_vcf/snp_fltr.vcf.gz",
+        snp_filtered_tbi    = "{bucket}/wgs/pipeline/{ref}/{date}/hardflt_vcf/snp_fltr.vcf.gz.tbi"
         nonsnp_filtered_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/hardflt_vcf/nonsnp_fltr.vcf.gz",
         nonsnp_filtered_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/hardflt_vcf/nonsnp_fltr.vcf.gz.tbi"
     output:

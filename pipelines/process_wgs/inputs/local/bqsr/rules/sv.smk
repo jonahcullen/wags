@@ -1,82 +1,123 @@
 
 # no longer tracking left aligned versus not here - could rethink...
-rule sv_delly:
+rule split_bam:
     input:
         final_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bam"
             if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bam",
         final_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai"
             if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai",
+        bed       = "{bucket}/bed_group/{bed}.bed"
     output:
-        sv_bcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.{sv_type}.{ref}.bcf.gz",
-        sv_csi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.{sv_type}.{ref}.bcf.gz.csi"
-    params:
-        delly_tmp = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/tmp.{sv_type}.bcf",
-        conda_env = config['conda_envs']['delly'],
-        ref_fasta = config['ref_fasta'],
-    benchmark:
-        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.{sv_type}.delly.benchmark.txt"
+        split_bam = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.{bed}.bam"),
+        split_bai = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.{bed}.bam.bai")
     threads: 12
     resources:
-         time   = 1440,
-         mem_mb = 60000
+         time   = 120,
+         mem_mb = 24000
     shell:
         '''
             set -e
+
+            samtools view \
+                -@ {threads} \
+                -L {input.bed} \
+                -b \
+                -o {output.split_bam} \
+                {input.final_bam}
+
+            samtools index -@ {threads} -b {output.split_bam}
+        '''
+
+rule sv_delly_split:
+    input:
+        split_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.{bed}.bam",
+        split_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.{bed}.bam.bai"
+    output:
+        delly_tmp = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{bed}/{sample_name}.delly.{bed}.tmp.bcf",
+    params:
+        conda_env = config['conda_envs']['delly'],
+        ref_fasta = config['ref_fasta'],
+    benchmark:
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{bed}/{sample_name}.delly.{bed}.benchmark.txt"
+    threads: 12
+    resources:
+         time   = 720,
+         mem_mb = 60000
+    shell:
+        '''
             source activate {params.conda_env}
 
             export OMP_NUM_THREADS={threads}
 
             # call svs for each sv type
             delly call \
-                -t {wildcards.sv_type} \
+                -t ALL \
                 -g {params.ref_fasta} \
-                -o {params.delly_tmp} \
-                {input.final_bam}
+                -o {output.delly_tmp} \
+                {input.split_bam}
+        '''
 
+rule sv_delly_filter:
+    input:
+        delly_tmp = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{bed}/{sample_name}.delly.{bed}.tmp.bcf",
+    output:
+        sv_bcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{bed}/{sample_name}.{ref}.bcf.gz",
+        sv_csi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{bed}/{sample_name}.{ref}.bcf.gz.csi"
+    benchmark:
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{bed}/{sample_name}.delly.{bed}.filter.benchmark.txt"
+    threads: 12
+    resources:
+         time   = 720,
+         mem_mb = 60000
+    shell:
+        '''
             # filter for pass and save as compressed bcf
             bcftools filter \
                 -O b \
                 -o {output.sv_bcf} \
                 -i "FILTER == 'PASS'" \
-                {params.delly_tmp}
+                {input.delly_tmp}
 
             # index filtered output
             bcftools index {output.sv_bcf}
         '''
 
-rule merge_delly_calls:
+rule sv_delly_concat:
     input:
-        expand(
-            "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.{sv_type}.{ref}.bcf.gz",
+        sorted(expand(
+            "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{bed}/{sample_name}.{ref}.bcf.gz",
             bucket=config['bucket'],
             breed=breed,
             sample_name=sample_name,
             ref=config['ref'],
-            sv_type=["BND","DEL","DUP","INS","INV"],
-        )
+            bed=beds
+        ))
     output:
         sv_gz  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz",
         sv_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz.tbi"
     params:
-        sv_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf"
+        vcf_tmp = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.tmp.vcf",
     benchmark:
-        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.merge_delly_calls.benchmark.txt"
-    threads: 4
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly_concat.benchmark.txt"
+    threads: 12
     resources:
          time   = 480,
          mem_mb = 60000
     shell:
         '''
             set -e
+
             bcftools concat \
                 -a \
                 -O v \
-                -o {params.sv_vcf} \
+                -o {params.vcf_tmp} \
                 {input}
 
             # bgzip and index
-            bgzip --threads {threads} -c {params.sv_vcf} > {output.sv_gz}
+            bgzip --threads {threads} -c {params.vcf_tmp} > {output.sv_gz}
             tabix -p vcf {output.sv_gz}
+
+            rm -f {params.vcf_tmp}
         '''
 
 rule sv_gridss:
@@ -99,11 +140,10 @@ rule sv_gridss:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.sv_gridss.benchmark.txt"
     threads: 8
     resources:
-         time   = 1440,
+         time   = 720,
          mem_mb = 36000
     shell:
         '''
-            set -e
             source activate {params.conda_env}
 
             gridss \
@@ -128,45 +168,59 @@ rule sv_gridss:
             tabix -p vcf {output.sv_gz}
         '''
 
-rule sv_lumpy:
+rule sv_lumpy_split:
     input:
-        final_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bam"
-            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bam",
-        final_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai"
-            if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai",
+        split_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.{bed}.bam",
+        split_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.{bed}.bam.bai"
     output:
-        sv_gz  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.gz",
-        sv_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.gz.tbi"
+        lumpy_tmp  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.lumpy.{ref}.tmp.vcf",
     params:
-        lumpy_tmp  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.tmp",
-        lumpy_filt = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.tmp.filt",
-        lumpy_sort = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.tmp.filt.vcf",
-        work_dir   = lambda wildcards, output: os.path.dirname(output.sv_gz),
+        work_dir   = lambda wildcards, output: os.path.join(os.path.dirname(output.lumpy_tmp), ".temp"),
         conda_env  = config['conda_envs']['lumpy'],
-        ref_fasta  = config['ref_fasta'],
-        ref_dict   = config['ref_dict']
     benchmark:
-        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.sv_lumpy.benchmark.txt"
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.sv_lumpy.benchmark.txt"
     threads: 8
     resources:
          time   = 2880,
-         mem_mb = lambda wildcards, attempt: 2**(attempt-1)*60000
+         mem_mb = 60000
     shell:
         '''
             set -e
             source activate {params.conda_env}
 
             lumpyexpress \
-                -B {input.final_bam} \
-                -o {params.lumpy_tmp} \
+                -B {input.split_bam} \
+                -o {output.lumpy_tmp} \
                 -T {params.work_dir}
+        '''
+
+rule sv_lumpy_filter:
+    input:
+        lumpy_tmp = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.lumpy.{ref}.tmp.vcf",
+    output:
+        sv_gz  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.lumpy.{ref}.vcf.gz",
+        sv_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.lumpy.{ref}.vcf.gz.tbi"
+    params:
+        lumpy_filt = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.lumpy.{ref}.filt.tmp.vcf",
+        lumpy_sort = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.lumpy.{ref}.sort.filt.tmp.vcf",
+        ref_fasta  = config['ref_fasta'],
+        ref_dict   = config['ref_dict']
+    benchmark:
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.sv_lumpy.filter.benchmark.txt"
+    threads: 8
+    resources:
+         time   = 2880,
+         mem_mb = 60000
+    shell:
+        '''
+            set -e
 
             # filter for pass and save as uncompressed vcf
             bcftools filter \
                 -O v \
                 -o {params.lumpy_filt} \
                 -i "FILTER == '.'" \
-                {params.lumpy_tmp}
+                {input.lumpy_tmp}
            
             # sort using ref dict
             gatk SortVcf \
@@ -177,6 +231,45 @@ rule sv_lumpy:
             # bgzip and index
             bgzip --threads {threads} -c {params.lumpy_sort} > {output.sv_gz}
             tabix -p vcf {output.sv_gz}
+        '''
+
+rule sv_lumpy_concat:
+    input:
+        sorted(expand(
+            "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.lumpy.{ref}.vcf.gz",
+            bucket=config['bucket'],
+            breed=breed,
+            sample_name=sample_name,
+            ref=config['ref'],
+            bed=beds
+        )),
+    output:
+        sv_gz  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.gz",
+        sv_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.gz.tbi"
+    params:
+        vcf_tmp = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.tmp.vcf.gz",
+        svs     = lambda wildcards, input: " --input ".join(map(str,input)),
+    benchmark:
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy_concat.benchmark.txt"
+    threads: 12
+    resources:
+         time   = 600,
+         mem_mb = 24000
+    shell:
+        '''
+            set -e
+
+            gatk --java-options "-Xmx18g -Xms6g" \
+                GatherVcfsCloud \
+                --ignore-safety-checks \
+                --gather-type BLOCK \
+                --input {params.svs} \
+                --output {params.vcf_tmp}
+
+            zcat {params.vcf_tmp} | bgzip --threads {threads} -c > {output.sv_gz} &&
+            tabix -p vcf {output.sv_gz}
+
+            rm -f {params.vcf_tmp}
         '''
 
 rule sv_manta:
@@ -201,11 +294,10 @@ rule sv_manta:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/{sample_name}.manta.benchmark.txt"
     threads: 24
     resources:
-         time   = 1440,
+         time   = 480,
          mem_mb = 36000
     shell:
         '''
-            set -e
             source activate {params.conda_env}
 
             configManta.py \
@@ -220,9 +312,6 @@ rule sv_manta:
                 --quiet \
                 -m local \
                 -j {threads}
-
-            # remove workflow script in case rerun needed
-            rm -f ./runWorkflow.py
 
             # cd back to working dir
             cd -
@@ -254,5 +343,4 @@ rule sv_done:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/alignmentStatsSummary.txt",
     output:
         touch("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/sv.done")
-
 

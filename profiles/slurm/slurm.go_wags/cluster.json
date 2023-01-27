@@ -124,7 +124,7 @@
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
     },
-    "nonsnp_hard_fltr" :
+    "nonsnps_hard_fltr" :
     {
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
@@ -138,6 +138,11 @@
     {
         "output" : ".logs/{rule}/{wildcards.interval}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.interval}/{wildcards.ref}/%j.{rule}.err"
+    },
+    "snps_hard_fltr" :
+    {
+        "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
     },
     "snps_var_recal" :
     {
@@ -254,17 +259,17 @@
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
     },
-    "all_var_to_table" :
+    "sv_delly_split" :
     {
-        "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.bed}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.bed}/%j.{rule}.err"
     },
-    "sv_delly" :
+    "sv_delly_filter" :
     {
-        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.bed}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.bed}/%j.{rule}.err"
     },
-    "merge_delly_calls" :
+    "sv_delly_concat" :
     {
         "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
@@ -274,7 +279,22 @@
         "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
     },
-    "sv_lumpy" :
+    "split_bam" :
+    {
+        "output" : ".logs/{rule}/{wildcards.bed}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.bed}/%j.{rule}.err"
+    },
+    "sv_lumpy_split" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.bed}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.bed}/%j.{rule}.err"
+    },
+    "sv_lumpy_filter" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.bed}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.bed}/%j.{rule}.err"
+    },
+    "sv_lumpy_concat" :
     {
         "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"

@@ -12,7 +12,7 @@ def sequence_grouping(base,ref_dict):
     '''
     Placeholder
     '''
-    
+    d = {}    
     with open(ref_dict,"r") as ref_dict_file:
         sequence_tuple_list = []
         longest_sequence = 0
@@ -21,6 +21,8 @@ def sequence_grouping(base,ref_dict):
                 line_split = line.split("\t")
                 # (Sequence_Name, Sequence_Length)
                 sequence_tuple_list.append((line_split[1].split("SN:")[1], int(line_split[2].split("LN:")[1])))
+                # add to d
+                d[line_split[1].split("SN:")[1]] = int(line_split[2].split("LN:")[1])
         longest_sequence = sorted(sequence_tuple_list, key=lambda x: x[1], reverse=True)[0][1]
     # We are adding this to the intervals because hg38 has contigs named with embedded colons (:) and a bug in 
     # some versions of GATK strips off the last element after a colon, so we add this as a sacrificial element.
@@ -50,6 +52,23 @@ def sequence_grouping(base,ref_dict):
     if not os.path.isdir(f"{base}/seq_group/with_unmap"):
         os.makedirs(f"{base}/seq_group/with_unmap",exist_ok=True)
         for i,v in enumerate(seq_group_unmapped):
-            with open(os.path.join(f"{base}/seq_group/with_unmap",f"group_{i}.tsv"),"w") as f:
+            with open(os.path.join(f"{base}/seq_group/with_unmap",f"group_{str(i).zfill(4)}.tsv"),"w") as f:
                 print(v,file=f)
     
+    os.makedirs(os.path.join(base, "bed_group"), exist_ok=True)
+    for i,v in enumerate(tsv_string.split("\n")):
+        # skip unmapped
+        if 'unmapped' in v:
+            continue
+        # check if multiple contigs
+        split_check = v.split("\t")
+        if len(split_check) > 1:
+            with open(os.path.join(f"{base}/bed_group", f"bed_group_{str(i).zfill(4)}.bed"), "w") as f:
+                for j in split_check:
+                    j = j.split(':')[0]
+                    print(j, "0", d[j], sep="\t", file=f)
+        else:
+            with open(os.path.join(f"{base}/bed_group", f"bed_group_{str(i).zfill(4)}.bed"), "w") as f:
+                v = v.split(':')[0]
+                print(v, "0", d[v], sep="\t", file=f)
+
