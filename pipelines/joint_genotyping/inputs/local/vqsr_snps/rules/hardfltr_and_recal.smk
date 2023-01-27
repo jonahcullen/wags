@@ -1,5 +1,5 @@
 
-rule nonsnp_hard_fltr:
+rule nonsnps_hard_fltr:
     input:
         nonsnp_unfiltered_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/unfltr_vcf/nonsnps.vcf.gz",
         nonsnp_unfiltered_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/unfltr_vcf/nonsnps.vcf.gz.tbi"

@@ -57,7 +57,7 @@ rule combine_snps_nonsnps:
     shell:
         '''
             bcftools concat \
-                --threads 12 \
+                --threads {threads} \
                 --allow-overlaps \
                 {input.final_snp_vcf} {input.nonsnp_filtered_vcf} \
                 -Oz \
@@ -101,13 +101,13 @@ rule vep_by_interval:
                 -o {params.out_name} \
                 --gtf {params.ref_gtf} \
                 --fasta {params.ref_fasta} \
-                --fork 4 \
+                --fork {threads} \
                 --everything \
                 --force_overwrite \
                 --vcf \
                 --dont_skip
 
-            bgzip --threads 6 -c {params.out_name} > {output.interval_vep}
+            bgzip --threads {threads} -c {params.out_name} > {output.interval_vep}
             tabix -p vcf {output.interval_vep}
         '''
 
@@ -149,7 +149,7 @@ rule final_gather_veps:
                 --input {params.veps} \
                 --output {params.vcf_tmp}
 
-            zcat {params.vcf_tmp} | bgzip --threads 24 -c > {output.vep_vcf} &&
+            zcat {params.vcf_tmp} | bgzip --threads {threads} -c > {output.vep_vcf} &&
             tabix -p vcf {output.vep_vcf}
 
             rm -f {params.vcf_tmp}

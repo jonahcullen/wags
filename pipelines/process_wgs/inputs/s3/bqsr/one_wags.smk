@@ -33,6 +33,7 @@ sample_name = units['sample_name'].values[0]
 # get sequence group intervals with unmapped and hc caller intervals
 sequence_grouping(config['bucket'],config['ref_dict'])
 intervals, = glob_wildcards(os.path.join(f"{config['bucket']}/seq_group/with_unmap","{interval}.tsv"))
+beds, = glob_wildcards(os.path.join(f"{config['bucket']}/bed_group/","{bed}.bed"))
 
 rule all:
     input:
@@ -61,13 +62,13 @@ rule all:
             ref=config['ref'],
         ),
         # upload fastqs
-        expand(
-            "{bucket}/fastqc/{breed}/{sample_name}/{u.readgroup_name}.upload",
-            u=units.itertuples(), 
-            bucket=config['bucket'],
-            breed=breed,
-            sample_name=sample_name,
-        ),
+       #expand(
+       #    "{bucket}/fastqc/{breed}/{sample_name}/{u.readgroup_name}.upload",
+       #    u=units.itertuples(), 
+       #    bucket=config['bucket'],
+       #    breed=breed,
+       #    sample_name=sample_name,
+       #),
         # upload pipeline, and logs
         expand(
             "{bucket}/{ref}/{breed}/{sample_name}/{ref}/pipe_and_logs.upload",

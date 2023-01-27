@@ -38,7 +38,9 @@ sample_name = units['sample_name'].values[0]
 sequence_grouping(config['bucket'],config['ref_dict'])
 intervals, = glob_wildcards(os.path.join(f"{config['bucket']}/seq_group/no_unmap","{interval}.tsv"))
 unmap_intervals, = glob_wildcards(os.path.join(f"{config['bucket']}/seq_group/with_unmap","{interval}.tsv"))
-
+beds, = glob_wildcards(os.path.join(f"{config['bucket']}/bed_group/","{bed}.bed"))
+# NOTE THE INTERVALS ARE NOT CORRECT HERE
+#
 rule all:
     input:
         # gvcf
