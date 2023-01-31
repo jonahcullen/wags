@@ -166,7 +166,9 @@ def meta_prep(alias, samples, outdir, outfile):
               help='sample ID and breed ("sample,breed") or file with one ID per row')
 @click.option('--ref', default='UU_Cfam_GSD_1.0_ROSY',
               help='reference to check against (default: UU_Cfam_GSD_1.0_ROSY)')
-def all_done(samples, ref):
+@click.option('--not-done', default='not_done.csv',
+              help='write samples not done to csv (default: not_done.csv)')
+def all_done(samples, ref, not_done):
     """
     check if all done dog
     """
@@ -252,7 +254,7 @@ def all_done(samples, ref):
     print('\n'.join(l_all_done))
     if d_not_done.keys():
         print('--NOT all done dogs--')
-        with open('dog_ids.not_done.csv', 'w') as f:
+        with open(not_done, 'w') as f:
             print('dogid,breed,sex,fastq', file=f)
             for k, v in d_not_done.items():
                 print(k, f'({len(done_outs) - len(v["files_done"])}/{len(done_outs)})')
