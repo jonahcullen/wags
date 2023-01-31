@@ -1,5 +1,4 @@
-# NOTE ALL OF THESE INCLUDING JOINT_COHORT AND DATE SHOULD BE PART OF SETUP
-joint_cohort : gvcfs.list
+joint_cohort : gvcfs.tsv
 species      : dog
 ref          : UU_Cfam_GSD_1.0_ROSY
 date         : ''
