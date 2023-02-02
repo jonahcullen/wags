@@ -145,7 +145,7 @@ rule multiqc:
     shell:
         '''
             multiqc {wildcards.bucket} \
-                -x '*duplicates_marked*' -x '*group_*' -e snippy \
+                -x '*duplicates_marked*' -x '*group_*' \
                 --interactive \
                 --force \
                 -o {params.outdir}
