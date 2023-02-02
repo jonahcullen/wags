@@ -82,8 +82,8 @@ rule merge_gvcfs:
     input:
         get_gvcfs
     output:
-        final_gvcf     = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/{sample_name}.{ref}.g.vcf.gz"),
-        final_gvcf_tbi = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/{sample_name}.{ref}.g.vcf.gz.tbi"),
+        final_gvcf = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/{sample_name}.{ref}.g.vcf.gz"),
+        final_tbi  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/{sample_name}.{ref}.g.vcf.gz.tbi"),
     params:
         gvcfs     = lambda wildcards, input: " -INPUT ".join(map(str,input)),
         java_opt  = "-Xmx2000m",
