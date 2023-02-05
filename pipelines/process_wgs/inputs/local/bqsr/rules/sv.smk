@@ -141,7 +141,7 @@ rule sv_gridss:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.sv_gridss.benchmark.txt"
     threads: 8
     resources:
-         time   = 720,
+         time   = 1440,
          mem_mb = 36000
     shell:
         '''
@@ -295,7 +295,7 @@ rule sv_manta:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/{sample_name}.manta.benchmark.txt"
     threads: 24
     resources:
-         time   = 480,
+         time   = 1440,
          mem_mb = 36000
     shell:
         '''
