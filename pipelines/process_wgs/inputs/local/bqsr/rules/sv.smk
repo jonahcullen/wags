@@ -8,8 +8,8 @@ rule split_bam:
             if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai",
         bed       = "{bucket}/bed_group/{bed}.bed"
     output:
-        split_bam = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.{bed}.bam"),
-        split_bai = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.{bed}.bam.bai")
+        split_bam = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/split/{bed}/{sample_name}.{bed}.bam"),
+        split_bai = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/split/{bed}/{sample_name}.{bed}.bam.bai")
     threads: 12
     resources:
          time   = 120,
@@ -45,6 +45,7 @@ rule sv_delly_split:
          mem_mb = 60000
     shell:
         '''
+            set +eu
             source activate {params.conda_env}
 
             export OMP_NUM_THREADS={threads}
@@ -170,8 +171,8 @@ rule sv_gridss:
 
 rule sv_lumpy_split:
     input:
-        split_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.{bed}.bam",
-        split_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.{bed}.bam.bai"
+        split_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/split/{bed}/{sample_name}.{bed}.bam",
+        split_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/split/{bed}/{sample_name}.{bed}.bam.bai"
     output:
         lumpy_tmp  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.lumpy.{ref}.tmp.vcf",
     params:
@@ -185,7 +186,7 @@ rule sv_lumpy_split:
          mem_mb = 60000
     shell:
         '''
-            set -e
+            set +eu
             source activate {params.conda_env}
 
             lumpyexpress \
@@ -298,7 +299,9 @@ rule sv_manta:
          mem_mb = 36000
     shell:
         '''
+            set +eu
             source activate {params.conda_env}
+            set -e
 
             configManta.py \
                 --bam {input.final_bam} \
