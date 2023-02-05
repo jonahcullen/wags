@@ -1,37 +1,37 @@
 
- rule fastqc:
-     input:
-         unpack(get_fastq)
-     output:
-         r1_zip  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}_R1_fastqc.zip"),
-         r1_html = S3.remote("{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}_R1_fastqc.html"),
-         r2_zip  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}_R2_fastqc.zip"),
-         r2_html = S3.remote("{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}_R2_fastqc.html"),
-     params:
-         outdir = "{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}",
-         r1_html = lambda wildcards, input: os.path.basename(input.r1.replace(".fastq.gz","_fastqc.html")),
-         r1_zip  = lambda wildcards, input: os.path.basename(input.r1.replace(".fastq.gz","_fastqc.zip")),
-         r2_html = lambda wildcards, input: os.path.basename(input.r2.replace(".fastq.gz","_fastqc.html")),
-         r2_zip  = lambda wildcards, input: os.path.basename(input.r2.replace(".fastq.gz","_fastqc.zip")),
-     benchmark:
-         "{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}.fastqc.benchmark.txt"
-     threads: 6
-     resources:
-          time   = 360,
-          mem_mb = 6000, 
-     shell:
-         '''
-             set -e
- 
-             fastqc -t {threads} \
-                 --outdir {params.outdir} \
-                 {input.r1} {input.r2}
- 
-             mv {params.outdir}/{params.r1_html} {output.r1_html}
-             mv {params.outdir}/{params.r2_html} {output.r2_html}
-             mv {params.outdir}/{params.r1_zip} {output.r1_zip}
-             mv {params.outdir}/{params.r2_zip} {output.r2_zip}
-         '''
+rule fastqc:
+    input:
+        unpack(get_fastq)
+    output:
+        r1_zip  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}_R1_fastqc.zip"),
+        r1_html = S3.remote("{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}_R1_fastqc.html"),
+        r2_zip  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}_R2_fastqc.zip"),
+        r2_html = S3.remote("{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}_R2_fastqc.html"),
+    params:
+        outdir = "{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}",
+        r1_html = lambda wildcards, input: os.path.basename(input.r1.replace(".fastq.gz","_fastqc.html")),
+        r1_zip  = lambda wildcards, input: os.path.basename(input.r1.replace(".fastq.gz","_fastqc.zip")),
+        r2_html = lambda wildcards, input: os.path.basename(input.r2.replace(".fastq.gz","_fastqc.html")),
+        r2_zip  = lambda wildcards, input: os.path.basename(input.r2.replace(".fastq.gz","_fastqc.zip")),
+    benchmark:
+        "{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}.fastqc.benchmark.txt"
+    threads: 6
+    resources:
+         time   = 360,
+         mem_mb = 6000, 
+    shell:
+        '''
+            set -e
+
+            fastqc -t {threads} \
+                --outdir {params.outdir} \
+                {input.r1} {input.r2}
+
+            mv {params.outdir}/{params.r1_html} {output.r1_html}
+            mv {params.outdir}/{params.r2_html} {output.r2_html}
+            mv {params.outdir}/{params.r1_zip} {output.r1_zip}
+            mv {params.outdir}/{params.r2_zip} {output.r2_zip}
+        '''
 
 rule flagstat:
     input:
