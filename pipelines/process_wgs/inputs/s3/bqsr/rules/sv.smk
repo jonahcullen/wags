@@ -30,8 +30,8 @@ rule split_bam:
 
 rule sv_delly_split:
     input:
-        split_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.{bed}.bam",
-        split_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.{bed}.bam.bai"
+        split_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/split/{bed}/{sample_name}.{bed}.bam",
+        split_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/split/{bed}/{sample_name}.{bed}.bam.bai"
     output:
         delly_tmp = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{bed}/{sample_name}.delly.{bed}.tmp.bcf",
     params:

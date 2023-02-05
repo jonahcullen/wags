@@ -8,8 +8,8 @@ rule split_bam:
             if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai",
         bed       = "{bucket}/bed_group/{bed}.bed"
     output:
-        split_bam = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.{bed}.bam"),
-        split_bai = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.{bed}.bam.bai")
+        split_bam = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/split/{bed}/{sample_name}.{bed}.bam"),
+        split_bai = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/split/{bed}/{sample_name}.{bed}.bam.bai")
     threads: 12
     resources:
          time   = 120,
@@ -30,8 +30,8 @@ rule split_bam:
 
 rule sv_delly_split:
     input:
-        split_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.{bed}.bam",
-        split_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.{bed}.bam.bai"
+        split_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/split/{bed}/{sample_name}.{bed}.bam",
+        split_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/split/{bed}/{sample_name}.{bed}.bam.bai"
     output:
         delly_tmp = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{bed}/{sample_name}.delly.{bed}.tmp.bcf",
     params:
@@ -170,8 +170,8 @@ rule sv_gridss:
 
 rule sv_lumpy_split:
     input:
-        split_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.{bed}.bam",
-        split_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.{bed}.bam.bai"
+        split_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/split/{bed}/{sample_name}.{bed}.bam",
+        split_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/split/{bed}/{sample_name}.{bed}.bam.bai"
     output:
         lumpy_tmp  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{bed}/{sample_name}.lumpy.{ref}.tmp.vcf",
     params:
