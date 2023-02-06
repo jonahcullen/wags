@@ -10,7 +10,9 @@ profile : slurm
 sif : /path/to/wags.sif
 
 # SORTSAM TEMP DIR
-sort_tmp : /path/to/proc/dir
+tmp_dir :
+    sort_tmp  : /path/to/proc/dir
+    fastq_tmp : /path/to/proc/dir
 
 # LEFT ALIGN BAM
 left_align : false

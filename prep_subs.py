@@ -206,7 +206,8 @@ def main():
             doc['pop_vcf']    = pop
             doc['common_vcf'] = common
         else:
-            doc['sort_tmp']  = os.path.join(outdir,".sort",breed,sample_name,".tmp")
+            doc['tmp_dir']['sort_tmp']  = os.path.join(outdir,".sort",breed,sample_name,".tmp")
+            doc['tmp_dir']['fastq_tmp'] = os.path.join(outdir,".fastq",breed,sample_name,".tmp")
         # dump
         with open(os.path.join(v['work_dir'],config_n),'w') as out:
             yaml.dump(doc,out,sort_keys=False)

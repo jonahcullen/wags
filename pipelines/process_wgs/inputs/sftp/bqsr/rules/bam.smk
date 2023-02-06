@@ -7,7 +7,8 @@ rule fastqs_to_ubam:
     params:
         java_opt          = "-Xms6000m",
         ref_fasta         = config['ref_fasta'],
-        tmp_dir           = f"/dev/shm/{os.environ['USER']}/{{readgroup_name}}_{config['ref']}/",
+       #tmp_dir           = f"/dev/shm/{os.environ['USER']}/{{readgroup_name}}_{config['ref']}/",
+        tmp_dir           = config['tmp_dir']['fastq_tmp'],
         library_name      = lambda wildcards: units.loc[units["readgroup_name"] == wildcards.readgroup_name,"library_name"].values[0],
         platform_unit     = lambda wildcards: units.loc[units["readgroup_name"] == wildcards.readgroup_name,"platform_unit"].values[0],
         run_date          = lambda wildcards: units.loc[units["readgroup_name"] == wildcards.readgroup_name,"run_date"].values[0],
@@ -202,7 +203,7 @@ rule sort_and_fix_tags:
         sorted_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bai"
     params:
         java_opt  = "-Xms4000m",
-        tmp_dir   = config['sort_tmp'],
+        tmp_dir   = config['tmp_dir']['sort_tmp'],
         ref_fasta = config['ref_fasta']
     benchmark:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.merge_bams.benchmark.txt"
