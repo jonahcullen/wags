@@ -60,15 +60,19 @@ def sequence_grouping(base,ref_dict):
         # skip unmapped
         if 'unmapped' in v:
             continue
-        # check if multiple contigs
-        split_check = v.split("\t")
-        if len(split_check) > 1:
-            with open(os.path.join(f"{base}/bed_group", f"bed_group_{str(i).zfill(4)}.bed"), "w") as f:
-                for j in split_check:
-                    j = j.split(':')[0]
-                    print(j, "0", d[j], sep="\t", file=f)
-        else:
-            with open(os.path.join(f"{base}/bed_group", f"bed_group_{str(i).zfill(4)}.bed"), "w") as f:
-                v = v.split(':')[0]
-                print(v, "0", d[v], sep="\t", file=f)
+        # interval file name
+        bed_name = os.path.join(f"{base}/bed_group", f"bed_group_{str(i).zfill(4)}.bed")
+        # only generate if not already
+        if not os.path.isfile(bed_name):
+            # check if multiple contigs
+            split_check = v.split("\t")
+            if len(split_check) > 1:
+                with open(bed_name, "w") as f:
+                    for j in split_check:
+                        j = j.split(':')[0]
+                        print(j, "0", d[j], sep="\t", file=f)
+            else:
+                with open(bed_name, "w") as f:
+                    v = v.split(':')[0]
+                    print(v, "0", d[v], sep="\t", file=f)
 
