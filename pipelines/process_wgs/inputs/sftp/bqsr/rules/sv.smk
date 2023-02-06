@@ -297,7 +297,7 @@ rule sv_manta:
     threads: 24
     resources:
          time   = 1440
-         mem_mb = 36000
+         mem_mb = 60000
     shell:
         '''
             source activate {params.conda_env}
