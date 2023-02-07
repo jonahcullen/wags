@@ -45,6 +45,7 @@ rule sv_delly_split:
          mem_mb = 60000
     shell:
         '''
+            set +eu
             source activate {params.conda_env}
 
             export OMP_NUM_THREADS={threads}
@@ -144,7 +145,9 @@ rule sv_gridss:
          mem_mb = 36000
     shell:
         '''
+            set +eu
             source activate {params.conda_env}
+            set -e
 
             gridss \
                 -t 8 \
@@ -185,7 +188,7 @@ rule sv_lumpy_split:
          mem_mb = 60000
     shell:
         '''
-            set -e
+            set +eu
             source activate {params.conda_env}
 
             lumpyexpress \
@@ -300,7 +303,9 @@ rule sv_manta:
          mem_mb = 60000
     shell:
         '''
+            set +eu
             source activate {params.conda_env}
+            set -e
 
             configManta.py \
                 --bam {input.final_bam} \
