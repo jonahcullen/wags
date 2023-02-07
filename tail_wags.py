@@ -84,9 +84,9 @@ def messages():
 @click.option('--samples', default='',
               help='sample IDs (comma separated) or file with one ID per row')
 @click.option('--outdir', default='./',
-              help='directory to send meta file')
+              help='directory to send meta file (default: ./)')
 @click.option('--outfile', default='dog_ids.csv',
-              help='meta file name (default dog_ids.csv')
+              help='meta file name (default: dog_ids.csv)')
 def meta_prep(alias, samples, outdir, outfile):
     """
     generate metadata from a sample ID (separated by commas) or
@@ -116,8 +116,6 @@ def meta_prep(alias, samples, outdir, outfile):
                               prefix='wgs/',
                               recursive=True)
     )
-
-    # and generate dict
 
     # get all fastqs associated with sample ids
     for i in objects:
@@ -175,20 +173,22 @@ def all_done(samples, ref, not_done):
     check if all done dog
     """
     # get dogs and breeds into d
-    d = {}
+    d = defaultdict(dict)
 
     if os.path.exists(samples):
         with open(samples, 'r') as infile:
             next(infile)
             for line in infile:
-                sample, breed = line.strip().split(',')[:2]
-                d[sample] = breed
+                line = line.strip().split(',')
+                sample, breed = line[:2]
+                d[sample]['breed'] = breed
+                d[sample]['fastq_prefix'] = line[-1]
     else:
         sample, breed = samples.strip().split(',')
-        d[sample] = breed
+        d[sample]['breed'] = breed
 
     l_all_done = []
-    d_not_done = {}
+    d_not_done = defaultdict(dict)
 
     done_outs = ''  # added to stop referenced before assignment warning
     for k, v in d.items():
@@ -229,7 +229,7 @@ def all_done(samples, ref, not_done):
         # list all object paths in bucket that begin with my-prefixname.
         objects = list(
             s3client.list_objects('friedlab',
-                                  prefix=f'wgs/{v}/{k}/{ref}',
+                                  prefix=f'wgs/{v["breed"]}/{k}/{ref}',
                                   recursive=True)
         )
 
@@ -241,12 +241,13 @@ def all_done(samples, ref, not_done):
             if i.object_name.split('/')[4] in ['cram', 'gvcf', 'svar', 'qc']
                and 'multiqc_fastqc.txt' not in i.object_name
         ]
-
         # check dog is done
         if set(done_outs) == set(is_done):
             l_all_done.append(k)
         else:
-            d_not_done[k] = list(set(done_outs) - set(is_done))
+            d_not_done[k]['files_done'] = list(set(done_outs) - set(is_done))
+            d_not_done[k]['breed'] = v['breed']
+            d_not_done[k]['fastq_prefix'] = v['fastq_prefix']
 
     # print to stdout
     print('----all done dogs----')
@@ -261,27 +262,17 @@ def all_done(samples, ref, not_done):
 
 @click.command()
 @click.option('--samples', default='',
-              help='sample ID and breed ("sample,breed") or file with one ID per row')
+              help='sample ID with one ID per row')
 @click.option('--ref', default='UU_Cfam_GSD_1.0_ROSY',
               help='reference to check against (default: UU_Cfam_GSD_1.0_ROSY)')
 @click.option('--outdir', default='./fetched_logs',
-              help='directory to send logs and multiqc report')
+              help='directory to send logs and multiqc report (default: fetched_logs)')
 def fetch_logs(samples, ref, outdir):
     """
     fetch slurm run logs and mean depth from multiqc text file
     """
     # get dogs and breeds into d
     d = defaultdict(dict)
-
-    # list all object paths in bucket that begin with my-prefixname.
-    objects = list(
-        s3client.list_objects('friedlab',
-                              prefix='wgs/',
-                              recursive=True)
-    )
-
-    ref_objects = list(filter(lambda x: ref in x.object_name, objects))
-
     if os.path.exists(samples):
         with open(samples, 'r') as infile:
             for line in infile:
@@ -292,6 +283,15 @@ def fetch_logs(samples, ref, outdir):
         for i in fq_list:
             d[i]['logs'] = []
             d[i]['depth'] = []
+
+    # list all object paths in bucket that begin with my-prefixname
+    objects = list(
+        s3client.list_objects('friedlab',
+                              prefix='wgs/',
+                              recursive=True)
+    )
+    # filter to include only those with ref
+    ref_objects = list(filter(lambda x: ref in x.object_name, objects))
 
     # get all logs and depth files into d
     for i in ref_objects:
@@ -347,6 +347,7 @@ def fetch_logs(samples, ref, outdir):
         print('breed\tsample\tinput_fqs\tmean_depth\trun_time', file=out)
         for k, v in filt_d.items():
             print(v['breed'], k, v['fq_num'], v['mean_depth'], v['runtime'], sep='\t', file=out)
+
 
 @click.command()
 @click.option('--alias', default='s3',
