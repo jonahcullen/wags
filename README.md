@@ -124,7 +124,7 @@ python ./prep_subs.py \
 This will generate the following directory structure
 
 ```
-PATH/TO/FASTQ_DIR/
+PATH/TO/OUTDIR/
     poodle/
         SampleA/
             REF_GENOME/
