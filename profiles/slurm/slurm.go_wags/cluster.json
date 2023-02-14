@@ -59,6 +59,11 @@
         "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.ref}/%j.{rule}.err"
     },
+    "cram_to_bam" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.ref}/%j.{rule}.err"
+    },
     "scatter_intervals" :
     {
         "output" : ".logs/{rule}/%j.{rule}.out",
@@ -259,15 +264,15 @@
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
     },
-    "sv_delly_split" :
+    "sv_delly" :
     {
-        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.bed}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.bed}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
     },
     "sv_delly_filter" :
     {
-        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.bed}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.bed}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
     },
     "sv_delly_concat" :
     {
@@ -279,22 +284,12 @@
         "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
     },
-    "split_bam" :
+    "sv_lumpy" :
     {
-        "output" : ".logs/{rule}/{wildcards.bed}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.bed}/%j.{rule}.err"
-    },
-    "sv_lumpy_split" :
-    {
-        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.bed}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.bed}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
     },
     "sv_lumpy_filter" :
-    {
-        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.bed}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.bed}/%j.{rule}.err"
-    },
-    "sv_lumpy_concat" :
     {
         "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
