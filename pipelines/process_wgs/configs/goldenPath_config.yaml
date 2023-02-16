@@ -11,8 +11,8 @@ sif : /path/to/wags.sif
 
 # SORTSAM TEMP DIR
 tmp_dir :
-    sort_tmp  : /path/to/proc/dir
-    fastq_tmp : /path/to/proc/dir
+  sort_tmp  : /path/to/proc/dir
+  fastq_tmp : /path/to/proc/dir
 
 # LEFT ALIGN BAM
 left_align : false
@@ -27,5 +27,12 @@ ref_fasta : /home/refgen/horse/goldenPath/goldenPath.Ec_build-3.0_wMSY.fa
 
 # RESOURCE FILES FOR BQSR (OPTIONAL)
 known_sites :
-    dbsnp_snp_vcf  : /home/refgen/horse/goldenPath/resources/equus_caballus.chrIDmod.vcf.gz
-    mnec2m_snp_vcf : /home/refgen/horse/goldenPath/resources/MNEc2M.EquCab3.09182018.recode.rmGT.refseqnames.chrIDmod.vcf.gz
+  dbsnp_snp_vcf  : /home/refgen/horse/goldenPath/resources/equus_caballus.chrIDmod.vcf.gz
+  mnec2m_snp_vcf : /home/refgen/horse/goldenPath/resources/MNEc2M.EquCab3.09182018.recode.rmGT.refseqnames.chrIDmod.vcf.gz
+
+# SV CONDA ENVS
+conda_envs :
+  delly  : delly
+  gridss : gridss
+  smoove : smoove
+  manta  : manta

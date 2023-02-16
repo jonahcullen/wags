@@ -11,8 +11,8 @@ sif : /path/to/wags.sif
 
 # SORTSAM TEMP DIR
 tmp_dir :
-    sort_tmp  : /path/to/proc/dir
-    fastq_tmp : /path/to/proc/dir
+  sort_tmp  : /path/to/proc/dir
+  fastq_tmp : /path/to/proc/dir
 
 # LEFT ALIGN BAM
 left_align : false
@@ -27,11 +27,11 @@ ref_fasta : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/UU_Cfam_GSD_1.0_ROSY.fa
 
 # RESOURCE FILES FOR BQSR (OPTIONAL)
 known_sites :
-    dog10k_bed : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/UU_Cfam_GSD_1.0.BQSR.DB.bed.gz
+  dog10k_bed : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/UU_Cfam_GSD_1.0.BQSR.DB.bed.gz
 
 # SV CONDA ENVS
 conda_envs :
-    delly  : delly
-    gridss : gridss
-    lumpy  : lumpy
-    manta  : manta
+  delly  : delly
+  gridss : gridss
+  smoove : smoove
+  manta  : manta

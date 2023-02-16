@@ -154,7 +154,7 @@ rule sv_lumpy:
         lumpy_tmp  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.tmp.vcf",
     params:
         work_dir   = lambda wildcards, output: os.path.join(os.path.dirname(output.lumpy_tmp), ".temp"),
-        conda_env  = config['conda_envs']['lumpy'],
+        conda_env  = config['conda_envs']['smoove'],
     benchmark:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.sv_lumpy.benchmark.txt"
     threads: 8

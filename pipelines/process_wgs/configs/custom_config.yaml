@@ -11,8 +11,8 @@ sif : /path/to/wags.sif
 
 # SORTSAM TEMP DIR
 tmp_dir :
-    sort_tmp  : /path/to/proc/dir
-    fastq_tmp : /path/to/proc/dir
+  sort_tmp  : /path/to/proc/dir
+  fastq_tmp : /path/to/proc/dir
 
 # LEFT ALIGN BAM
 left_align : false
@@ -26,3 +26,10 @@ ref_dict  : species.dict
 ref_fasta : /home/refgen/species/version/species.fa
 
 # RESOURCE FILES FOR BQSR (OPTIONAL)
+
+# SV CONDA ENVS
+conda_envs :
+  delly  : delly
+  gridss : gridss
+  smoove : smoove
+  manta  : manta

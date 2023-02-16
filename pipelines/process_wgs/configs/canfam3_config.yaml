@@ -11,8 +11,8 @@ sif : /path/to/wags.sif
 
 # SORTSAM TEMP DIR
 tmp_dir :
-    sort_tmp  : /path/to/proc/dir
-    fastq_tmp : /path/to/proc/dir
+  sort_tmp  : /path/to/proc/dir
+  fastq_tmp : /path/to/proc/dir
 
 # LEFT ALIGN BAM
 left_align : false
@@ -27,14 +27,14 @@ ref_fasta : /home/refgen/dog/canfam3/canFam3.fa
 
 # RESOURCE FILES FOR BQSR (OPTIONAL)
 known_sites :
-    dbsnp_indels_vcf : /home/refgen/dog/canfam3/resources/dbsnp146.indel.vcf
-    dbsnp_snp_vcf    : /home/refgen/dog/canfam3/resources/dbsnp146.snp.vcf
-    broad_snp_vcf    : /home/refgen/dog/canfam3/resources/final.broad.snps.vcf
-    axelsson_snp_vcf : /home/refgen/dog/canfam3/resources/final.axelsson.snps.vcf
+  dbsnp_indels_vcf : /home/refgen/dog/canfam3/resources/dbsnp146.indel.vcf
+  dbsnp_snp_vcf    : /home/refgen/dog/canfam3/resources/dbsnp146.snp.vcf
+  broad_snp_vcf    : /home/refgen/dog/canfam3/resources/final.broad.snps.vcf
+  axelsson_snp_vcf : /home/refgen/dog/canfam3/resources/final.axelsson.snps.vcf
 
 # SV CONDA ENVS
 conda_envs :
-    delly  : delly
-    gridss : gridss
-    lumpy  : lumpy
-    manta  : manta
+  delly  : delly
+  gridss : gridss
+  smoove : smoove
+  manta  : manta
