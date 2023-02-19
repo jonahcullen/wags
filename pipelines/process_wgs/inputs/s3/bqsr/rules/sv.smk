@@ -275,12 +275,12 @@ rule sv_manta:
 
 rule sv_done:
     input:
-       #S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz"),
-       #S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz.tbi"),
+        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz"),
+        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz.tbi"),
         S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz"),
         S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz.tbi"),
-       #S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.gz"),
-       #S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.gz.tbi"),
+        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.vcf.gz"),
+        S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.vcf.gz.tbi"),
         S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/{sample_name}.manta.diploidSV.{ref}.vcf.gz"),
         S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/{sample_name}.manta.diploidSV.{ref}.vcf.gz.tbi"),
         S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/svCandidateGenerationStats.tsv"),
