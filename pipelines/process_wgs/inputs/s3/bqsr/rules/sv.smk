@@ -24,7 +24,7 @@ rule sv_delly:
 
             # call svs for each sv type
             delly call \
-                -t ALL \
+                -t {wildcards.sv_type} \
                 -g {params.ref_fasta} \
                 -o {output.delly_tmp} \
                 {input.final_bam}
