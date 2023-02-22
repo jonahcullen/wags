@@ -7,6 +7,7 @@ Placeholder (description of the pipelines)
 - [Python](https://www.python.org/)
 - [Mamba](https://github.com/mamba-org/mamba) or [Conda](https://conda.io/)
 - [Snakemake](https://snakemake.readthedocs.io/)
+- [Snakemake-Profiles](https://github.com/Snakemake-Profiles)
 - Miscellaneous python modules [pyaml](https://pyyaml.org/), [wget](https://bitbucket.org/techtonik/python-wget/), and [xlsxwriter](https://xlsxwriter.readthedocs.io/)
 - [Apptainer/Singularity](https://apptainer.org/)
 - [MinIO Client](https://min.io/docs/minio/linux/reference/minio-mc.html)
@@ -65,15 +66,16 @@ git clone git@github.com:jonahcullen/rescuer.git
 
 **4. Install and setup MinIO client (optional)**
 
-If desired, `wags` can work with MinIO Client (`mc`) to save pipeline outputs (e.g. FASTQ, BAM, GVCF), job-runner logs, and individual processing logs.
+If desired, `wags` can work with MinIO Client (`mc`) to save pipeline outputs (e.g. FASTQ, BAM, GVCF), job-runner logs, and individual processing logs. See MinIO Client install instructions [here](https://min.io/docs/minio/linux/reference/minio-mc.html#quickstart). Note: before submitting a job run to your HPC scheduler, you will need to export your credentials as
 
 ```
-placeholder
+export AWS_ACCESS_KEY=...
+export AWS_SECRET_KEY=...
 ```
 
 ## Reference genome
 
-placeholder
+NOTE - SCRIPT TO LIST AVAILABLE GENOMES IN THE CONTAINER
 
 ## FASTQ to GVCF (OneWag)
 
@@ -116,7 +118,7 @@ python ./prep_subs.py \
     --snake-env SNAKEMAKE_ENV \
     --partition PAR1,PAR2 \
     --email USER@email.com \
-    --account SLURM_ACCT \
+    --account HPC_ACCOUNT \
     --remote S3 \
     --alias MINIO_ALIAS
 ```
@@ -137,3 +139,9 @@ PATH/TO/FASTQ_DIR/
                 slurm.go_wags/
                 src/
 ```
+
+Slurm is the default scheduler (`--profile`). Other schedulers may be setup using the instructions provided by [Snakemake-Profiles](https://github.com/Snakemake-Profiles). Feel free to open an issue if assistance is needed!
+
+## GVCFs to VCF (ManyWags)
+
+**Prepare joint calling inputs**
