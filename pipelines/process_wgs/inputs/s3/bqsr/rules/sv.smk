@@ -24,7 +24,7 @@ rule sv_delly:
 
             # call svs for each sv type
             delly call \
-                -t ALL \
+                -t {wildcards.sv_type} \
                 -g {params.ref_fasta} \
                 -o {output.delly_tmp} \
                 {input.final_bam}
@@ -158,7 +158,7 @@ rule sv_smoove:
         ref_fasta = config['ref_fasta'],
         conda_env = config['conda_envs']['smoove'],
     benchmark:
-        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.sv_lumpy.benchmark.txt"
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.sv_smoove.benchmark.txt"
     threads: 4
     resources:
          time   = 1440,
