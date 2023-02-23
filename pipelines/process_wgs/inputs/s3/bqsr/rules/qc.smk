@@ -95,7 +95,7 @@ rule qualimap_bamqc:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/qualimap/{sample_name}.multimap_bamqc.benchmark.txt"
     threads: 12
     resources:
-         time   = 120,
+         time   = 360,
          mem_mb = 60000
     shell:
         '''
