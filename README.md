@@ -1,6 +1,6 @@
-# rescuer
+# WAGS
 
-Placeholder (description of the pipelines)
+WAGS consists of three pipelines, adapted from GATK's Best Practices. The first pipeline processes raw FASTQs into genomic variant call format (GVCF) files and is capable of processing samples split across flow cells or lanes. The second pipeline takes multiple GVCFs as inputs and performs joint genotype calling and variant annotation. And the third pipeline compares variants in a specific sample to variants in a larger variant call file (VCF) database to enable the identification of unique variants in a particular animal.
 
 ## Dependencies
 
@@ -11,9 +11,6 @@ Placeholder (description of the pipelines)
 - Miscellaneous python modules [pyaml](https://pyyaml.org/), [wget](https://bitbucket.org/techtonik/python-wget/), and [xlsxwriter](https://xlsxwriter.readthedocs.io/)
 - [Apptainer/Singularity](https://apptainer.org/)
 - [MinIO Client](https://min.io/docs/minio/linux/reference/minio-mc.html)
-
-The `wags` Singularity container includes the following tools:
-- [Placeholder]
 
 ## Initial setup
 
