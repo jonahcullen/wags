@@ -14,9 +14,9 @@ import textwrap
 import argparse
 import fileinput
 import pandas as pd
+from pathlib import Path
 from datetime import datetime
 from collections import defaultdict
-
 
 refs = [
     "canfam3","canfam4","UU_Cfam_GSD_1.0_ROSY",
@@ -143,8 +143,9 @@ def main():
            #profile_n = "slurm.go_money"
  
         # copy snakefile, rules, config, and profile to working dir
+        prep_dir = os.path.dirname(os.path.realpath(__file__))
         smk = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
+            str(Path(prep_dir).parents[0]),
             "pipelines",
             pipeline,
             f"inputs/{remote}/{bqsr}",
@@ -152,7 +153,7 @@ def main():
         )
         
         rules = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
+            str(Path(prep_dir).parents[0]),
             "pipelines",
             pipeline,
             f"inputs/{remote}/{bqsr}",
@@ -160,7 +161,7 @@ def main():
         )
         
         config = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
+            str(Path(prep_dir).parents[0]),
             "pipelines",
             pipeline,
             "configs",
@@ -174,13 +175,13 @@ def main():
             config = tmp[0]
     
         profile_dir = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
+            str(Path(prep_dir).parents[0]),
             f"profiles/{profile}",
             profile_n
         )
         
         src = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
+            str(Path(prep_dir).parents[0]),
             "pipelines",
             pipeline,
             "src"

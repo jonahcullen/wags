@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 import os
 import yaml
@@ -6,6 +7,7 @@ import shutil
 import textwrap
 import argparse
 import fileinput
+from pathlib import Path
 
 def main():
     global profile
@@ -40,8 +42,9 @@ def main():
         shutil.copy(fasta,ref_home)
     
     # copy and profile
+    prep_dir = os.path.dirname(os.path.realpath(__file__))
     profile_dir = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
+        str(Path(prep_dir).parents[0]),
         f"profiles/{profile}/{profile}.go_wags"
     )
     
@@ -56,7 +59,7 @@ def main():
     
     # custom config to modify
     config = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
+        str(Path(prep_dir).parents[0]),
         "pipelines/prep_ref/configs/custom_config.yaml"
     )
 
@@ -78,7 +81,7 @@ def main():
 
     # copy snake
     smk = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
+        str(Path(prep_dir).parents[0]),
         "pipelines/prep_ref/prep_wags.smk",
     )
     shutil.copy(smk,ref_home)
