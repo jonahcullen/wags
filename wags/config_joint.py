@@ -14,9 +14,9 @@ import textwrap
 import argparse
 import fileinput
 import pandas as pd
+from pathlib import Path
 from datetime import datetime
 from collections import defaultdict
-
 
 refs = [
     "canfam3","canfam4","UU_Cfam_GSD_1.0_ROSY",
@@ -30,10 +30,11 @@ def main():
     # ref_fasta, ref_dict, and ref_gtf are already
     # avaiable within container and do not need
     # to be specified
+    prep_dir = os.path.dirname(os.path.realpath(__file__))
     if ref in refs:
         config_n  = f"{ref}_config.yaml"
         config = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
+            str(Path(prep_dir).parents[0]),
             "pipelines/joint_genotyping/configs",
             config_n
         )
@@ -47,7 +48,7 @@ def main():
         # build config from custom_config.yaml
         config_n = f"{ref}_config.yaml"
         config = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
+            str(Path(prep_dir).parents[0]),
             "pipelines/joint_genotyping/configs/custom_config.yaml",
         )
         # load known config
