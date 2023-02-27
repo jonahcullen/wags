@@ -106,7 +106,7 @@ SampleA,poodle,M,SampleA_20
 The input CSV may contain as many samples as desired where `prep_subs.py` will generate pipeline inputs for each included sample. A minimal example of running `prep_subs.py` for processing using S3 storage is below (for all required and optional arguments `prep_subs.py --help`)
 
 ```
-python ./prep_subs.py \
+python ./wags/prep_subs.py \
     --meta input.csv \
     --fastqs PATH/TO/FASTQ_DIR \ 
     --ref REF_GENOME \          
@@ -154,7 +154,7 @@ SampleC /path/to/SampleC.g.vcf.gz
 Next, `config_joint.py` is used to prepare the configuration file. If the species and reference of interest is already within the container (e.g. dog - canfam4), `--fasta`, `--fasta_dict`, and `--gtf` do not need to be set as optional arguments. An example of preparing the configuration file for canfam4 is shown below (see `python config_joint.py --help` for all available arugments)
 
 ```
-python ./config_joint.py \
+python ./wags/config_joint.py \
     --ref canfam4 \
     --bucket RESULTS
 ```
