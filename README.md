@@ -75,7 +75,43 @@ export AWS_SECRET_KEY=...
 
 ## Reference genome
 
-NOTE - SCRIPT TO LIST AVAILABLE GENOMES IN THE CONTAINER
+The WAGS container currently includes a handful of reference genomes making the processing of FASTQs and joint genotyping _ready-to-go_ with those references. Available references can listed with `singularity exec PATH/TO/wags.sif tree /home/refgen/ -L 2`
+
+```
+/home/refgen/
+├── cat
+│   └── Fca126_mat1.0
+├── dog
+│   ├── UU_Cfam_GSD_1.0_ROSY
+│   ├── canfam3
+│   └── canfam4
+├── horse
+│   └── goldenPath
+└── tiger
+    └── tiger
+```
+
+For all other reference genomes, the required accessory and index files may be generated using the `prep_custom_ref.py` module starting from only a FASTA. Similar to the other pipelines, `prep_custom_ref.py` prepares a complete set of pipeline inputs to be submitted to the HPC scheduler (`python wags/prep_custom_ref.py --help`)
+
+```
+required arguments:
+  -r, --ref        reference name (e.g. equcab3, canfam4)
+  -n, --species    species name (e.g. horse, dog)
+  -f, --fasta      path to reference fasta
+  -s, --snake-env  conda environment with snakemake
+  -p, --partition  default partition(s) to use (e.g. 'par1' or 'par1,par2'
+  -e, --email      email address for job logs
+  -a, --account    default scheduler account
+
+optional arguments:
+  -o , --out           path to custom reference out dir [default: ~/.wags]
+  --sites SITES        comma-separated file containing names (col 1) and
+                       paths to resource VCFs (and indices) (col 2) to be 
+                       used with --ref custom and --bqsr
+  --profile PROFILE    HPC job scheduler [default: slurm]
+  --sif SIF            location of container image [default: ~/.sif/wags.sif]
+  -h, --help           show this help message and exit
+```
 
 ## FASTQ to GVCF (OneWag)
 

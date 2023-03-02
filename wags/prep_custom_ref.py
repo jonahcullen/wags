@@ -243,9 +243,7 @@ if __name__ == '__main__':
     args      = parser.parse_args()
     ref       = args.ref
     species   = args.species
-   #fasta     = os.path.expanduser(args.fasta) \
-   #    if "~" in args.fasta else os.path.abspath(args.fasta)
-    fasta     = os.path.realpath(os.path.expanduser(args.fasta)
+    fasta     = os.path.realpath(os.path.expanduser(args.fasta))
     snake_env = args.snake_env
     partition = args.partition
     email     = args.email
@@ -268,19 +266,11 @@ if __name__ == '__main__':
 
     # if non default outdir
     if outdir != os.path.join(os.path.expanduser("~"),".wags/"):
-        outdir = os.path.realpath(os.path.expanduser(outdir)
-       #if "~" in outdir:
-       #    outdir = os.path.expanduser(outdir)
-       #else:
-       #    outdir = os.path.abspath(outdir)
+        outdir = os.path.realpath(os.path.expanduser(outdir))
  
     # if non default sif location
     if sif != os.path.join(os.path.expanduser("~"),".sif/wags.sif"):
-        sif = os.path.realpath(os.path.expanduser(sif)
-       #if "~" in sif:
-       #    sif = os.path.expanduser(sif)
-       #else:
-       #    sif = os.path.abspath(sif)
+        sif = os.path.realpath(os.path.expanduser(sif))
     
     # confirm image exitst
     if os.path.isfile(sif):
