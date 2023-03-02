@@ -18,14 +18,13 @@ rule sv_delly:
          mem_mb = 60000
     shell:
         '''
-            set +eu
             source activate {params.conda_env}
 
             export OMP_NUM_THREADS={threads}
 
             # call svs for each sv type
             delly call \
-                -t ALL \
+                -t {wildcards.sv_type} \
                 -g {params.ref_fasta} \
                 -o {output.delly_tmp} \
                 {input.final_bam}
@@ -144,52 +143,56 @@ rule sv_gridss:
             tabix -p vcf {output.sv_gz}
         '''
 
-rule sv_lumpy:
+rule sv_smoove:
     input:
         final_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bam"
             if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bam",
         final_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai"
             if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai",
     output:
-        lumpy_tmp  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.tmp.vcf",
+        smoove_tmp = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.{ref}-smoove.genotyped.vcf.gz",
+        smoove_csi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.{ref}-smoove.genotyped.vcf.gz.csi",
     params:
-        work_dir   = lambda wildcards, output: os.path.join(os.path.dirname(output.lumpy_tmp), ".temp"),
-        conda_env  = config['conda_envs']['smoove'],
+        out_dir   = lambda wildcards, output: os.path.dirname(output.smoove_tmp),
+        base_name = lambda wildcards, input: os.path.basename(input.final_bam).rsplit('.',1)[0],
+        ref_fasta = config['ref_fasta'],
+        conda_env = config['conda_envs']['smoove'],
     benchmark:
-        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.sv_lumpy.benchmark.txt"
-    threads: 8
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.sv_smoove.benchmark.txt"
+    threads: 4
     resources:
          time   = 2880,
          mem_mb = 60000
     shell:
         '''
-            set +eu
             source activate {params.conda_env}
 
-            mkdir -p {params.work_dir}
-
-            lumpyexpress \
-                -B {input.final_bam} \
-                -o {output.lumpy_tmp} \
-                -T {params.work_dir}
+            smoove call \
+                -x \
+                -d \
+                --outdir {params.out_dir} \
+                --name {params.base_name} \
+                --fasta {params.ref_fasta} \
+                -p {threads} \
+                --genotype {input.final_bam}
         '''
 
-rule sv_lumpy_filter:
+rule sv_smoove_filter:
     input:
-        lumpy_tmp  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.tmp.vcf",
+        smoove_tmp = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.{ref}-smoove.genotyped.vcf.gz",
+        smoove_csi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.{ref}-smoove.genotyped.vcf.gz.csi",
     output:
-        sv_gz  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.gz",
-        sv_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.gz.tbi"
+        sv_gz  = SFTP.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.vcf.gz"),
+        sv_tbi = SFTP.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.vcf.gz.tbi")
     params:
-        lumpy_filt = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.filt.tmp.vcf",
-        lumpy_sort = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.sort.filt.tmp.vcf",
-        ref_fasta  = config['ref_fasta'],
-        ref_dict   = config['ref_dict']
+        smoove_filt = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.filt.tmp.vcf",
+        smoove_sort = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.sort.filt.tmp.vcf",
+        ref_dict    = config['ref_dict']
     benchmark:
-        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.sv_lumpy.filter.benchmark.txt"
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.sv_smoove.filter.benchmark.txt"
     threads: 8
     resources:
-         time   = 2880,
+         time   = 480,
          mem_mb = 60000
     shell:
         '''
@@ -198,18 +201,18 @@ rule sv_lumpy_filter:
             # filter for pass and save as uncompressed vcf
             bcftools filter \
                 -O v \
-                -o {params.lumpy_filt} \
+                -o {params.smoove_filt} \
                 -i "FILTER == '.'" \
-                {input.lumpy_tmp}
+                {input.smoove_tmp}
            
             # sort using ref dict
             gatk SortVcf \
                 -SD {params.ref_dict} \
-                -I {params.lumpy_filt} \
-                -O {params.lumpy_sort}
+                -I {params.smoove_filt} \
+                -O {params.smoove_sort}
 
             # bgzip and index
-            bgzip --threads {threads} -c {params.lumpy_sort} > {output.sv_gz}
+            bgzip --threads {threads} -c {params.smoove_sort} > {output.sv_gz}
             tabix -p vcf {output.sv_gz}
         '''
 
@@ -275,12 +278,12 @@ rule sv_manta:
 
 rule sv_done:
     input:
-       #SFTP.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz"),
-       #SFTP.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz.tbi"),
+        SFTP.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz"),
+        SFTP.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz.tbi"),
         SFTP.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz"),
         SFTP.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz.tbi"),
-       #SFTP.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.gz"),
-       #SFTP.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/lumpy/{sample_name}.lumpy.{ref}.vcf.gz.tbi"),
+        SFTP.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.vcf.gz"),
+        SFTP.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.vcf.gz.tbi"),
         SFTP.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/{sample_name}.manta.diploidSV.{ref}.vcf.gz"),
         SFTP.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/{sample_name}.manta.diploidSV.{ref}.vcf.gz.tbi"),
         SFTP.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/svCandidateGenerationStats.tsv"),

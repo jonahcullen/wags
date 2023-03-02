@@ -192,7 +192,7 @@ rule sv_smoove_filter:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.sv_smoove.filter.benchmark.txt"
     threads: 8
     resources:
-         time   = 2880,
+         time   = 480,
          mem_mb = 60000
     shell:
         '''
