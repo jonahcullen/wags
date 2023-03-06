@@ -290,5 +290,9 @@ rule sv_done:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/svLocusGraphStats.tsv",
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/alignmentStatsSummary.txt",
     output:
-        touch("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/sv.done")
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/sv.done"
+    shell:
+        '''
+            touch {output}
+        '''
 
