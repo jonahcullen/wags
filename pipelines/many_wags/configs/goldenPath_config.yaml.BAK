@@ -1,0 +1,48 @@
+
+joint_cohort : cohort.csv
+ref          : goldenPath
+date         : 20220602
+bucket       : friedlab
+alias        : s3Fried
+profile      : slurm
+
+# SINGULARITY IMAGE
+sif : /home/fried255/cull0084/.sif/wags.sif
+
+# OUTPUT OPTIONS
+var_table : true
+phasing   : false
+
+# CONDA ENV
+conda_envs :
+    qc : bcftools
+
+# DB IMPORT
+batch_size : 50
+
+# REFERENCE FILES
+ref_fasta : /home/refgen/horse/goldenPath/goldenPath.Ec_build-3.0_wMSY.fa
+ref_dict  : goldenPath.Ec_build-3.0_wMSY.dict
+ref_gtf   : /WHICH/ANNOTATION/TO/USE.gtf
+
+# TMP DIRS - NOTE THIS NEEDS TO BE BASED ON SETUP
+tmp_dir :
+    sites_only_gather_vcf : /scratch.global/friedlab_UPDATE_JOINT/sort_gather
+
+# RULE-SPECIFIC PARTITIONS - NOTE THIS IS NOT AVAILABLE YET
+partitions :
+    phasing : "amdsmall,amdlarge,amd512,ram256g"
+
+# RECAL
+indel_recalibration_tranche_values    : ["100.0", "99.95", "99.9", "99.5", "99.0", "97.0", "96.0", "95.0", "94.0", "93.5", "93.0", "92.0", "91.0", "90.0"]
+indel_recalibration_annotation_values : ["FS", "ReadPosRankSum", "MQRankSum", "QD", "SOR", "DP"]
+snp_recalibration_tranche_values      : ["100.0", "99.95", "99.9", "99.8", "99.6", "99.5", "99.4", "99.3", "99.0", "98.0", "97.0", "90.0" ]
+snp_recalibration_annotation_values   : ["QD", "MQRankSum", "ReadPosRankSum", "FS", "MQ", "SOR", "DP"]
+
+indel_filter_level : 99.7
+snp_filter_level   : 99.7
+
+# RESOURCE FILES FOR BQSR (OPTIONAL)
+known_sites :
+    dbsnp_snp_vcf  : /home/refgen/horse/goldenPath/resources/equus_caballus.chrIDmod.vcf.gz
+    mnec2m_snp_vcf : /home/refgen/horse/goldenPath/resources/MNEc2M.EquCab3.09182018.recode.rmGT.refseqnames.chrIDmod.vcf.gz
