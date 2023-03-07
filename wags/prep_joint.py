@@ -82,7 +82,7 @@ def main():
         os.makedirs(jobs)
 
     # input templates
-    pipeline  = "joint_genotyping"
+    pipeline  = "many_wags"
     rules     = "rules"
     snake_n   = "many_wags.smk"
     profile_n = f"{profile}.go_wags"

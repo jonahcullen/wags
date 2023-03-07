@@ -129,18 +129,17 @@ def main():
             v['df'].to_csv(out,sep='\t',index=False)
        
         # input templates
-        pipeline  = "process_wgs"
+        pipeline  = "one_wag"
         rules     = "rules"
-        snake_n   = "one_wags.smk"
+        snake_n   = "one_wag.smk"
         config_n  = f"{ref}_config.yaml"
         profile_n = f"{profile}.go_wags"
         # switch to money templates if true - NEEDS TO BE UPDATED STILL
         if money:
-            pipeline  = "make_money"
+            pipeline  = "only_wag"
             rules     = "rules"
-            snake_n   = "go_make_money.smk"
+            snake_n   = "only_wag.smk"
             config_n  = f"{ref}_money.yaml"
-           #profile_n = "slurm.go_money"
  
         # copy snakefile, rules, config, and profile to working dir
         prep_dir = os.path.dirname(os.path.realpath(__file__))
