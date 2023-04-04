@@ -501,7 +501,7 @@ if __name__ == '__main__':
         bqsr = "no_bqsr"
 
     if money:
-        bqsr = "recal"
+       #bqsr = "recal"
         # require path to pop
         if pop is None:
             parser.error("--money requires --pop")
