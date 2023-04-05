@@ -41,7 +41,7 @@ indel_filter_level : 99.0
 
 # RESOURCE FILES (FROM CONTAINER)
 k9hd_axiom_vcf : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/SRZ189891_722g.simp.header.CanineHDandAxiom_K9_HD.GSD_1.0.vcf.gz
-overage_sites : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/SRZ189891_722g.simp.header.CanineHD.names.GSD_1.0.filter.vcf.gz
+coverage_sites : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/SRZ189891_722g.simp.header.CanineHD.names.GSD_1.0.filter.vcf.gz
 
 # OUTPUT OPTIONS
 # PHASING

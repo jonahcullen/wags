@@ -1,11 +1,13 @@
-import pandas as pd
 import os
+import textwrap
+import pandas as pd
 
 #######################################
 # S3 with BQSR ########################
 #######################################
 
 localrules: sv_done,
+            manifest_and_archive,
             multiqc,
             upload_fastqs,
             upload_pipe_and_logs
@@ -33,18 +35,9 @@ sample_name = units['sample_name'].values[0]
 # get sequence group intervals with unmapped and hc caller intervals
 sequence_grouping(config['bucket'],config['ref_dict'])
 intervals, = glob_wildcards(os.path.join(f"{config['bucket']}/seq_group/with_unmap","{interval}.tsv"))
-beds, = glob_wildcards(os.path.join(f"{config['bucket']}/bed_group/","{bed}.bed"))
 
 rule all:
     input:
-        # gvcf
-        expand(
-            "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/{sample_name}.{ref}.g.vcf.gz",
-            bucket=config['bucket'],
-            breed=breed,
-            sample_name=sample_name,
-            ref=config['ref'],
-        ),
         # structural variants
         expand(
             "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/sv.done",
@@ -53,35 +46,51 @@ rule all:
             sample_name=sample_name,
             ref=config['ref'],
         ),
-        # multiqc
+        # money archive
         expand(
-            "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report.html",
+            "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/{breed}_{sample_name}.{ref}.K9MM.tar.gz",
             bucket=config['bucket'],
             breed=breed,
             sample_name=sample_name,
-            ref=config['ref'],
+            ref=config["ref"],
+            
         ),
-        # upload fastqs
+        # multiqc
        #expand(
-       #    "{bucket}/fastqc/{breed}/{sample_name}/{u.readgroup_name}.upload",
-       #    u=units.itertuples(), 
+       #    "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report.html",
        #    bucket=config['bucket'],
        #    breed=breed,
        #    sample_name=sample_name,
+       #    ref=config["ref"],
+       #    
        #),
-        # upload pipeline, and logs
+        # upload fastqs
         expand(
-            "{bucket}/{ref}/{breed}/{sample_name}/{ref}/pipe_and_logs.upload",
-            bucket=config['bucket'],
+            "{bucket}/fastqc/{breed}_{sample_name}/{u.readgroup_name}.upload",
+            u=units.itertuples(), 
+            bucket=config["bucket"],
             breed=breed,
             sample_name=sample_name,
-            ref=config['ref'],
+        ),
+        # upload pipeline, and logs
+        expand(
+            "{bucket}/{breed}_{sample_name}.{ref}.done",
+            bucket=config["bucket"],
+            breed=breed,
+            sample_name=sample_name,
+            ref=config["ref"],
         ),
 
 # rules to include based on user setup
-include: "rules/qc.smk"
 include: "rules/bam.smk"
 include: "rules/sv.smk"
 include: "rules/gvcf.smk"
+include: "rules/genotype.smk"
+include: "rules/fltr_sites_vcf.smk"
+include: "rules/recal.smk"
+include: "rules/gather_vep.smk"
+include: "rules/compare.smk"
+include: "rules/final_output.smk"
+include: "rules/qc.smk"
 include: "rules/save.smk"
 
