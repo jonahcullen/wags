@@ -56,14 +56,14 @@ rule all:
             
         ),
         # multiqc
-       #expand(
-       #    "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report.html",
-       #    bucket=config['bucket'],
-       #    breed=breed,
-       #    sample_name=sample_name,
-       #    ref=config["ref"],
-       #    
-       #),
+        expand(
+            "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report.html",
+            bucket=config['bucket'],
+            breed=breed,
+            sample_name=sample_name,
+            ref=config["ref"],
+            
+        ),
         # upload fastqs
         expand(
             "{bucket}/fastqc/{breed}_{sample_name}/{u.readgroup_name}.upload",
@@ -86,9 +86,9 @@ include: "rules/bam.smk"
 include: "rules/sv.smk"
 include: "rules/gvcf.smk"
 include: "rules/genotype.smk"
-include: "rules/fltr_sites_vcf.smk"
-include: "rules/recal.smk"
-include: "rules/gather_vep.smk"
+include: "rules/gather_and_select.smk"
+include: "rules/hardfltr.smk"
+include: "rules/gather_and_vep.smk"
 include: "rules/compare.smk"
 include: "rules/final_output.smk"
 include: "rules/qc.smk"

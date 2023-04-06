@@ -3,7 +3,7 @@ rule upload_fastqs:
     input:
         unpack(get_fastq)
     output:
-        touch("{bucket}/fastqc/{breed}_{sample_name}/{readgroup_name}.upload")
+        touch("{bucket}/fastqc/{breed}/{sample_name}/{readgroup_name}.upload")
     params:
         alias    = config['alias'],
         flowcell = lambda wildcards: units.loc[units['readgroup_name'] == wildcards.readgroup_name,'flowcell'].values[0],

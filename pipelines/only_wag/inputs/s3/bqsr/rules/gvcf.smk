@@ -66,9 +66,16 @@ rule haplotype_caller:
                 -R {params.ref_fasta} \
                 -I {input.final_cram} \
                 -L {input.interval} \
-                -O {output.hc_gvcf} \
-                -contamination 0 -ERC GVCF
+                -O {output.hc_vcf} \
+                -ERC GVCF
         '''
+           #gatk --java-options "{params.java_opt}" \
+           #    HaplotypeCaller \
+           #    -R {params.ref_fasta} \
+           #    -I {input.final_cram} \
+           #    -L {input.interval} \
+           #    -O {output.hc_gvcf} \
+           #    -contamination 0 -ERC GVCF
 
 def get_gvcfs(wildcards):
     # interval dir from split intervals
@@ -99,6 +106,6 @@ rule merge_gvcfs:
             gatk --java-options {params.java_opt} \
                 MergeVcfs \
                 --INPUT {params.gvcfs} \
-                --OUTPUT {output.final_gvcf}
+                --OUTPUT {output.final_vcf}
         '''
 

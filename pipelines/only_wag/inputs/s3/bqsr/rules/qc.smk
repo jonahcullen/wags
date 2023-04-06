@@ -95,8 +95,8 @@ rule qualimap_bamqc:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/qualimap/{sample_name}.multimap_bamqc.benchmark.txt"
     threads: 12
     resources:
-         time   = 120,
-         mem_mb = 24000
+         time   = 360,
+         mem_mb = 60000
     shell:
         '''
             unset DISPLAY
@@ -119,7 +119,8 @@ rule collect_metrics_on_vcf:
         detail_metrics  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.variant_calling_detail_metrics"),
         summary_metrics = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.variant_calling_summary_metrics"),
     params:
-        dbsnp_snp_vcf  = config['known_sites']['dbsnp_snp_vcf'],
+       #dbsnp_snp_vcf  = config['known_sites']['dbsnp_snp_vcf'],
+        coverage_vcf   = config['coverage_sites'],
         ref_dict       = config['ref_dict'],
         metrics_prefix = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}"
     threads: 8
@@ -131,7 +132,7 @@ rule collect_metrics_on_vcf:
             gatk --java-options "-Xmx18g -Xms6g" \
                 CollectVariantCallingMetrics \
                 --INPUT {input.final_vcf} \
-                --DBSNP {params.dbsnp_snp_vcf} \
+                --DBSNP {params.coverage_vcf} \
                 --SEQUENCE_DICTIONARY {params.ref_dict} \
                 --OUTPUT {params.metrics_prefix} \
                 --THREAD_COUNT 8 \
@@ -248,7 +249,7 @@ rule multiqc:
     shell:
         '''
             multiqc {wildcards.bucket} \
-                -x '*duplicates_marked*' -x '*group_*' -e snippy \
+                -x '*duplicates_marked*' -x '*group_*' \
                 --interactive \
                 --force \
                 -o {params.outdir}
