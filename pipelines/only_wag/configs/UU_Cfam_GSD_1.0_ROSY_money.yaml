@@ -26,6 +26,7 @@ scatter_size : 50
 # REFERENCE FILES
 ref_dict  : UU_Cfam_GSD_1.0_ROSY.dict
 ref_fasta : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/UU_Cfam_GSD_1.0_ROSY.fa
+ref_gtf   : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/UU_Cfam_GSD_1.0_ROSY.refSeq.ensformat.gtf.gz
 
 # RESOURCE FILES FOR BQSR (OPTIONAL)
 known_sites :

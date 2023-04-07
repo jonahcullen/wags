@@ -81,8 +81,8 @@ rule select_snps:
         var_unfiltered_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/unfltr_vcf/all_vars.vcf.gz",
         var_unfiltered_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/unfltr_vcf/all_vars.vcf.gz.tbi"
     output:
-        snp_unfiltered_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/sites_only_gather_vcf/gather.snp_sites_only.vcf.gz",
-        snp_unfiltered_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/sites_only_gather_vcf/gather.snp_sites_only.vcf.gz.tbi"
+        snp_unfiltered_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/unfltr_vcf/snp_only.vcf.gz",
+        snp_unfiltered_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/unfltr_vcf/snp_only.vcf.gz.tbi"
     threads: 4
     resources:
          time   = 240,

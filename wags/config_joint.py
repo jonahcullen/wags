@@ -35,7 +35,7 @@ def main():
         config_n  = f"{ref}_config.yaml"
         config = os.path.join(
             str(Path(prep_dir).parents[0]),
-            "pipelines/joint_genotyping/configs",
+            "pipelines/many_wags/configs",
             config_n
         )
         # load known config
@@ -49,7 +49,7 @@ def main():
         config_n = f"{ref}_config.yaml"
         config = os.path.join(
             str(Path(prep_dir).parents[0]),
-            "pipelines/joint_genotyping/configs/custom_config.yaml",
+            "pipelines/many_wags/configs/custom_config.yaml",
         )
         # load known config
         with open(config) as f:
@@ -63,7 +63,7 @@ def main():
     
     # set directory for config file
     if not args.out:
-        outdir = os.path.join(os.path.expanduser("~"), f".wags/{species}/{ref}/joint")
+        outdir = os.path.join(os.path.expanduser("~"), f".wags/{species}/{ref}/many_wags")
     else:
         outdir = os.path.realpath(os.path.expanduser(args.out))
     os.makedirs(outdir, exist_ok=True)
@@ -136,7 +136,7 @@ if __name__ == '__main__':
     optional.add_argument(
         "-o", "--out",
         metavar="\b",
-        help="location of config out [default: ~/.wags/SPECIES/REF/joint/REF_config.yaml]"
+        help="location of config out [default: ~/.wags/SPECIES/REF/many_wags/REF_config.yaml]"
     )
     optional.add_argument(
         "-s", "--species",

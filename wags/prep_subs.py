@@ -199,15 +199,19 @@ def main():
         doc['alias']   = alias
         doc['bucket']  = bucket
         doc['left_align'] = left_align
+        doc['tmp_dir']['sort_tmp']  = os.path.join(
+            outdir,".sort",breed,sample_name,".tmp"
+        )
+        doc['tmp_dir']['fastq_tmp'] = os.path.join(
+            outdir,".fastq",breed,sample_name,".tmp"
+        )
         # for private variant analysis, add pop.vcf and common.vcf path
         if money:
-            doc['tmp_dir']['sort_tmp']              = os.path.join(outdir,".sort",breed,sample_name,".tmp")
-            doc['tmp_dir']['sites_only_gather_vcf'] = os.path.join(outdir,".sort",breed,sample_name,".tmp")
             doc['pop_vcf']    = pop
             doc['common_vcf'] = common
-        else:
-            doc['tmp_dir']['sort_tmp']  = os.path.join(outdir,".sort",breed,sample_name,".tmp")
-            doc['tmp_dir']['fastq_tmp'] = os.path.join(outdir,".fastq",breed,sample_name,".tmp")
+            doc['tmp_dir']['select_variants_to_table'] = os.path.join(
+                outdir,".select",breed,sample_name,".tmp"
+            )
         # dump
         with open(os.path.join(v['work_dir'],config_n),'w') as out:
             yaml.dump(doc,out,sort_keys=False)

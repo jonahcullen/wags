@@ -6,7 +6,7 @@ rule combine_snps_nonsnps:
        #nonsnp_filtered_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/hardflt_vcf/nonsnp_fltr.vcf.gz",
        #nonsnp_filtered_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/hardflt_vcf/nonsnp_fltr.vcf.gz.tbi"
         snp_filtered_vcf    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/hardflt_vcf/snp_fltr.vcf.gz",
-        snp_filtered_tbi    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/hardflt_vcf/snp_fltr.vcf.gz.tbi"
+        snp_filtered_tbi    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/hardflt_vcf/snp_fltr.vcf.gz.tbi",
         nonsnp_filtered_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/hardflt_vcf/nonsnp_fltr.vcf.gz",
         nonsnp_filtered_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/hardflt_vcf/nonsnp_fltr.vcf.gz.tbi"
     output:
@@ -21,7 +21,7 @@ rule combine_snps_nonsnps:
             bcftools concat \
                 --threads {threads} \
                 --allow-overlaps \
-                {input.final_snp_vcf} {input.nonsnp_filtered_vcf} \
+                {input.snp_filtered_vcf} {input.nonsnp_filtered_vcf} \
                 -Oz \
                 -o {output.final_vcf}
 

@@ -26,7 +26,7 @@ rule upload_pipe_and_logs:
         manifest     = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/{breed}_{sample_name}.{ref}.manifest.txt"),
         money_tar_gz = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/{breed}_{sample_name}.{ref}.K9MM.tar.gz"),
     output:
-        touch("{bucket}/{breed}_{sample_name}.{ref}.done"),
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/upload_pipe.done"
     params:
         alias   = config['alias'],
         profile = config['profile']

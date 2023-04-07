@@ -66,7 +66,7 @@ rule all:
         ),
         # upload fastqs
         expand(
-            "{bucket}/fastqc/{breed}_{sample_name}/{u.readgroup_name}.upload",
+            "{bucket}/fastqc/{breed}/{sample_name}/{u.readgroup_name}.upload",
             u=units.itertuples(), 
             bucket=config["bucket"],
             breed=breed,
@@ -74,7 +74,7 @@ rule all:
         ),
         # upload pipeline, and logs
         expand(
-            "{bucket}/{breed}_{sample_name}.{ref}.done",
+            "{bucket}/wgs/{breed}/{sample_name}/{ref}/upload_pipe.done",
             bucket=config["bucket"],
             breed=breed,
             sample_name=sample_name,

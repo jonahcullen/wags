@@ -24,14 +24,35 @@ refs = [
     "tiger"
 ]
 
+# https://stackoverflow.com/questions/2892931/longest-common-substring-from-more-than-two-strings
+def common_prefix(strings):
+    """
+    Find the longest string that is a prefix of all the strings.
+    """
+    if not strings:
+        return ''
+    prefix = strings[0]
+    for s in strings:
+        if len(s) < len(prefix):
+            prefix = prefix[:len(s)]
+        if not prefix:
+            return ''
+        for i in range(len(prefix)):
+            if prefix[i] != s[i]:
+                prefix = prefix[:i]
+                break
+    return prefix
+
 # NOTE - should also have checks that each sample and gvcf mapping are unique
 def validate_mapping(f):
     ''' quick check that the sample-gvcf mapping contains two tab-delimited columns'''
+    prefs = []
     with open(f, 'r') as infile:
         for line in infile:
             cols = line.split('\t')
             col_length = len(cols)
             if col_length == 2:
+                prefs.append(cols[1])
                 continue
             else:
                 sys.exit(textwrap.dedent('''\n
@@ -39,6 +60,7 @@ def validate_mapping(f):
                     two columns, sample followed by path to gvcf, separated
                     by a tab
                 '''))
+        return common_prefix(prefs)
 
 def main():
 
@@ -191,7 +213,7 @@ def main():
             print(
                 textwrap.dedent(
                     f"""
-                    GVCF_DIR=/scratch.global/friedlab_JOINT_EVAL/fetched_gvcfs/gvcfs/
+                    GVCF_DIR={validate_mapping(gvcfs)}
                     snakemake -s {snake_n} \\
                         --use-singularity \\
                         --singularity-args "-B $PWD,$GVCF_DIR" \\

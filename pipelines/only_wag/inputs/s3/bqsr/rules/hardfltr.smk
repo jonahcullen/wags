@@ -29,8 +29,8 @@ rule snps_hard_fltr:
     input:
        #snp_unfiltered_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/sites_only_gather_vcf/gather.snp_sites_only.vcf.gz",
        #snp_unfiltered_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/sites_only_gather_vcf/gather.snp_sites_only.vcf.gz.tbi"
-        snp_unfiltered_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/sites_only_gather_vcf/gather.snp_sites_only.vcf.gz",
-        snp_unfiltered_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/sites_only_gather_vcf/gather.snp_sites_only.vcf.gz.tbi"
+        snp_unfiltered_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/unfltr_vcf/snp_only.vcf.gz",
+        snp_unfiltered_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/unfltr_vcf/snp_only.vcf.gz.tbi"
     output:
        #snp_filtered_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/hardflt_vcf/snp_fltr.vcf.gz",
        #snp_filtered_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/hardflt_vcf/snp_fltr.vcf.gz.tbi"
