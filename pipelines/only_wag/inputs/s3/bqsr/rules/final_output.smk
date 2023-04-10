@@ -55,9 +55,11 @@ rule final_output:
                 options={"strings_to_formulas": False}
             ) as writer:
             for k,v in dfs.items():
-                v.to_excel(writer,
-                           sheet_name=k,
-                           index=False)
+                v.to_excel(
+                    writer,
+                    sheet_name=k[:30],
+                    index=False
+                )
             writer.save()
 
 rule manifest_and_archive:

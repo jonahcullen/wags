@@ -139,7 +139,7 @@ def main():
             pipeline  = "only_wag"
             rules     = "rules"
             snake_n   = "only_wag.smk"
-            config_n  = f"{ref}_money.yaml"
+            config_n  = f"{ref}_only_wag.yaml"
  
         # copy snakefile, rules, config, and profile to working dir
         prep_dir = os.path.dirname(os.path.realpath(__file__))
@@ -158,7 +158,6 @@ def main():
             f"inputs/{remote}/{bqsr}",
             rules
         )
-        
         config = os.path.join(
             str(Path(prep_dir).parents[0]),
             "pipelines",
