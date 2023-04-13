@@ -14,7 +14,7 @@ def main():
     # prepare outdir
     ref_home = os.path.join(outdir,species,ref)
     ref_res  = os.path.join(ref_home,"resources")
-    ref_fa   = os.path.join(ref_home,os.path.basename(fasta))
+    ref_fa   = os.path.realpath(os.path.join(ref_home,os.path.basename(fasta)))
 
     # generate custom reference and resource directories
     os.makedirs(ref_home,exist_ok=True)
