@@ -35,7 +35,7 @@ def main():
                 vcf_out = os.path.join(ref_res,os.path.basename(vcf))
                 shutil.copy(vcf,vcf_out)
                 # add updated location to dictionary
-                d_sites[name] = vcf_out
+                d_sites[name] = os.path.realpath(vcf_out)
    
     # copy reference fasta to outdir
     if not os.path.isfile(ref_fa):
