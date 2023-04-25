@@ -76,7 +76,7 @@ def main():
     doc['date']        = datetime.today().strftime('%Y%m%d')
     if os.path.isfile(gvcfs):
         if validate_mapping(gvcfs):
-            doc['joint_cohort'] = gvcfs
+            doc['joint_cohort'] = os.path.join(outdir, os.path.basename(gvcfs))
     else:
         sys.exit("mapping file (--gvcfs) does not exist - ensure correct path")
     doc['tmp_dir']['sites_only_gather_vcf'] = os.path.join(outdir, '.sites_gather')

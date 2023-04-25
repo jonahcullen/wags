@@ -212,18 +212,18 @@ def all_done(samples, ref, not_done):
             f'multiqc_sources.txt',
             f'multiqc_report.html',
             f'genome_results.txt',
-            f'{k}.delly.{ref}.vcf.gz',
-            f'{k}.delly.{ref}.vcf.gz.tbi',
-            f'{k}.gridss.{ref}.bam',
-            f'{k}.gridss.{ref}.vcf.gz',
-            f'{k}.gridss.{ref}.vcf.gz.tbi',
-            f'{k}.lumpy.{ref}.vcf.gz',
-            f'{k}.lumpy.{ref}.vcf.gz.tbi',
-            f'{k}.manta.diploidSV.{ref}.vcf.gz',
-            f'{k}.manta.diploidSV.{ref}.vcf.gz.tbi',
-            'svCandidateGenerationStats.tsv',
-            'svLocusGraphStats.tsv',
-            'alignmentStatsSummary.txt'
+           #f'{k}.delly.{ref}.vcf.gz',
+           #f'{k}.delly.{ref}.vcf.gz.tbi',
+           #f'{k}.gridss.{ref}.bam',
+           #f'{k}.gridss.{ref}.vcf.gz',
+           #f'{k}.gridss.{ref}.vcf.gz.tbi',
+           #f'{k}.manta.diploidSV.{ref}.vcf.gz',
+           #f'{k}.manta.diploidSV.{ref}.vcf.gz.tbi',
+           #f'{k}.smoove.{ref}.vcf.gz',
+           #f'{k}.smoove.{ref}.vcf.gz.tbi',
+           #'svCandidateGenerationStats.tsv',
+           #'svLocusGraphStats.tsv',
+           #'alignmentStatsSummary.txt'
         ]
 
         # list all object paths in bucket that begin with my-prefixname.
@@ -241,14 +241,19 @@ def all_done(samples, ref, not_done):
             if i.object_name.split('/')[4] in ['cram', 'gvcf', 'svar', 'qc']
                and 'multiqc_fastqc.txt' not in i.object_name
         ]
+        
+        # drop lumpy and delly
+        sv_drop = ['delly','gridss','manta','smoove','svCandidate','svLocus','alignmentStats']
+        mod_done = [word for word in is_done if not any(bad in word for bad in sv_drop)]
+       #print(k, mod_done, done_outs)
         # check dog is done
-        if set(done_outs) == set(is_done):
+        if set(done_outs) == set(mod_done):
             l_all_done.append(k)
         else:
             d_not_done[k]['files_done'] = list(set(done_outs) - set(is_done))
             d_not_done[k]['breed'] = v['breed']
             d_not_done[k]['fastq_prefix'] = v['fastq_prefix']
-
+            
     # print to stdout
     print('----all done dogs----')
     print('\n'.join(l_all_done))
@@ -373,7 +378,10 @@ def fetch_gvcfs(alias, bucket, samples, ref, outdir, outfile):
     if os.path.exists(samples):
         with open(samples, 'r') as infile:
             for line in infile:
-                d[line.strip()]['gvcf'] = ''
+                if ',' in line:
+                    d[line.strip().split(',')[0]]['gvcf'] = ''
+                else:
+                    d[line.strip()]['gvcf'] = ''
     else:
         fq_list = [samples]
         for i in fq_list:
@@ -408,10 +416,10 @@ def fetch_gvcfs(alias, bucket, samples, ref, outdir, outfile):
                 fetched_dir = os.path.join(gvcfs_dir, breed, dogid)
                 os.makedirs(fetched_dir, exist_ok=True)
 
-    # get all fastqs into list
+    # get all gvcfs into list
     gvcfs = list(chain(*[v['gvcf'] for v in d.values()]))
     # prepare slurm submissions to download all gvcfs
-    for ind, i in enumerate(np.array_split(gvcfs, math.ceil(len(d.keys()) / 2))):
+    for ind, i in enumerate(np.array_split(gvcfs, math.ceil(len(d.keys()) / 5))):
         with open(os.path.join(slurm_dir, f'gvcfs_{str(ind).zfill(4)}.slurm'), 'w') as out:
             print(top.replace('JOB_NAME', f'gvcfs_{str(ind).zfill(4)}'), file=out)
             for j in i:

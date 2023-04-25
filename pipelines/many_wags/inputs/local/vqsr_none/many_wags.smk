@@ -2,8 +2,11 @@ import os
 import pandas as pd
 from pathlib import Path
 
-localrules: scatter_intervals,
-            generate_intervals
+localrules: generate_intervals,
+            intergenic_bed,
+            intergenic_midpoints,
+            bed_to_interval_list,
+            plot_interval_lengths
 
 singularity: config['sif']
 include: "src/utils.py"

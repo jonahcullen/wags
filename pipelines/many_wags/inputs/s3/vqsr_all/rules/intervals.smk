@@ -3,27 +3,107 @@ import pandas as pd
 import os
 import glob
 
-rule scatter_intervals:
+rule intergenic_bed:
     output:
-        "{bucket}/wgs/pipeline/{ref}/{date}/intervals/acgt.N50.interval_list",
+        genome    = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/beds/genome.txt",
+        ref_gtf   = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/beds/ref.gtf",
+        ref_bed   = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/beds/ref.bed",
+        sort_bed  = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/beds/sort.bed",
+        merge_bed = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/beds/merge.bed",
+        inter_bed = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/beds/intergenic.bed",
     params:
-        ref_fasta = config['ref_fasta']
+        ref_dict = config['ref_dict'],
+        ref_gtf  = config['ref_gtf']
     shell:
         '''
-            java -jar /opt/wags/src/picard.jar \
-                ScatterIntervalsByNs \
-                R={params.ref_fasta} \
-                OT=ACGT \
-                N=50 \
-                O={output}
+            set -e
 
-            # dump chrun
-            sed -i '/^chrUn/d' {output}
+            # generate genome.txt file
+            tail -n +2 {params.ref_dict} | cut -f 2,3 > {output.genome}
+            sed -i 's/SN:\|LN://g' {output.genome}
+
+            # check and uncompress if gtf gzipped
+            if file {params.ref_gtf} | grep -q gzip; then
+                echo HELLO
+                gunzip -c {params.ref_gtf} > {output.ref_gtf}
+            else
+                cp {params.ref_gtf} {output.ref_gtf}
+                echo NOWAY
+            fi
+
+            # bedops to convert gtf to 
+            gtf2bed < {output.ref_gtf} > {output.ref_bed}
+
+            # sort bed by chromosome and start position
+            sortBed -i {output.ref_bed} -g {output.genome} > {output.sort_bed}
+
+            # merge adjacent intervals along the same chrom and strand
+            mergeBed -i {output.sort_bed} > {output.merge_bed}
+
+            # complement the merged intervals to generate intergenic intervals
+            complementBed -i {output.merge_bed} -g {output.genome} > {output.inter_bed}
         '''
+
+rule intergenic_midpoints:
+    input:
+        inter_bed = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/beds/intergenic.bed",
+    output:
+        midp_bed = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/beds/intergenic_midp.bed"
+    params:
+        ref_dict = config['ref_dict']
+    shell:
+        '''
+            python src/intergenic_midpoints.py \
+                {params.ref_dict} \
+                {input.inter_bed} \
+                {output.midp_bed}
+        '''
+
+# NOTE - NEED TO MAKE THE DROPPING ON UNPLACED CONTIGS FLEXIBLE FOR OTHER
+# SPECIES
+rule bed_to_interval_list:
+    input:
+        "{bucket}/wgs/pipeline/{ref}/{date}/intervals/beds/intergenic_midp.bed"
+    output:
+        midp_filt = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/beds/intergenic_midp.filt.bed",
+        ival_list = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/intergenic_midp.interval_list"
+    params:
+        ref_dict = config['ref_dict']
+    shell:
+        '''
+            # for canine ref dump chrun
+            # NOTE - needs to be flexible...
+            sed '/^chrUn/d' {input} > {output.midp_filt}
+
+            java -jar /opt/wags/src/picard.jar \
+                BedToIntervalList \
+                I={output.midp_filt} \
+                O={output.ival_list} \
+                SD={params.ref_dict}
+        '''
+
+# old version based on runs of 50 Ns
+#rule scatter_intervals:
+#    output:
+#        "{bucket}/wgs/pipeline/{ref}/{date}/intervals/acgt.N50.interval_list",
+#    params:
+#        ref_fasta = config['ref_fasta']
+#    shell:
+#        '''
+#            java -jar /opt/wags/src/picard.jar \
+#                ScatterIntervalsByNs \
+#                R={params.ref_fasta} \
+#                OT=ACGT \
+#                N=50 \
+#                O={output}
+#
+#            # dump chrun
+#            sed -i '/^chrUn/d' {output}
+#        '''
 
 checkpoint generate_intervals:
     input:
-        ival_list = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/acgt.N50.interval_list"
+        ival_list = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/intergenic_midp.interval_list"
     output:
         directory("{bucket}/wgs/pipeline/{ref}/{date}/intervals/import"),
     params:
