@@ -211,6 +211,9 @@ def main():
             doc['tmp_dir']['select_variants_to_table'] = os.path.join(
                 outdir,".select",breed,sample_name,".tmp"
             )
+            doc['tmp_dir']['unfilt_gather_vcf'] = os.path.join(
+                outdir,".gather",breed,sample_name,".tmp"
+            )
         # dump
         with open(os.path.join(v['work_dir'],config_n),'w') as out:
             yaml.dump(doc,out,sort_keys=False)

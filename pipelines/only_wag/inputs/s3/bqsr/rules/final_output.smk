@@ -10,7 +10,7 @@ rule final_output:
     threads: 1
     resources:
          time   = 30,
-         mem_mb = 16000
+         mem_mb = 32000
     run:
         header = [
             'chrom', 'pos', 'ref', 'alt', 'ac',

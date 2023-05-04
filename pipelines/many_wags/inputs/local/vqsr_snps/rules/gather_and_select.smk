@@ -38,7 +38,7 @@ rule gather_unfltr_vcf:
                 --input {params.vcfs} \
                 --output {params.tmp_vcf}
            
-            java -jar /opt/wags/src/picard.jar \
+            java -jar -Xmx190g -Xms6g /opt/wags/src/picard.jar \
                 SortVcf \
                 TMP_DIR={params.tmp_dir} \
                 I={params.tmp_vcf} \
