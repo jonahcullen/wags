@@ -3,7 +3,7 @@
 WAGS consists of three pipelines, adapted from GATK's Best Practices. The first pipeline processes raw FASTQs into genomic variant call format (GVCF) files and is capable of processing samples split across flow cells or lanes (**A**). The second pipeline takes multiple GVCFs as inputs and performs joint genotype calling and variant annotation (**B**). And the third pipeline compares variants in a specific sample to variants in a larger population variant call file (VCF) to enable the identification of unique variants in a particular animal (**C**).
 
 <p align="center">
-  <img src="figures/pipeline.png" width="250" height="450" title="wags pipeline">
+  <img src="figures/Figure_01.png" width="250" height="450" title="wags pipeline">
 </p>
 
 ## Dependencies
