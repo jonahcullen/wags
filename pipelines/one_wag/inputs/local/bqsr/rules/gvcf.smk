@@ -4,7 +4,7 @@ rule scatter_intervals:
         acgt_ivals = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/acgt.N50.interval_list",
     params:
         ref_fasta = config['ref_fasta'],
-        contig_ns = config['contig_n_size'],
+        contig_ns = config['nrun_length'],
     threads: 1
     resources:
          time   = 20,

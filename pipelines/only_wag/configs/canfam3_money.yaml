@@ -4,35 +4,22 @@ species : dog
 ref     : canfam3
 bucket  : wags
 alias   : s3
+profile : slurm
 
 # SINGULARITY IMAGE
 sif : /path/to/WAGS/wags.sif
 
+# SORTSAM TEMP DIR
+tmp_dir :
+  sort_tmp  : /path/to/proc/dir
+  fastq_tmp : /path/to/proc/dir
+
 # LEFT ALIGN BAM
 left_align : false
 
-# TMP DIRS - NOTE SORT AND SITES ONLY NEEDS TO BE BASED ON PROC DIC + "sort_gather"
-tmp_dir :
-    sort_tmp                 : /scratch.global/friedlab_MONEY_TEST/.tmp/sort
-    sites_only_gather_vcf    : /scratch.global/friedlab_MONEY_TEST/.tmp/sites_gather
-    select_variants_to_table : /dev/shm/money_vars
-
-# BQSR INTERVAL PARAMS
-contig_n_size : 50
+# INTERVAL SIZE SCATTER
+nrun_length  : 50
 scatter_size : 50
-
-# CONDA ENVS
-conda_envs :
-    vep : ensembl-vep
-
-# POPULATION VCF - NOTE PREP_JOINT WILL NEED pop_vcf AND THEN common_vcf WILL BE FIGUED OUT
-# NOTE pop_vcf DIR HAS TO BE BOUND WITH SINGULARITY
-pop_vcf    : /path/to/pop.ref.vcf
-common_vcf : /path/to/common.vcf
-#common_tbi : /path/to/common.vcf.tbi
-#pop_vcf    : /panfs/roc/groups/0/fried255/fried255/working/pipeline/20210512/VEP/joint_genotype.canfam3.20210512.vcf.gz
-#common_vcf : /panfs/roc/groups/0/fried255/fried255/working/pipeline/20210512/VEP/CommonVars/joint_genotype.canfam3.vep.af_nonmajor.vcf.gz
-#common_tbi : /panfs/roc/groups/0/fried255/fried255/working/pipeline/20210512/VEP/CommonVars/joint_genotype.canfam3.vep.af_nonmajor.vcf.gz.tbi
 
 # REFERENCE FILES 
 ref_fasta : /home/refgen/dog/canfam3/canFam3.fa 
@@ -56,6 +43,9 @@ known_sites :
     axelsson_snp_vcf : /home/refgen/dog/canfam3/resources/final.axelsson.snps.vcf
     illumina_snp_vcf : /home/refgen/dog/canfam3/resources/illumina.snps.vcf
 
+# ALLELE FREQUENCY FOR COMPARISON TO POPULATION
+allele_freq : 0.005
+
 # RANDOM PARAMS
 excess_het_threshold : 54.69
 
@@ -66,6 +56,3 @@ conda_envs :
     lumpy  : lumpy
     manta  : manta
 
-# INTERVALS - NOTE GENERATE AS PART OF PIPELINE
-#hc_intervals       : /panfs/roc/groups/0/fried255/shared/gatk4_workflow/refdata/canFam3/intervals/Splint100/
-#eval_interval_list : /panfs/roc/groups/0/fried255/cull0084/projects/gatk4_pipeline/intervals/acgt.N1000.interval_list

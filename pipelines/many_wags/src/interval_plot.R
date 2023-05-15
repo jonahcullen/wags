@@ -2,7 +2,9 @@
 .libPaths("/usr/local/lib/R/site-library")
 
 suppressPackageStartupMessages({
-    library(tidyverse)
+    library(dplyr)
+    library(stringr)
+    library(ggplot2)
     library(scales)
 })
 

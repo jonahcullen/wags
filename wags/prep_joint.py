@@ -26,9 +26,9 @@ refs = [
 
 # https://stackoverflow.com/questions/2892931/longest-common-substring-from-more-than-two-strings
 def common_prefix(strings):
-    """
-    Find the longest string that is a prefix of all the strings.
-    """
+    '''
+    find the longest string that is a prefix of all the strings.
+    '''
     if not strings:
         return ''
     prefix = strings[0]
@@ -41,11 +41,17 @@ def common_prefix(strings):
             if prefix[i] != s[i]:
                 prefix = prefix[:i]
                 break
-    return prefix
+    # ensure prefex ends with directory and not split file name
+    if os.path.isfile(prefix) or os.path.isdir(prefix):
+        return prefix
+    else:
+        return os.path.dirname(prefix)
 
 # NOTE - should also have checks that each sample and gvcf mapping are unique
 def validate_mapping(f):
-    ''' quick check that the sample-gvcf mapping contains two tab-delimited columns'''
+    '''
+    quick check that the sample-gvcf mapping contains two tab-delimited columns
+    '''
     prefs = []
     with open(f, 'r') as infile:
         for line in infile:
@@ -71,7 +77,7 @@ def main():
     except FileNotFoundError:
         print(f"{config} does not exist - ensure correct path")
         
-    # update config with mapping cohort, and temp dirs    
+    # update config with mapping cohort, interval options, and temp dirs
     doc['joint_cohort'] = os.path.basename(gvcfs)
     doc['date']        = datetime.today().strftime('%Y%m%d')
     if os.path.isfile(gvcfs):
@@ -81,6 +87,11 @@ def main():
         sys.exit("mapping file (--gvcfs) does not exist - ensure correct path")
     doc['tmp_dir']['sites_only_gather_vcf'] = os.path.join(outdir, '.sites_gather')
     doc['tmp_dir']['unfilt_gather_vcf']     = os.path.join(outdir, '.unfilt_gather')
+
+    # interval optional updates
+    doc['anchor_type']     = anchor_type
+    doc['nrun_length']     = int(nrun_length)
+    doc['interval_length'] = int(ival_length)
 
     # get values from config
     bucket    = doc['bucket']
@@ -335,6 +346,37 @@ if __name__ == '__main__':
         ''')
     )
     optional.add_argument(
+        "--anchor-type",
+        default='nruns',
+        help=textwrap.dedent('''\
+            anchor type for generating intervals.
+            'intergenic' requires an annotation file
+            (e.g. gff/gtf) to be included during
+            config_joint.py setup [options: nruns, intergenic]
+        ''')
+    )
+    optional.add_argument(
+        "--nrun-length",
+        default='50',
+        help=textwrap.dedent('''\
+            maximum number of contiguous missing
+            bases to tolerate. only relevant for
+            anchor-type nruns
+            allowed [default: 50]
+        ''')
+    )
+    optional.add_argument(
+        "--interval-length",
+        default='10000000',
+        help=textwrap.dedent('''\
+            desired invterval target lengths.
+            this does not guarantee a uniform
+            length and is largely dependent on
+            interval design choice (--anchor-type)
+            and genome completeness [default: 10000000]
+        ''')
+    )
+    optional.add_argument(
         "--profile",
         default="slurm",
         help="HPC job scheduler [default: slurm]",
@@ -357,19 +399,22 @@ if __name__ == '__main__':
         help="show this help message and exit"
     )
 
-    args = parser.parse_args()
-    config     = args.config
-    gvcfs      = args.gvcfs
-    snps       = args.vqsr_snps
-    indels     = args.vqsr_indels
-    outdir     = os.path.realpath(os.path.expanduser(args.out))
-    snake_env  = args.snake_env
-    partition  = args.partition
-    email      = args.email
-    account    = args.account
-    sif        = args.sif
-    profile    = args.profile
-    remote     = args.remote.lower()
+    args        = parser.parse_args()
+    config      = args.config
+    gvcfs       = args.gvcfs
+    snps        = args.vqsr_snps
+    indels      = args.vqsr_indels
+    outdir      = os.path.realpath(os.path.expanduser(args.out))
+    snake_env   = args.snake_env
+    partition   = args.partition
+    email       = args.email
+    account     = args.account
+    sif         = args.sif
+    profile     = args.profile
+    remote      = args.remote.lower()
+    anchor_type = args.anchor_type.lower()
+    nrun_length = args.nrun_length
+    ival_length = args.interval_length
 
     # based on snps/indels, define pipeline
     recal = "vqsr_none"

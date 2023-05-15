@@ -4,7 +4,7 @@ rule scatter_intervals:
         acgt_ivals = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/acgt.N50.interval_list",
     params:
         ref_fasta = config['ref_fasta'],
-        contig_ns = config['contig_n_size'],
+        contig_ns = config['nrun_length'],
     threads: 1
     resources:
          time   = 20,
@@ -41,14 +41,6 @@ checkpoint split_intervals:
                 -O {output}
         '''
 
-def get_gvcfs(wildcards):
-    # interval dir from split intervals
-    ivals_dir = checkpoints.split_intervals.get(**wildcards).output[0]
-    # variable number of intervals up to scatter_size set in config (default: 50)
-    SPLIT, = glob_wildcards(os.path.join(ivals_dir,"00{split}-scattered.interval_list"))
-    # return list of split intervals
-    return expand(os.path.join(ivals_dir,"{sample_name}.00{split}.g.vcf.gz"),sample_name=sample_name,split=SPLIT)
-
 rule haplotype_caller:
     input:
         final_cram = "{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.cram"
@@ -77,6 +69,14 @@ rule haplotype_caller:
                 -O {output.hc_gvcf} \
                 -contamination 0 -ERC GVCF
         '''
+
+def get_gvcfs(wildcards):
+    # interval dir from split intervals
+    ivals_dir = checkpoints.split_intervals.get(**wildcards).output[0]
+    # variable number of intervals up to scatter_size set in config (default: 50)
+    SPLIT, = glob_wildcards(os.path.join(ivals_dir,"00{split}-scattered.interval_list"))
+    # return list of split intervals
+    return expand(os.path.join(ivals_dir,"{sample_name}.00{split}.g.vcf.gz"),sample_name=sample_name,split=SPLIT)
 
 rule merge_gvcfs:
     input:

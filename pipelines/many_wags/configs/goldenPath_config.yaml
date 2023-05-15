@@ -13,6 +13,12 @@ sif : /home/fried255/cull0084/.sif/wags.sif
 conda_envs :
   qc : bcftools
 
+# INTERVAL ANCHOR METHOD
+anchor_type : nruns
+# INTERVAL SIZES
+nrun_length     : 50
+interval_length : 10000000
+
 # DB IMPORT
 batch_size : 50
 
@@ -21,10 +27,10 @@ ref_fasta : /home/refgen/horse/goldenPath/goldenPath.Ec_build-3.0_wMSY.fa
 ref_dict  : /home/refgen/horse/goldenPath/goldenPath.Ec_build-3.0_wMSY.dict
 ref_gtf   : /home/refgen/horse/goldenPath/MISSING.gtf
 
-# TMP DIRS - NOTE THIS NEEDS TO BE BASED ON SETUP
+# TMP DIRS
 tmp_dir :
-  sites_only_gather_vcf : /scratch.global/friedlab_JOINT/.sites_gather
-  unfilt_gather_vcf     : /scratch.global/friedlab_JOINT/.unfilt_gather
+  sites_only_gather_vcf : /path/to/.sites_gather
+  unfilt_gather_vcf     : /path/to/.unfilt_gather
 
 # RECAL
 snp_recalibration_tranche_values    : [

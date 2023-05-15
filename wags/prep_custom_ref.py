@@ -66,14 +66,20 @@ def main():
     # modify config file
     with open(config) as f:
         doc = yaml.safe_load(f)
+    
     # update sif and other cli args
     doc['sif']      = sif
     doc['ref']      = ref
     doc['species']  = species
     doc['ref_dict'] = f"{os.path.splitext(ref_fa)[0]}.dict"
     doc['ref_fasta'] = ref_fa
+    
     # add known site resources if provided
     doc['known_sites'] = d_sites
+    
+    # interval optional updates
+    doc['nrun_length']  = int(nrun_len)
+    doc['scatter_size'] = int(scat_size)
 
     # dump
     with open(os.path.join(ref_home,f"{ref}_config.yaml"),'w') as out:
@@ -224,6 +230,24 @@ if __name__ == '__main__':
         ''')
     )
     optional.add_argument(
+        "--nrun-length",
+        default='50',
+        help=textwrap.dedent('''\
+            maximum number of contiguous missing
+            bases to tolerate for generating intervals
+            [default: 50]
+        ''')
+    )
+    optional.add_argument(
+        "--scatter-size",
+        default='50',
+        help=textwrap.dedent('''\
+            maximum number of intervals across which
+            to haplotype calling and bqsr (if desired)
+            [default: 50]
+        ''')
+    )
+    optional.add_argument(
         "--profile",
         default="slurm",
         help="HPC job scheduler [default: slurm]",
@@ -250,6 +274,8 @@ if __name__ == '__main__':
     account   = args.account
     outdir    = args.out
     sites     = args.sites
+    nrun_len  = args.nrun_length
+    scat_size = args.scatter_size
     profile   = args.profile
     sif       = args.sif
 

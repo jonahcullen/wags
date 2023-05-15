@@ -5,7 +5,8 @@ if not os.path.isfile(config['common_vcf']):
         output:
             common_vcf = config['common_vcf'],
         params:
-            pop_vcf = config['pop_vcf'],
+            pop_vcf     = config['pop_vcf'],
+            allele_freq = config['allele_freq']
         threads: 8
         resources:
              time   = 2160,
@@ -13,7 +14,7 @@ if not os.path.isfile(config['common_vcf']):
         shell:
             '''
                 bcftools view -Oz \
-                    -i 'AF[*]>0.005' \
+                    -i 'AF[*]>{params.allele_freq}' \
                     {params.pop_vcf} \
                     -o {output.common_vcf}
 

@@ -17,8 +17,8 @@ tmp_dir :
 # LEFT ALIGN BAM
 left_align : false
 
-# BQSR INTERVAL PARAMS
-contig_n_size : 50
+# INTERVAL SIZE SCATTER
+nrun_length  : 50
 scatter_size : 50
 
 # REFERENCE FILES
@@ -29,6 +29,9 @@ ref_gtf   : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/UU_Cfam_GSD_1.0_ROSY.refSeq.en
 # RESOURCE FILES FOR BQSR (OPTIONAL)
 known_sites :
   dog10k_bed : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/UU_Cfam_GSD_1.0.BQSR.DB.bed.gz
+
+# ALLELE FREQUENCY FOR COMPARISON TO POPULATION
+allele_freq : 0.005
 
 # NOTE DO WE NEED THESE?
 # RESOURCE FILES (FROM CONTAINER)

@@ -8,6 +8,8 @@ def get_fastq(wildcards):
     
     return {'r1': fastqs.fastq_1, 'r2': fastqs.fastq_2}
 
+# adatped from GATKs best practices, including the human-based
+# adding of a sacrificial element:w
 def sequence_grouping(base,ref_dict):
     '''
     Placeholder
@@ -37,14 +39,6 @@ def sequence_grouping(base,ref_dict):
         else:
             tsv_string += "\n" + sequence_tuple[0] + hg38_protection_tag
             temp_size = sequence_tuple[1]
-
-    # write sequence group list to interval files
-   #seq_group = tsv_string.split("\n")
-   #if not os.path.isdir(f"{base}/seq_group/no_unmap"):
-   #    os.makedirs(f"{base}/seq_group/no_unmap",exist_ok=True)
-   #    for i,v in enumerate(seq_group):
-   #        with open(os.path.join(f"{base}/seq_group/no_unmap",f"group_{i}.tsv"),"w") as f:
-   #            print(v,file=f)
 
     # write sequence group list with unmapped to interval file so they are recalibrated as well
     tsv_string += '\n' + "unmapped"

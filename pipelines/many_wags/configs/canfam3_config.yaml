@@ -1,9 +1,10 @@
-
-joint_cohort : dogid_20220326.list
-bucket       : friedlab
-alias        : s3Fried
+joint_cohort : gvcfs.list
+species      : ''
 ref          : canfam3
-date         : 20220401
+date         : ''
+bucket       : ''
+alias        : s3
+profile      : slurm
 
 # SINGULARITY IMAGE
 sif : /home/fried255/cull0084/.sif/wags.sif
@@ -16,8 +17,14 @@ phasing   : false
 conda_envs :
     qc : bcftools
 
+# INTERVAL ANCHOR METHOD
+anchor_type : nruns
+# INTERVAL SIZES
+nrun_length     : 50
+interval_length : 10000000
+
 # DB IMPORT
-batch_size    : 50
+batch_size : 50
 
 # REFERENCE FILES
 ref_fasta : /home/refgen/dog/canfam3/canFam3.fa
@@ -26,11 +33,8 @@ ref_gtf   : /home/refgen/dog/canfam3/Canis_lupus_familiaris.CanFam3.1.103.gtf.gz
 
 # TMP DIRS
 tmp_dir :
-    sites_only_gather_vcf : /scratch.global/friedlab_JOINT_CF3/sort_gather
-
-# RULE-SPECIFIC PARTITIONS
-partitions :
-    phasing : "amdsmall,amdlarge,amd512,ram256g"
+  sites_only_gather_vcf : /path/to/.sites_gather
+  unfilt_gather_vcf     : /path/to/.unfilt_gather
 
 # RECAL
 indel_recalibration_tranche_values    : ["100.0", "99.95", "99.9", "99.5", "99.0", "97.0", "96.0", "95.0", "94.0", "93.5", "93.0", "92.0", "91.0", "90.0"]

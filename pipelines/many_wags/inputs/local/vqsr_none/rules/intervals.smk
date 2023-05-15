@@ -81,34 +81,40 @@ rule bed_to_interval_list:
                 SD={params.ref_dict}
         '''
 
-# old version based on runs of 50 Ns
-#rule scatter_intervals:
-#    output:
-#        "{bucket}/wgs/pipeline/{ref}/{date}/intervals/acgt.N50.interval_list",
-#    params:
-#        ref_fasta = config['ref_fasta']
-#    shell:
-#        '''
-#            java -jar /opt/wags/src/picard.jar \
-#                ScatterIntervalsByNs \
-#                R={params.ref_fasta} \
-#                OT=ACGT \
-#                N=50 \
-#                O={output}
-#
-#            # dump chrun
-#            sed -i '/^chrUn/d' {output}
-#        '''
+# intervals based on nruns (default as does not require the reference genome
+# to have a quality annotation file)
+if "nruns" in config['anchor_type']:
+    rule scatter_intervals:
+        output:
+            "{bucket}/wgs/pipeline/{ref}/{date}/intervals/acgt.N50.interval_list",
+        params:
+            nrun_length = config['nrun_length'],
+            ref_fasta   = config['ref_fasta']
+        shell:
+            '''
+                java -jar /opt/wags/src/picard.jar \
+                    ScatterIntervalsByNs \
+                    R={params.ref_fasta} \
+                    OT=ACGT \
+                    N={params.nrun_length} \
+                    O={output}
+
+                # dump chrun
+                sed -i '/^chrUn/d' {output}
+            '''
 
 checkpoint generate_intervals:
     input:
-        ival_list = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/intergenic_midp.interval_list"
+       #ival_list = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/intergenic_midp.interval_list"
+        ival_list = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/acgt.N50.interval_list"
+            if "nruns" in config['anchor_type'] else "{bucket}/wgs/pipeline/{ref}/{date}/intervals/intergenic_midp.interval_list"
     output:
         directory("{bucket}/wgs/pipeline/{ref}/{date}/intervals/import"),
     params:
-        base      = f"{config['bucket']}/wgs/pipeline/{config['ref']}/{config['date']}/intervals/import",
-        lengths   = f"{config['bucket']}/wgs/pipeline/{config['ref']}/{config['date']}/intervals/collapsed_lengths.csv",
-        ivals_all = f"{config['bucket']}/wgs/pipeline/{config['ref']}/{config['date']}/intervals/wags_intervals.list",
+        ival_length = config['interval_length'],
+        base        = f"{config['bucket']}/wgs/pipeline/{config['ref']}/{config['date']}/intervals/import",
+        lengths     = f"{config['bucket']}/wgs/pipeline/{config['ref']}/{config['date']}/intervals/collapsed_lengths.csv",
+        ivals_all   = f"{config['bucket']}/wgs/pipeline/{config['ref']}/{config['date']}/intervals/wags_intervals.list",
     run:
         os.makedirs(params.base,exist_ok=True)
         # process interval file and collapse intervals by chromosome    
@@ -147,7 +153,10 @@ checkpoint generate_intervals:
 
             # generate collapsed intervals
             for k,v in d.items():
-                d[k]["collapsed"] = collapse_intervals(v["intervals"])
+                d[k]["collapsed"] = collapse_intervals(
+                    v["intervals"], 
+                    int(params.ival_length)
+                )
 
         # get list of keys and apply natural sort
         sorted_keys = list(d.keys())

@@ -17,8 +17,8 @@ tmp_dir :
 # LEFT ALIGN BAM
 left_align : false
 
-# BQSR INTERVAL PARAMS
-contig_n_size : 50
+# INTERVAL SIZE SCATTER
+nrun_length  : 50
 scatter_size : 50
 
 # REFERENCE FILES

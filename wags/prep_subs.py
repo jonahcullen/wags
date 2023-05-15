@@ -188,10 +188,12 @@ def main():
         # modify config file
         with open(config) as f:
             doc = yaml.safe_load(f)
+        
         # get config values
         species  = doc['species']
         ref_dict = doc['ref_dict']
         fasta    = doc['ref_fasta']
+        
         # update sif and other cli args
         doc['profile'] = profile
         doc['sif']     = sif
@@ -204,16 +206,23 @@ def main():
         doc['tmp_dir']['fastq_tmp'] = os.path.join(
             outdir,".fastq",breed,sample_name,".tmp"
         )
+        
         # for private variant analysis, add pop.vcf and common.vcf path
         if money:
-            doc['pop_vcf']    = pop
-            doc['common_vcf'] = common
+            doc['pop_vcf']     = pop
+            doc['common_vcf']  = common
+            doc['allele_freq'] = float(allele_freq)
             doc['tmp_dir']['select_variants_to_table'] = os.path.join(
                 outdir,".select",breed,sample_name,".tmp"
             )
             doc['tmp_dir']['unfilt_gather_vcf'] = os.path.join(
                 outdir,".gather",breed,sample_name,".tmp"
             )
+
+        # interval optional updates
+        doc['nrun_length']  = int(nrun_len)
+        doc['scatter_size'] = int(scat_size)
+        
         # dump
         with open(os.path.join(v['work_dir'],config_n),'w') as out:
             yaml.dump(doc,out,sort_keys=False)
@@ -430,6 +439,24 @@ if __name__ == '__main__':
         '''),
     )
     optional.add_argument(
+        "--nrun-length",
+        default='50',
+        help=textwrap.dedent('''\
+            maximum number of contiguous missing
+            bases to tolerate for generating intervals
+            [default: 50]
+        ''')
+    )
+    optional.add_argument(
+        "--scatter-size",
+        default='50',
+        help=textwrap.dedent('''\
+            maximum number of intervals across which
+            to haplotype calling and bqsr (if desired)
+            [default: 50]
+        ''')
+    )
+    optional.add_argument(
         "--profile",
         default="slurm",
         help="HPC job scheduler [default: slurm]",
@@ -466,36 +493,48 @@ if __name__ == '__main__':
         help="switch to setup private SNP pipeline"
     )
     optional.add_argument(
+        "--pop",
+        default=None,
+        help="path to population variants vcf (money pipeline) [default: None]"
+    )
+    optional.add_argument(
+        "--allele-freq",
+        default='0.005',
+        help=textwrap.dedent('''\
+            threshold to define commone variants compared
+            to the population vcf (only relevant with 
+            --money) [default: 0.005]
+        ''')
+    )
+    optional.add_argument(
         "-h", "--help",
         action="help",
         default=argparse.SUPPRESS,
         help="show this help message and exit"
     )
-    optional.add_argument(
-        "--pop",
-        default=None,
-        help="path to population variants vcf (money pipeline) [default: None]"
-    )
 
     args = parser.parse_args()
-    dog_meta   = os.path.realpath(os.path.expanduser(args.meta))
-    fq_dir     = os.path.realpath(os.path.expanduser(args.fastqs))
-    outdir     = os.path.realpath(os.path.expanduser(args.out))
-    bucket     = args.bucket
-    snake_env  = args.snake_env
-    partition  = args.partition
-    email      = args.email
-    account    = args.account
-    sif        = args.sif
-    ref        = args.ref
-    ref_dir    = os.path.realpath(os.path.expanduser(args.ref_dir))
-    alias      = args.alias
-    money      = args.money
-    pop        = args.pop
-    profile    = args.profile
-    remote     = args.remote.lower()
-    no_bqsr    = args.no_bqsr
-    left_align = args.left_align
+    dog_meta    = os.path.realpath(os.path.expanduser(args.meta))
+    fq_dir      = os.path.realpath(os.path.expanduser(args.fastqs))
+    outdir      = os.path.realpath(os.path.expanduser(args.out))
+    bucket      = args.bucket
+    snake_env   = args.snake_env
+    partition   = args.partition
+    email       = args.email
+    account     = args.account
+    sif         = args.sif
+    ref         = args.ref
+    ref_dir     = os.path.realpath(os.path.expanduser(args.ref_dir))
+    alias       = args.alias
+    money       = args.money
+    pop         = args.pop
+    allele_freq = args.allele_freq
+    nrun_len    = args.nrun_length
+    scat_size   = args.scatter_size
+    profile     = args.profile
+    remote      = args.remote.lower()
+    no_bqsr     = args.no_bqsr
+    left_align  = args.left_align
 
     # QUICK FIX FOR goldenPath - NEED TO ADJUST CONTAINER TO BE horse/goldenpath
     if "golden" in ref:
