@@ -142,7 +142,7 @@ python ../rescuer/wags/prep_custom_ref.py \
     --out ~/.wags/
 ```
 
-which returns `submit platypus_mOrnAna1.p.v1.prep_wags.slurm from /home/fried255/cull0084/.wags/platypus/mOrnAna1.p.v1 to prep mOrnAna1.p.v1 for wags`. Following the sucess run of the `platypus_mOrnAna1.p.v1.prep_wags.slurm`, the required genome and alignment indices will be availabale along `mOrnAna1.p.v1_config.yaml`, the input config for running platypus samples with *OneWAG*.
+which returns `submit platypus_mOrnAna1.p.v1.prep_wags.slurm from /home/fried255/cull0084/.wags/platypus/mOrnAna1.p.v1 to prep mOrnAna1.p.v1 for wags`. Following the successful run of `platypus_mOrnAna1.p.v1.prep_wags.slurm`, the required genome and alignment indices will be available along with `mOrnAna1.p.v1_config.yaml`, the input config for running platypus samples with *OneWAG*.
 
 ## FASTQ to GVCF (OneWAG)
 
@@ -190,7 +190,7 @@ python ./wags/prep_subs.py \
     --alias MINIO_ALIAS
 ```
 
-NOTE that `--bucket` here is the name of the per-sample output directory nested within `--out` and must be an available S3 bucket if using `--remote S3`. It should be noted the importance of two additional options `run-length` and `scatter-size`. 1run-length` determines the maximum number of missing bases allowed to define interval boundaries, while `scatter-size` determines the number of intervals that can be processed simultaneously, both of which have default values of 50. Together these options have an impact on processing speed for haplotype calling and BQSR (if desired). This will generate the following directory structure
+Note that `--bucket` here is the name of the per-sample output directory nested within `--out` and must be an available S3 bucket if using `--remote S3`. It should also be noted the importance of two additional options `run-length` and `scatter-size`. `run-length` determines the maximum number of missing bases allowed to define interval boundaries, while `scatter-size` determines the number of intervals that can be processed simultaneously, both of which have default values of 50. Together these options have an impact on processing speed for haplotype calling and BQSR (if desired). This will generate the following directory structure
 
 ```
 PATH/TO/OUTDIR/
