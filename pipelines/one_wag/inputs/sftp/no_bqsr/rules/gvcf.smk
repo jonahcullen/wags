@@ -1,7 +1,7 @@
 
 rule scatter_intervals:
     output:
-        acgt_ivals  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/acgt.N50.interval_list",
+        acgt_ivals  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/acgt.interval_list",
     params:
         ref_fasta = config['ref_fasta'],
         contig_ns = config['nrun_length'],
@@ -21,13 +21,12 @@ rule scatter_intervals:
 
 checkpoint split_intervals:
     input:
-        acgt_ivals  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/acgt.N50.interval_list",
+        acgt_ivals  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/acgt.interval_list",
     output:
         directory("{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered")
     params:
         ref_fasta    = config['ref_fasta'],
         scatter_size = config['scatter_size'],
-       #split_dir    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered"
     threads: 1
     resources:
          time   = 20,
@@ -48,14 +47,14 @@ rule haplotype_caller:
             if not config['left_align'] else SFTP.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.duplicate_marked.sorted.bam"),
         sorted_bai = SFTP.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bai")
             if not config['left_align'] else SFTP.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.duplicate_marked.sorted.bai"),
-        interval  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/00{split}-scattered.interval_list"
+        interval  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/{split}-scattered.interval_list"
     output:
-        hc_gvcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/{sample_name}.00{split}.g.vcf.gz"
+        hc_gvcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/{sample_name}.{split}.g.vcf.gz"
     params:
         java_opt  = "-Xmx10G -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10",
         ref_fasta = config['ref_fasta'],
     benchmark:
-        "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/benchmarks/{sample_name}.00{split}.hc.benchmark.txt"
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/benchmarks/{sample_name}.{split}.hc.benchmark.txt"
     threads: 4
     resources:
          time   = 720,
