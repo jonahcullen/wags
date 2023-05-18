@@ -6,19 +6,19 @@ def get_recal_vcfs(wildcards):
     INTERVALS, = glob_wildcards(os.path.join(ivals_dir,"wags_{interval}.interval_list"))
     # return list of recal vcfs
     return sorted(expand(
-        "{bucket}/wgs/pipeline/{ref}/{date}/var_recal/apply/wags_{interval}/recal_snps.{interval}.vcf.gz",
+        "{bucket}/wgs/pipeline/{ref}/{date}/var_recal/apply/wags_{interval}/recal.{interval}.vcf.gz",
         bucket=config['bucket'],
         ref=config['ref'],
         date=config['date'],
         interval=INTERVALS
     ))
 
-rule gather_snp_recal_vcfs:
+rule final_gather_vcfs:
     input:
         get_recal_vcfs
     output:
-        final_snp_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/snps.{ref}.vcf.gz",
-        final_snp_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/snps.{ref}.vcf.gz.tbi"
+        final_vcf = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz"),
+        final_tbi = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz.tbi")
     params:
         vcfs = lambda wildcards, input: " --input ".join(map(str,input)),
     threads: 4
@@ -34,36 +34,11 @@ rule gather_snp_recal_vcfs:
                 --ignore-safety-checks \
                 --gather-type BLOCK \
                 --input {params.vcfs} \
-                --output {output.final_snp_vcf}
+                --output {output.final_vcf}
 
             gatk --java-options "-Xmx18g -Xms6g" \
                 IndexFeatureFile \
-                --input {output.final_snp_vcf}
-        '''
-
-rule combine_snps_nonsnps:
-    input:
-        final_snp_vcf       = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/snps.{ref}.vcf.gz",
-        final_snp_tbi       = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/snps.{ref}.vcf.gz.tbi",
-        nonsnp_filtered_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/hardflt_vcf/nonsnp_fltr.vcf.gz",
-        nonsnp_filtered_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/hardflt_vcf/nonsnp_fltr.vcf.gz.tbi"
-    output:
-        final_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz",
-        final_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz.tbi",
-    threads: 12
-    resources:
-         time   = 1440,
-         mem_mb = 24000
-    shell:
-        '''
-            bcftools concat \
-                --threads {threads} \
-                --allow-overlaps \
-                {input.final_snp_vcf} {input.nonsnp_filtered_vcf} \
-                -Oz \
-                -o {output.final_vcf}
-
-            tabix -p vcf {output.final_vcf}
+                --input {output.final_vcf}
         '''
 
 # generate vep intervals by runs of missing bases
@@ -113,9 +88,9 @@ checkpoint split_intervals:
 
 rule vep_by_interval:
     input:
-        final_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz",
-        final_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz.tbi",
-        interval   = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/vep/scattered/{vep_interval}-scattered.interval_list"
+        final_vcf = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz"),
+        final_tbi = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz.tbi"),
+        interval  = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/vep/scattered/{vep_interval}-scattered.interval_list"
     output:
         final_interval    = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/split/vep_{vep_interval}/joint_call.{vep_interval}.vcf.gz",
         interval_vep      = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/vep/vep_{vep_interval}/joint_call.{vep_interval}.vep.vcf.gz", 
@@ -174,8 +149,8 @@ rule final_gather_veps:
     input:
         get_vep_vcfs
     output:
-        vep_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vep.vcf.gz",
-        vep_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vep.vcf.gz.tbi",
+        vep_vcf = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vep.vcf.gz"),
+        vep_tbi = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vep.vcf.gz.tbi"),
     params:
         vcf_tmp = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.TMP.gz",
         veps    = lambda wildcards, input: " --input ".join(map(str,input)),

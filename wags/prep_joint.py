@@ -92,6 +92,7 @@ def main():
     doc['anchor_type']     = anchor_type
     doc['nrun_length']     = int(nrun_length)
     doc['interval_length'] = int(ival_length)
+    doc['scatter_size']    = int(scat_size)
 
     # get values from config
     bucket    = doc['bucket']
@@ -377,6 +378,14 @@ if __name__ == '__main__':
         ''')
     )
     optional.add_argument(
+        "--scatter-size",
+        default='50',
+        help=textwrap.dedent('''\
+            maximum number of intervals for vep-base
+            annotation [default: 50]
+        ''')
+    )
+    optional.add_argument(
         "--profile",
         default="slurm",
         help="HPC job scheduler [default: slurm]",
@@ -414,6 +423,7 @@ if __name__ == '__main__':
     remote      = args.remote.lower()
     anchor_type = args.anchor_type.lower()
     nrun_length = args.nrun_length
+    scat_size   = args.scatter_size
     ival_length = args.interval_length
 
     # based on snps/indels, define pipeline

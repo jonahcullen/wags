@@ -452,7 +452,7 @@ if __name__ == '__main__':
         default='50',
         help=textwrap.dedent('''\
             maximum number of intervals across which
-            to haplotype calling and bqsr (if desired)
+            haplotype calling and bqsr (if desired) occur
             [default: 50]
         ''')
     )

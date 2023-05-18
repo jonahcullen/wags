@@ -171,8 +171,8 @@
     },
     "vep_by_interval" :
     {
-        "output" : ".logs/{rule}/{wildcards.interval}/{wildcards.ref}/%j.{rule}.out",
-        "error"  : ".logs/{rule}/{wildcards.interval}/{wildcards.ref}/%j.{rule}.err"
+        "output" : ".logs/{rule}/{wildcards.vep_interval}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.vep_interval}/{wildcards.ref}/%j.{rule}.err"
     },
     "final_gather_veps" :
     {
