@@ -179,6 +179,11 @@
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
     },
+    "all_var_to_table" :
+    {
+        "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
+    },
     "collect_metrics_on_vcf" :
     {
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
