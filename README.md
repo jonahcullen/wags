@@ -53,7 +53,7 @@ mamba create \
 
 **2. Download the container**
 
-Due to the size of the included reference genomes and index files (and depending on your internet speed) this should check ~5 minutes.
+Due to the size of the included reference genomes and index files (and depending on your internet speed) this should take ~5 minutes.
 
 ```
 wget https://s3.msi.umn.edu/wags/wags.sif
@@ -62,7 +62,7 @@ wget https://s3.msi.umn.edu/wags/wags.sif
 **3. Clone this repo**
 
 ```
-git clone git@github.com:jonahcullen/rescuer.git
+git clone git@github.com:jonahcullen/wags.git
 ```
 
 **4. Install and setup MinIO client (optional)**
