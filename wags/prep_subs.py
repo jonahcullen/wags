@@ -501,7 +501,7 @@ if __name__ == '__main__':
         "--allele-freq",
         default='0.005',
         help=textwrap.dedent('''\
-            threshold to define commone variants compared
+            threshold to define common variants compared
             to the population vcf (only relevant with 
             --money) [default: 0.005]
         ''')
