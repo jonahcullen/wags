@@ -69,6 +69,11 @@
         "output" : ".logs/{rule}/%j.{rule}.out",
         "error"  : ".logs/{rule}/%j.{rule}.err"
     },
+    "vep_scatter_intervals" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    },
     "split_intervals" :
     {
         "output" : ".logs/{rule}/%j.{rule}.out",

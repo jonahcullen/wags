@@ -42,7 +42,7 @@ rule final_gather_vcfs:
         '''
 
 # generate vep intervals by runs of missing bases
-rule scatter_intervals:
+rule vep_scatter_intervals:
     output:
         acgt_ivals = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/vep/acgt.interval_list"
     params:
