@@ -88,7 +88,7 @@ def get_vep_htmls(wildcards):
     INTERVALS, = glob_wildcards(os.path.join(ivals_dir,"wags_{interval}.interval_list"))
     # return list of recal vcfs
     return expand(
-        "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/vep/wags_{interval}/recal.{interval}.vep.vcf_summary.html",
+        "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/vep/vep_{interval}/recal.{interval}.vep.vcf_summary.html",
         bucket=config['bucket'],
         ref=config['ref'],
         date=config['date'],
