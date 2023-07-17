@@ -65,7 +65,7 @@ def main():
             tmp = []
             for root,dirs,files in os.walk(fq_dir):
                 for f in files:
-                    if f.startswith(line[-1]) and not f.endswith("md5") and "_R2" in f:
+                    if f.startswith(line[-1]) and not f.endswith(("md5","txt")) and "_R2" in f:
                         tmp.append(os.path.join(root,f))
             first = "_R1"           
             second = "_R2"
@@ -81,7 +81,7 @@ def main():
             # add fastq information for each pair per sample
             dog_input = []  
             for i,v in enumerate(sorted(tmp)):
-                
+
                 platform_unit = extract_pu(v)
                 cdate = datetime.fromtimestamp(os.path.getctime(v)).strftime('%Y-%m-%dT%H:%M:%S')                   
    
