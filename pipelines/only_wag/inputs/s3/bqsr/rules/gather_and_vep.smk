@@ -35,7 +35,7 @@ rule vep_by_interval:
        #interval  = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/import/wags_{interval}.interval_list",
         final_vcf = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vcf.gz"),
         final_tbi = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vcf.gz.tbi"),
-        interval  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/00{interval}-scattered.interval_list"
+        interval  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/{interval}-scattered.interval_list"
     output:
         final_interval    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/split/wags_{interval}/{sample_name}.{interval}.vcf.gz",
         interval_vep      = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/wags_{interval}/{sample_name}.{interval}.vep.vcf.gz", 
@@ -158,7 +158,7 @@ def get_vep_vcfs(wildcards):
     # interval dir from split intervals
     ivals_dir = checkpoints.split_intervals.get(**wildcards).output[0]
     # variable number of intervals up to scatter_size set in config (default: 50)
-    INTERVALS, = glob_wildcards(os.path.join(ivals_dir,"00{interval}-scattered.interval_list"))
+    INTERVALS, = glob_wildcards(os.path.join(ivals_dir,"{interval}-scattered.interval_list"))
     # return list of split intervals recal.vcf.gz
     return sorted(expand(
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/wags_{interval}/{sample_name}.{interval}.vep.vcf.gz",

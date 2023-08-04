@@ -1,10 +1,10 @@
 
 rule scatter_intervals:
     output:
-        acgt_ivals = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/acgt.N50.interval_list",
+        acgt_ivals = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/acgt.interval_list",
     params:
         ref_fasta = config['ref_fasta'],
-        contig_ns = config['contig_n_size'],
+        contig_ns = config['nrun_length'],
     threads: 1
     resources:
          time   = 20,
@@ -21,7 +21,7 @@ rule scatter_intervals:
 
 checkpoint split_intervals:
     input:
-        acgt_ivals = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/acgt.N50.interval_list",
+        acgt_ivals = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/acgt.interval_list",
     output:
         directory("{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered")
     params:
@@ -47,14 +47,14 @@ rule haplotype_caller:
             if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.left_aligned.cram"),
         final_crai = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.cram.crai")
             if not config['left_align'] else S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.left_aligned.cram.crai"),
-        interval   = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/00{split}-scattered.interval_list"
+        interval   = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/{split}-scattered.interval_list"
     output:
-        hc_gvcf = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/{sample_name}.00{split}.g.vcf.gz")
+        hc_gvcf = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/{sample_name}.{split}.g.vcf.gz")
     params:
         java_opt  = "-Xmx10G -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10",
         ref_fasta = config['ref_fasta'],
     benchmark:
-        "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/benchmarks/{sample_name}.00{split}.hc.benchmark.txt"
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/benchmarks/{sample_name}.{split}.hc.benchmark.txt"
     threads: 4
     resources:
          time   = 1080,
@@ -74,9 +74,9 @@ def get_gvcfs(wildcards):
     # interval dir from split intervals
     ivals_dir = checkpoints.split_intervals.get(**wildcards).output[0]
     # variable number of intervals up to scatter_size set in config (default: 50)
-    SPLIT, = glob_wildcards(os.path.join(ivals_dir,"00{split}-scattered.interval_list"))
+    SPLIT, = glob_wildcards(os.path.join(ivals_dir,"{split}-scattered.interval_list"))
     # return list of split intervals
-    return expand(os.path.join(ivals_dir,"{sample_name}.00{split}.g.vcf.gz"),sample_name=sample_name,split=SPLIT)
+    return expand(os.path.join(ivals_dir,"{sample_name}.{split}.g.vcf.gz"),sample_name=sample_name,split=SPLIT)
 
 rule merge_gvcfs:
     input:

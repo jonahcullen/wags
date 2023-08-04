@@ -112,15 +112,14 @@ rule qualimap_bamqc:
 # NOTE THERE IS AN ISSUE WTIH CALLING IT DBSNP IF A USER DOES NOT HAVE THAT RESOURCE...
 rule collect_metrics_on_vcf:
     input:
-        final_vcf       = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vcf.gz"),
-        final_vcf_index = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vcf.gz.tbi"),
-        acgt_ivals      = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/acgt.N50.interval_list",
+        final_vcf  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vcf.gz"),
+        final_tbi  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vcf.gz.tbi"),
+        acgt_ivals = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/acgt.interval_list",
     output:
         detail_metrics  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.variant_calling_detail_metrics"),
         summary_metrics = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.variant_calling_summary_metrics"),
     params:
-       #dbsnp_snp_vcf  = config['known_sites']['dbsnp_snp_vcf'],
-        coverage_vcf   = config['coverage_sites'],
+        known_sites    = config['coverage_sites'],
         ref_dict       = config['ref_dict'],
         metrics_prefix = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}"
     threads: 8
@@ -132,7 +131,7 @@ rule collect_metrics_on_vcf:
             gatk --java-options "-Xmx18g -Xms6g" \
                 CollectVariantCallingMetrics \
                 --INPUT {input.final_vcf} \
-                --DBSNP {params.coverage_vcf} \
+                --DBSNP {params.known_sites} \
                 --SEQUENCE_DICTIONARY {params.ref_dict} \
                 --OUTPUT {params.metrics_prefix} \
                 --THREAD_COUNT 8 \

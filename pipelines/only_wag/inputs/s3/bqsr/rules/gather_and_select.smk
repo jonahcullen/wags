@@ -3,7 +3,7 @@ def get_unfiltered_vcfs(wildcards):
     # interval dir from split intervals
     ivals_dir = checkpoints.split_intervals.get(**wildcards).output[0]
     # variable number of intervals 
-    INTERVALS, = glob_wildcards(os.path.join(ivals_dir,"00{interval}-scattered.interval_list"))
+    INTERVALS, = glob_wildcards(os.path.join(ivals_dir,"{interval}-scattered.interval_list"))
     # return list of recal vcfs
     return sorted(expand(
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/genotype_gvcfs/money_{interval}/output.vcf.gz",

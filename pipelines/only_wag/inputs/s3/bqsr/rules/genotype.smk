@@ -2,7 +2,7 @@
 rule genotype_gvcfs:
     input:
         final_gvcf = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/{sample_name}.{ref}.g.vcf.gz"),
-        interval   = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/00{interval}-scattered.interval_list"
+        interval   = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/{interval}-scattered.interval_list"
     output:
         vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/genotype_gvcfs/money_{interval}/output.vcf.gz",
     params:
