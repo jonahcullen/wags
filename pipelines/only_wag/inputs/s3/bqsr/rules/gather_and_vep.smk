@@ -35,12 +35,12 @@ rule vep_by_interval:
        #interval  = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/import/wags_{interval}.interval_list",
         final_vcf = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vcf.gz"),
         final_tbi = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vcf.gz.tbi"),
-        interval  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/{interval}-scattered.interval_list"
+        interval  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/{vep_interval}-scattered.interval_list"
     output:
-        final_interval    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/split/wags_{interval}/{sample_name}.{interval}.vcf.gz",
-        interval_vep      = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/wags_{interval}/{sample_name}.{interval}.vep.vcf.gz", 
-        interval_vep_tbi  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/wags_{interval}/{sample_name}.{interval}.vep.vcf.gz.tbi", 
-        interval_vep_html = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/wags_{interval}/{sample_name}.{interval}.vep.vcf_summary.html", 
+        final_interval    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/split/wags_{vep_interval}/{sample_name}.{vep_interval}.vcf.gz",
+        interval_vep      = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/wags_{vep_interval}/{sample_name}.{vep_interval}.vep.vcf.gz", 
+        interval_vep_tbi  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/wags_{vep_interval}/{sample_name}.{vep_interval}.vep.vcf.gz.tbi", 
+        interval_vep_html = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/wags_{vep_interval}/{sample_name}.{vep_interval}.vep.vcf_summary.html", 
     params:
         out_name = lambda wildcards, output: os.path.splitext(output.interval_vep)[0],
         ref_fasta = config["ref_fasta"],
@@ -161,12 +161,12 @@ def get_vep_vcfs(wildcards):
     INTERVALS, = glob_wildcards(os.path.join(ivals_dir,"{interval}-scattered.interval_list"))
     # return list of split intervals recal.vcf.gz
     return sorted(expand(
-        "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/wags_{interval}/{sample_name}.{interval}.vep.vcf.gz",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/wags_{vep_interval}/{sample_name}.{interval}.vep.vcf.gz",
         bucket = config['bucket'],
         breed=breed,
         sample_name = sample_name,
         ref = config['ref'],
-        interval = INTERVALS
+        vep_interval = INTERVALS
     ))
 
 rule final_gather_veps:
