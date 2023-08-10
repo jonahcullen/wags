@@ -433,7 +433,7 @@ def fetch_gvcfs(alias, bucket, samples, ref, outdir, outfile):
                 print(gvcf_copy, file=out)
 
     # write gvcfs.list for input to joint genotyping
-    with open(os.path.join(outdir, outfile), 'w') as out:
+    with open(os.path.join(out_dir, outfile), 'w') as out:
         for k, v in d.items():
             tmp = v['gvcf'][0].split('/')
             breed, dogid = tmp[-5:-3]

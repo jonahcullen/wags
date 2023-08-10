@@ -57,7 +57,7 @@ rule final_output:
             for k,v in dfs.items():
                 v.to_excel(
                     writer,
-                    sheet_name=k[:30],
+                    sheet_name=k.split('.')[-1],
                     index=False
                 )
             writer.save()
