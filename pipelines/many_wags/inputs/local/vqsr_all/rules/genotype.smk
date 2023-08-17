@@ -42,7 +42,7 @@ rule genotype_gvcfs:
          mem_mb = 60000
     shell:
         '''
-            gatk --java-options "-Xmx50g -Xms50g" \
+            gatk --java-options "-Xms50g -Xmx50g" \
             GenotypeGVCFs \
                 -R {params.ref_fasta} \
                 -O {output.vcf} \
