@@ -26,7 +26,7 @@ rule gather_unfltr_vcf:
     threads: 12
     resources:
          time   = 1440,
-         mem_mb = 200000
+         mem_mb = 20000
     shell:
         '''
             set -e
@@ -122,7 +122,7 @@ rule sites_only_gather_vcf:
     threads: 12
     resources:
          time   = 1440,
-         mem_mb = 200000
+         mem_mb = 20000
     shell:
         '''
             set -e
