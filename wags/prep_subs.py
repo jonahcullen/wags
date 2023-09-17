@@ -21,7 +21,8 @@ from collections import defaultdict
 refs = [
     "canfam3","canfam4","UU_Cfam_GSD_1.0_ROSY",
     "goldenPath",
-    "tiger"
+    "tiger",
+    "Fca126_mat1.0"
 ]
 #remotes = ["local","s3","sftp"]
 
@@ -54,7 +55,7 @@ def main():
             "platform_unit","flowcell","run_date",
             "platform_name","sequencing_center"]
     
-    with open(dog_meta) as ids:
+    with open(sample_meta) as ids:
         reader = csv.reader(ids, delimiter=',')
         next(reader, None)
         for line in reader:
@@ -79,7 +80,7 @@ def main():
                 first = "_1.fastq.gz"
                 second = "_2.fastq.gz"
             # add fastq information for each pair per sample
-            dog_input = []  
+            sample_input = []  
             for i,v in enumerate(sorted(tmp)):
 
                 platform_unit = extract_pu(v)
@@ -91,7 +92,7 @@ def main():
                     os.path.basename(v).replace(second,first)
                 )
  
-                dog_input.append(
+                sample_input.append(
                     [   
                         line[1],
                         line[0],
@@ -109,7 +110,7 @@ def main():
             
             d[line[0]]['work_dir']    = os.path.join(outdir,line[1],line[0],ref)
             d[line[0]]['breed']       = line[1]
-            d[line[0]]['df']          = pd.DataFrame(dog_input, columns=cols)
+            d[line[0]]['df']          = pd.DataFrame(sample_input, columns=cols)
             
     # copy pipeline input and submission file
     for k,v in d.items():
@@ -124,7 +125,7 @@ def main():
         if not os.path.exists(jobs):
             os.makedirs(jobs)
    
-        # write dog input to working directory
+        # write sample input to working directory
         with open(os.path.join(v['work_dir'],"input.tsv"),"w") as out:
             v['df'].to_csv(out,sep='\t',index=False)
        
@@ -376,7 +377,8 @@ if __name__ == '__main__':
         default="canfam4",
         metavar="",
         help=textwrap.dedent(f'''\
-            select reference to use: {", ".join(refs)}.
+            select reference to use: 
+                {", ".join(refs)}
             if using custom reference, ensure provided name
             is exact match to name (--ref) used with 
             prep_custom_ref.py
@@ -514,7 +516,7 @@ if __name__ == '__main__':
     )
 
     args = parser.parse_args()
-    dog_meta    = os.path.realpath(os.path.expanduser(args.meta))
+    sample_meta = os.path.realpath(os.path.expanduser(args.meta))
     fq_dir      = os.path.realpath(os.path.expanduser(args.fastqs))
     outdir      = os.path.realpath(os.path.expanduser(args.out))
     bucket      = args.bucket

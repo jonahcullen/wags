@@ -46,7 +46,7 @@ rule bcftools_stats:
     input:
         final_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz",
     output:
-        all_stats = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort.{ref}.vchk",
+        all_stats = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/join_call.{ref}.{date}.vchk",
     params:
         ref_fasta = config['ref_fasta'],
         conda_env = config['conda_envs']['qc']
@@ -64,7 +64,7 @@ rule bcftools_stats:
 
 rule bcftools_plot:
     input:
-        all_stats = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort.{ref}.vchk",
+        all_stats = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/join_call.{ref}.{date}.vchk",
     output:
         summary = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort/summary.pdf"
     params:
@@ -85,21 +85,21 @@ def get_vep_htmls(wildcards):
     # interval dir from split intervals
     ivals_dir = checkpoints.split_intervals.get(**wildcards).output[0]
     # variable number of intervals 
-    INTERVALS, = glob_wildcards(os.path.join(ivals_dir,"wags_{interval}.interval_list"))
+    INTERVALS, = glob_wildcards(os.path.join(ivals_dir,"{vep_interval}-scattered.interval_list"))
     # return list of recal vcfs
-    return expand(
-        "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/vep/vep_{interval}/recal.{interval}.vep.vcf_summary.html",
+    return sorted(expand(
+        "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/vep/vep_{vep_interval}/joint_call.{vep_interval}.vep.vcf_summary.html", 
         bucket=config['bucket'],
         ref=config['ref'],
         date=config['date'],
-        interval=INTERVALS
-    )
+        vep_interval=INTERVALS
+    ))
 
 rule qc_cohort:
     input:
         get_vep_htmls,
         len_barplt      = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/interval_lengths_mqc.tiff",
-        all_stats       = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort.{ref}.vchk",
+        all_stats       = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/join_call.{ref}.{date}.vchk",
         summary         = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort/summary.pdf",
         detail_metrics  = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort.variant_calling_detail_metrics",
         summary_metrics = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort.variant_calling_summary_metrics",
