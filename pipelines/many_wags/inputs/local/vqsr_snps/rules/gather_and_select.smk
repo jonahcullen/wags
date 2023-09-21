@@ -25,7 +25,7 @@ rule gather_unfltr_vcf:
         tmp_dir = config['tmp_dir']['unfilt_gather_vcf']
     threads: 12
     resources:
-         time   = 1440,
+         time   = 5760,
          mem_mb = 200000
     shell:
         '''

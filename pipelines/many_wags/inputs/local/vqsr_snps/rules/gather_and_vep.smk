@@ -23,7 +23,7 @@ rule gather_snp_recal_vcfs:
         vcfs = lambda wildcards, input: " --input ".join(map(str,input)),
     threads: 4
     resources:
-         time   = 240,
+         time   = 2880,
          mem_mb = 22000
     shell:
         '''
@@ -52,7 +52,7 @@ rule combine_snps_nonsnps:
         final_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz.tbi",
     threads: 12
     resources:
-         time   = 1440,
+         time   = 2880,
          mem_mb = 24000
     shell:
         '''

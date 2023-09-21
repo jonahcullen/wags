@@ -28,7 +28,7 @@ rule collect_metrics_on_vcf:
         metrics_prefix = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort"
     threads: 8
     resources:
-         time   = 360,
+         time   = 1440,
          mem_mb = 22000
     shell:
         '''

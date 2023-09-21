@@ -72,8 +72,8 @@ rule concat_phased:
             chrom=[f"chr{i}" for i in range(1,39+1)]
         ),
     output:
-        phase_full        = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/joint_genotype.{ref}.snps.phased.vcf.gz",
-        phase_full_index  = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/joint_genotype.{ref}.snps.phased.vcf.gz.tbi",
+        phase_full        = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/joint_call.{ref}.{date}.snps.phased.vcf.gz",
+        phase_full_index  = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/joint_call.{ref}.{date}.snps.phased.vcf.gz.tbi",
     threads: 4
     resources:
         time      = 720,

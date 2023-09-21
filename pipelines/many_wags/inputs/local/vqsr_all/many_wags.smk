@@ -36,7 +36,7 @@ rule all:
         ),
        ## phasing
        #expand(
-       #    "{bucket}/wgs/pipeline/{ref}/{date}/phasing/joint_genotype.{ref}.snps.phased.vcf.gz",
+       #    "{bucket}/wgs/pipeline/{ref}/{date}/phasing/joint_call.{ref}.{date}.snps.phased.vcf.gz",
        #    bucket=config['bucket'],
        #    ref=config['ref'],
        #    date=config['date'],

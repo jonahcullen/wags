@@ -10,7 +10,7 @@ rule combine_snps_nonsnps:
         final_tbi = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz.tbi"),
     threads: 12
     resources:
-         time   = 600,
+         time   = 2880,
          mem_mb = 24000
     shell:
         '''
