@@ -1,10 +1,10 @@
 
 rule filter_x_chrom:
     input:
-        final_vcf = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz"),
-        final_tbi = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz.tbi"),
+        final_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.vcf.gz",
+        final_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.vcf.gz.tbi"
     output:
-        chrom_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/filtered/joint_genotype.{ref}.{chrom}.vcf.gz",
+        chrom_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/filtered/joint_call.{ref}.{chrom}.vcf.gz",
     threads: 4
     resources:
          time   = 60,
@@ -33,18 +33,19 @@ rule filter_x_chrom:
 
 rule phase_x_chrom:
     input:
-        chrom_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/filtered/joint_genotype.{ref}.{chrom}.vcf.gz",
+        chrom_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/filtered/joint_call.{ref}.{chrom}.vcf.gz",
     output:
-        phase_vcf       = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/phased/joint_genotype.{ref}.{chrom}.phased.vcf.gz",
-        phase_vcf_index = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/phased/joint_genotype.{ref}.{chrom}.phased.vcf.gz.tbi",
+        phase_vcf = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/phasing/phased/joint_call.{ref}.{chrom}.phased.vcf.gz"),
+        phase_tbi = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/phasing/phased/joint_call.{ref}.{chrom}.phased.vcf.gz.tbi"),
     params:
-        link_map     = config["link_map"],
+        link_map     = "/home/refgen/dog/canfam3/canFam3.linkage.map.wgs",
         eff_pop_size = 200,
         window       = 120,
         overlap      = 10,
-        out_prefix   = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/phased/joint_genotype.{ref}.{chrom}.phased",
+        out_prefix   = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/phased/joint_call.{ref}.{chrom}.phased",
     threads: 24
     resources:
+        partition = config['partitions']['phasing'],
         time      = 480,
         mem_mb    = 248000
     shell:
@@ -63,25 +64,45 @@ rule phase_x_chrom:
 
 rule concat_phased:
     input:
-        phase_vcf = expand(
-            "{bucket}/wgs/pipeline/{ref}/{date}/phasing/phased/joint_genotype.{ref}.{chrom}.phased.vcf.gz",
+        phase_vcf = S3.remote(expand(
+            "{bucket}/wgs/pipeline/{ref}/{date}/phasing/phased/joint_call.{ref}.{chrom}.phased.vcf.gz",
             bucket=config['bucket'],
             ref=config['ref'],
             date=config['date'],
             chrom=[f"chr{i}" for i in range(1,39+1)]
-        ),
+        )),
     output:
-        phase_full        = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/phasing/joint_call.{ref}.{date}.snps.phased.vcf.gz"),
-        phase_full_index  = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/phasing/joint_call.{ref}.{date}.snps.phased.vcf.gz.tbi"),
+        phase_vcf = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/phasing/joint_call.{ref}.{date}.snps.phased.vcf.gz"),
+        phase_tbi = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/phasing/joint_call.{ref}.{date}.snps.phased.vcf.gz.tbi"),
     threads: 4
     resources:
-        time      = 720,
-        mem_mb    = 24000
+        time   = 720,
+        mem_mb = 24000
     shell:
         '''
             bcftools concat \
-                -Oz -o {output.phase_full} \
+                -Oz -o {output.phase_vcf} \
                 {input.phase_vcf}
 
-            tabix -p vcf {output.phase_full}
+            tabix -p vcf {output.phase_vcf}
         '''
+
+rule genomebrowse_index:
+    input:
+        phase_vcf = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/phasing/joint_call.{ref}.{date}.snps.phased.vcf.gz"),
+        phase_tbi = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/phasing/joint_call.{ref}.{date}.snps.phased.vcf.gz.tbi"),
+    output:
+        S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/phasing/joint_call.{ref}.{date}.snps.phased.vcf.gz.covtsf"),
+    params:
+        ref_dir = os.path.dirname(config['ref_fasta']),
+    threads: 4
+    resources:
+        time   = 2880,
+        mem_mb = 12000
+    shell:
+        '''
+            gautil coverage \
+                {input.phase_vcf} \
+                --refFolder={params.ref_dir}
+        '''
+

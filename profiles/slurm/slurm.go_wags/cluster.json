@@ -184,6 +184,16 @@
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
     },
+    "SIFT_vep_by_interval" :
+    {
+        "output" : ".logs/{rule}/{wildcards.vep_interval}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.vep_interval}/{wildcards.ref}/%j.{rule}.err"
+    },
+    "final_gather_SIFT_veps" :
+    {
+        "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
+    },
     "all_var_to_table" :
     {
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
@@ -270,6 +280,11 @@
         "error"  : ".logs/{rule}/{wildcards.ref}/{wildcards.chrom}/%j.{rule}.err"
     },
     "concat_phased" :
+    {
+        "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
+    },
+    "genomebrowse_index" :
     {
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
