@@ -36,6 +36,14 @@ rule all:
             ref=config["ref"],
             
         ),
+        # structural variants
+        expand(
+            "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/sv.done",
+            bucket=config['bucket'],
+            breed=breed,
+            sample_name=sample_name,
+            ref=config['ref'],
+        ),
         # multiqc
         expand(
             "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report.html",

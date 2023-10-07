@@ -440,11 +440,98 @@ def fetch_gvcfs(alias, bucket, samples, ref, outdir, outfile):
             print(dogid, os.path.join(gvcfs_dir, breed, dogid, os.path.basename(tmp[-1])), sep='\t', file=out)
     print('Done!')
 
+@click.command()
+@click.option('--alias', default='s3',
+              help='minio client alias for friedlab bucket')
+@click.option('--bucket', default='',
+              help='bucket name')
+@click.option('--samples', default='',
+              help='sample ID and breed ("sample,breed") or file with one ID per row')
+@click.option('--ref', default='UU_Cfam_GSD_1.0_ROSY',
+              help='reference to check against (default: UU_Cfam_GSD_1.0_ROSY)')
+@click.option('--outdir', default='./fetched_bams',
+              help='directory to send logs and multiqc report (default: fetched_bams)')
+@click.option('--outfile', default='bams.list',
+              help='list of bam locations (default: bams.list)')
+def fetch_bams(alias, bucket, samples, ref, outdir, outfile):
+    """
+    fetch bams from samples ids, prepare slurm submissions to download, and
+    output file containing path to downloaded bams (following submission of
+    the prepared slurm jobs)
+    """
+    # get dogs and breeds into d
+    d = defaultdict(dict)
+    if os.path.exists(samples):
+        with open(samples, 'r') as infile:
+            for line in infile:
+                if ',' in line:
+                    d[line.strip().split(',')[0]]['bam'] = ''
+                else:
+                    d[line.strip()]['bam'] = ''
+    else:
+        fq_list = [samples]
+        for i in fq_list:
+            d[i]['bam'] = ''
+
+    # list all object paths in bucket that begin with my-prefixname
+    objects = list(
+        s3client.list_objects(bucket,
+                              prefix='wgs/',
+                              recursive=True)
+    )
+    # filter to include only those with ref
+    ref_objects = list(filter(lambda x: ref in x.object_name, objects))
+    # get absolute path of outdir
+    out_dir = os.path.abspath(os.path.expanduser(outdir))
+
+    # write slurm submissions to download all bams
+    slurm_dir = os.path.join(out_dir, 'jobs')
+    os.makedirs(slurm_dir, exist_ok=True)
+    bams_dir = os.path.join(out_dir, 'bams')
+    os.makedirs(bams_dir, exist_ok=True)
+    print(f'Generating slurm submissions in {slurm_dir}')
+    # get bams and indices
+    for i in ref_objects:
+        if i.object_name.endswith('.bam'):
+            breed, dogid = i.object_name.split('/')[1:3]
+            if dogid in d:
+                d[dogid]['breed'] = breed
+                d[dogid]['bam'] = [i.object_name]
+                d[dogid]['bam'].append(i.object_name.replace('.bam', '.bai'))
+                # keep bam downloads organized
+                fetched_dir = os.path.join(bams_dir, breed, dogid)
+                os.makedirs(fetched_dir, exist_ok=True)
+
+    # get all bams into list
+    bams = list(chain(*[v['bam'] for v in d.values()]))
+    # prepare slurm submissions to download all bams
+    for ind, i in enumerate(np.array_split(bams, math.ceil(len(d.keys()) / 5))):
+        with open(os.path.join(slurm_dir, f'bams_{str(ind).zfill(4)}.slurm'), 'w') as out:
+            print(top.replace('JOB_NAME', f'bams_{str(ind).zfill(4)}'), file=out)
+            for j in i:
+                # get breed and sample
+                tmp = j.split('/')
+                breed, dogid = tmp[-5:-3]
+                bam_copy = (
+                    f'mc cp {os.path.join(alias, bucket, j)} '
+                    f'{os.path.join(bams_dir, breed, dogid) + "/"}'
+                )
+                print(bam_copy, file=out)
+
+    # write bams.list for input to joint genotyping
+    with open(os.path.join(out_dir, outfile), 'w') as out:
+        for k, v in d.items():
+            print(k)
+            tmp = v['bam'][0].split('/')
+            breed, dogid = tmp[-5:-3]
+            print(dogid, os.path.join(bams_dir, breed, dogid, os.path.basename(tmp[-1])), sep='\t', file=out)
+    print('Done!')
 
 messages.add_command(meta_prep)
 messages.add_command(all_done)
 messages.add_command(fetch_logs)
 messages.add_command(fetch_gvcfs)
+messages.add_command(fetch_bams)
 
 if __name__ == '__main__':
     messages()
