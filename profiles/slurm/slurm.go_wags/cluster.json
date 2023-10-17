@@ -269,6 +269,11 @@
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
     },
+    "fix_ploidy_x_chrom" :
+    {
+        "output" : ".logs/{rule}/{wildcards.ref}/{wildcards.chrom}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.ref}/{wildcards.chrom}/%j.{rule}.err"
+    },
     "filter_x_chrom" :
     {
         "output" : ".logs/{rule}/{wildcards.ref}/{wildcards.chrom}/%j.{rule}.out",
