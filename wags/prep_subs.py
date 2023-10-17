@@ -397,7 +397,8 @@ if __name__ == '__main__':
         metavar="\b",
         required=True,
         help=textwrap.dedent('''\
-            bucket name. if using sftp, bucket is the
+            bucket (with --remote s3) or results 
+            directory name. if using sftp, bucket is the
             host name and path to output director
             (e.g. hostname/path/to/dir)
         ''')
@@ -497,7 +498,7 @@ if __name__ == '__main__':
     optional.add_argument(
         "--pop",
         default=None,
-        help="path to population variants vcf (money pipeline) [default: None]"
+        help="path to population variants vcf (only wags pipeline) [default: None]"
     )
     optional.add_argument(
         "--allele-freq",
