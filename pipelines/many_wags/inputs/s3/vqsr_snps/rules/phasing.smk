@@ -1,13 +1,14 @@
 
-rule filter_x_chrom:
+rule fix_ploidy_x_chrom:
     input:
-        final_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.vcf.gz",
-        final_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.vcf.gz.tbi"
+        final_vcf = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz",keep_local=True),
+        final_tbi = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz.tbi",keep_local=True),
     output:
-        chrom_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/filtered/joint_call.{ref}.{chrom}.vcf.gz",
+        tmp_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/force_fix_ploidy/joint_call.{ref}.{chrom}.vcf.gz",
+        tmp_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/force_fix_ploidy/joint_call.{ref}.{chrom}.vcf.gz.tbi",
     threads: 4
     resources:
-         time   = 60,
+         time   = 2880,
          mem_mb = 16000
     shell:
         '''
@@ -16,14 +17,36 @@ rule filter_x_chrom:
             if [ $chrom = "chr39" ]; then
                 chrom=chrX
             fi
+            
+            bcftools +fixploidy \
+                --regions $chrom \
+                -Oz \
+                -o {output.tmp_vcf} \
+                {input.final_vcf} \
+                -- \
+                --force-ploidy 2
 
+            tabix -p vcf {output.tmp_vcf}
+        '''
+
+rule filter_x_chrom:
+    input:
+        tmp_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/force_fix_ploidy/joint_call.{ref}.{chrom}.vcf.gz",
+        tmp_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/force_fix_ploidy/joint_call.{ref}.{chrom}.vcf.gz.tbi",
+    output:
+        chrom_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/filtered/joint_call.{ref}.{chrom}.vcf.gz",
+    threads: 4
+    resources:
+         time   = 60,
+         mem_mb = 16000
+    shell:
+        '''
             bcftools view \
                 --min-alleles 2 \
                 --max-alleles 2 \
                 --types snps \
-                --regions $chrom \
                 --exclude ' GT="." ' \
-                {input.final_vcf} \
+                {input.tmp_vcf} \
             | \
             bcftools filter \
                 --exclude "F_MISSING > 0.01" \
