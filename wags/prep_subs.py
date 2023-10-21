@@ -43,7 +43,8 @@ def extract_pu(s):
                 return f"{head.split('.')[0][1:]}.NA.NA" # sample name in place of flowcell
         else: # or "standard" illumina headers...
             head = head.split(":")
-            return f"{head[2]}.{head[3]}.{head[-1]}"
+            ycoord = head[-1].split(" ",1)[0] # modify headers with additional info (eg length=150)
+            return f"{head[2]}.{head[3]}.{ycoord}"
 
 def main():
     global profile
