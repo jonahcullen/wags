@@ -3,6 +3,7 @@
 import os
 import yaml
 import gzip
+import wget
 import shutil
 import textwrap
 import argparse
