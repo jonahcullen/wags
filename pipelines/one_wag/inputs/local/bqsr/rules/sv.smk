@@ -154,7 +154,7 @@ rule sv_smoove:
         smoove_csi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.{ref}-smoove.genotyped.vcf.gz.csi",
     params:
         out_dir   = lambda wildcards, output: os.path.dirname(output.smoove_tmp),
-        base_name = lambda wildcards, input: os.path.basename(input.final_bam).rsplit('.',1)[0],
+        base_name = lambda wildcards, input: '.'.join(os.path.basename(input.final_bam).split('.')[:2]),
         ref_fasta = config['ref_fasta'],
         conda_env = config['conda_envs']['smoove'],
     benchmark:
