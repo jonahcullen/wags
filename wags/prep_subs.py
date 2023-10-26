@@ -26,6 +26,13 @@ refs = [
 ]
 #remotes = ["local","s3","sftp"]
 
+replace_map = {
+    "_2.fq.gz": "_1.fq.gz",
+    "_R2.fq.gz": "_R1.fq.gz",
+    "_2.fastq.gz": "_1.fastq.gz",
+    "_R2.fastq.gz": "_R1.fastq.gz"
+}
+
 def extract_pu(s):
     """ extracts platform unit from fastq header """
     with gzip.open(s,"rt") as f:
@@ -64,34 +71,51 @@ def main():
             # there is a problem with this strategy if the sample name
             # contains _R1 or _R2 
             # find associated fastqs
-            tmp = []
-            for root,dirs,files in os.walk(fq_dir):
-                for f in files:
-                    if f.startswith(line[-1]) and not f.endswith(("md5","txt")) and "_R2" in f:
-                        tmp.append(os.path.join(root,f))
-            first = "_R1"           
-            second = "_R2"
-            # special circumstance where fastqs labelled as sample_{1,2}.fastq.gz
-            # there is DEFINITELY a better to deal with finding fastqs...
-            if not tmp:
-                for root,dirs,files in os.walk(fq_dir):
-                    for f in files:
-                        if f.startswith(line[-1]) and f.endswith("_2.fastq.gz"): 
-                            tmp.append(os.path.join(root,f))
-                first = "_1.fastq.gz"
-                second = "_2.fastq.gz"
+           #tmp = []
+           #for root,dirs,files in os.walk(fq_dir):
+           #    for f in files:
+           #        if f.startswith(line[-1]) and not f.endswith(("md5","txt")) and "_R2" in f:
+           #            tmp.append(os.path.join(root,f))
+           #first = "_R1"           
+           #second = "_R2"
+           ## special circumstance where fastqs labelled as sample_{1,2}.fastq.gz
+           ## there is DEFINITELY a better to deal with finding fastqs...
+           #if not tmp:
+           #    for root,dirs,files in os.walk(fq_dir):
+           #        for f in files:
+           #            if f.startswith(line[-1]) and f.endswith("_2.fastq.gz"): 
+           #                tmp.append(os.path.join(root,f))
+           #    first = "_1.fastq.gz"
+           #    second = "_2.fastq.gz"
+            
+            # new strategy using pathlib - still not perfect as it requires
+            # "guessing" the R1/R2 naming strategy
+            tmp = [
+                f for f in pathlib.Path(fq_dir).rglob(f"{line[-1]}*")
+                if any(ext in str(f) for ext in [".fastq.gz", ".fq.gz"]) 
+                and any(part in str(f) for part in ["_R2", "_2", ".R2", ".2", "_R2_001", "_2_001"])
+            ]
             # add fastq information for each pair per sample
             sample_input = []  
             for i,v in enumerate(sorted(tmp)):
 
                 platform_unit = extract_pu(v)
                 cdate = datetime.fromtimestamp(os.path.getctime(v)).strftime('%Y-%m-%dT%H:%M:%S')                   
-   
+ 
+                # get first read
+                for R2,R1 in replace_map.items():
+                    if R2 in os.path.basename(v):
+                       #print(os.path.basename(v), os.path.basename(v).replace(R2, R1))
+                        v1 = os.path.join(
+                            os.path.dirname(v),
+                            os.path.basename(v).replace(R2, R1)
+                        )
+                        break
                 # where second read is v, first read is
-                v1 = os.path.join(
-                    os.path.dirname(v),
-                    os.path.basename(v).replace(second,first)
-                )
+               #v1 = os.path.join(
+               #    os.path.dirname(v),
+               #    os.path.basename(v).replace(second,first)
+               #)
  
                 sample_input.append(
                     [   
