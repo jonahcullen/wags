@@ -175,3 +175,21 @@ rule final_gather_veps:
             rm -f {params.vcf_tmp}
         '''
 
+rule gbindex_vep_vcf:
+    input:
+        vep_vcf = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vep.vcf.gz"),
+        vep_tbi = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vep.vcf.gz.tbi"),
+    output:
+        phase_vcf = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.SIFT_vep.vcf.gz.covtsf"),
+    params:
+        ref_dir = os.path.dirname(config['ref_fasta']),
+    threads: 4
+    resources:
+        time   = 2880,
+        mem_mb = 12000
+    shell:
+        '''
+            gautil coverage \
+                {input.vep_vcf} \
+                --refFolder={params.ref_dir}
+        '''

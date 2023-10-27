@@ -68,9 +68,8 @@ rule phase_x_chrom:
         out_prefix   = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/phased/joint_call.{ref}.{chrom}.phased",
     threads: 24
     resources:
-        partition = config['partitions']['phasing'],
-        time      = 480,
-        mem_mb    = 248000
+        time   = 480,
+        mem_mb = 248000
     shell:
         '''
             java -jar -Xmx246g /opt/wags/src/beagle.18May20.d20.jar \
@@ -110,7 +109,7 @@ rule concat_phased:
             tabix -p vcf {output.phase_vcf}
         '''
 
-rule genomebrowse_index:
+rule gbindex_phase_vcf:
     input:
         phase_vcf = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/phasing/joint_call.{ref}.{date}.snps.phased.vcf.gz"),
         phase_tbi = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/phasing/joint_call.{ref}.{date}.snps.phased.vcf.gz.tbi"),

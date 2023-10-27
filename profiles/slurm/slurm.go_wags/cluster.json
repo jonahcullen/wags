@@ -194,6 +194,11 @@
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
     },
+    "gbindex_vep_vcf" :
+    {
+        "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
+    },
     "all_var_to_table" :
     {
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
@@ -289,7 +294,7 @@
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
     },
-    "genomebrowse_index" :
+    "gbindex_phase_vcf" :
     {
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
