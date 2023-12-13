@@ -77,7 +77,8 @@ def main():
     except FileNotFoundError:
         print(f"{config} does not exist - ensure correct path")
         
-    # update config with mapping cohort, interval options, and temp dirs
+    # update config with sif, mapping cohort, interval options, and temp dirs
+    doc['sif'] = sif
     doc['joint_cohort'] = os.path.basename(gvcfs)
     doc['date']        = datetime.today().strftime('%Y%m%d')
     if os.path.isfile(gvcfs):
@@ -95,9 +96,9 @@ def main():
     doc['scatter_size']    = int(scat_size)
 
     # get values from config
-    bucket    = doc['bucket']
-    alias     = doc['alias']
     profile   = doc['profile']
+    alias     = doc['alias']
+    bucket    = doc['bucket']
     ref       = doc['ref']
     ref_fasta = doc['ref_fasta']
     ref_dict  = doc['ref_dict']

@@ -1,0 +1,35 @@
+# INPUT AND SECONDARY 
+units   : input.tsv
+species : sheep
+ref     : ARS-UI_Ramb_v3.0
+bucket  : wags
+alias   : s3
+profile : slurm
+
+# SINGULARITY IMAGE
+sif : /path/to/wags.sif
+
+# SORTSAM TEMP DIR
+tmp_dir :
+  sort_tmp  : /path/to/proc/dir
+  fastq_tmp : /path/to/proc/dir
+
+# LEFT ALIGN BAM
+left_align : false
+
+# INTERVAL SIZE SCATTER
+nrun_length  : 50
+scatter_size : 50
+
+# REFERENCE FILES
+ref_dict  : GCF_016772045.2_ARS-UI_Ramb_v3.0_genomic.nice.dict
+ref_fasta : /home/refgen/sheep/ARS-UI_Ramb_v3.0/GCF_016772045.2_ARS-UI_Ramb_v3.0_genomic.nice.fna
+
+# RESOURCE FILES FOR BQSR (OPTIONAL)
+
+# SV CONDA ENVS
+conda_envs :
+  delly  : delly
+  gridss : gridss
+  smoove : smoove
+  manta  : manta
