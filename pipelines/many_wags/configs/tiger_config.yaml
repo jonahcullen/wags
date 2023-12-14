@@ -25,7 +25,7 @@ batch_size : 50
 # REFERENCE FILES
 ref_fasta : /home/refgen/tiger/tiger/Tiger_final.fasta
 ref_dict  : /home/refgen/tiger/tiger/Tiger_final.dict
-ref_gtf   : /home/refgen/tiger/tiger/Tiger_final.sorted.nice.gtf.gz
+ref_gtf   : /home/refgen/tiger/tiger/Tiger_final.sorted.gtf.gz
 
 # TMP DIRS
 tmp_dir :
