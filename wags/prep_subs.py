@@ -97,6 +97,8 @@ def main():
                 if any(ext in str(f) for ext in [".fastq.gz", ".fq.gz"]) 
                 and any(part in str(f) for part in ["_R2", "_2", ".R2", ".2", "_R2_001", "_2_001"])
             ]
+            # drop any md5 files that came along for the ride
+            tmp = [f for f in tmp if not f.name.endswith('.md5')]
             # add fastq information for each pair per sample
             sample_input = []  
             for i,v in enumerate(sorted(tmp)):
@@ -508,7 +510,12 @@ if __name__ == '__main__':
     optional.add_argument(
         "--left-align",
         action="store_true",
-        help="left align analysis-ready bam  [default: off]"
+        help="left align analysis-ready bam [default: off]"
+    )
+    optional.add_argument(
+        "--sv",
+        action="store_true",
+        help="call structural variants [default: off]"
     )
     optional.add_argument(
         "--money",
@@ -558,6 +565,7 @@ if __name__ == '__main__':
     remote      = args.remote.lower()
     no_bqsr     = args.no_bqsr
     left_align  = args.left_align
+    sv_call     = args.sv
 
     # QUICK FIX FOR goldenPath - NEED TO ADJUST CONTAINER TO BE horse/goldenpath
     if "golden" in ref:
