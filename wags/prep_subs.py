@@ -24,15 +24,28 @@ class RawFile(object):
     def __init__(self,filename):
         self.filename = filename
         if filename.endswith('.gz'):
-            self.handle = gzip.open(filename,'rt')
+            if self.is_gzipped(filename):
+                self.handle = gzip.open(filename, 'rt')
+            else:
+                self.handle = open(filename,'r')
         elif filename.endswith('bz2'):
             self.handle = bz2.open(filename,'rt')
         elif filename.endswith('xz'):
             self.handle = lzma.open(filenaem,'rt')
         else:
             self.handle = open(filename,'r')
+
+    def is_gzipped(self, filename):
+        try:
+            with gzip.open(filename, 'rt') as f_in:
+                f_in.read(1)
+            return True
+        except gzip.BadGzipFile:
+            return False
+
     def __enter__(self):
         return self.handle
+
     def __exit__(self,dtype,value,traceback):
         self.handle.close()
 
@@ -102,9 +115,10 @@ def main():
             # add fastq information for each pair per sample
             sample_input = []  
             for i,v in enumerate(sorted(tmp)):
+                
                 platform_unit = extract_pu(v)
                 cdate = datetime.fromtimestamp(os.path.getctime(v)).strftime('%Y-%m-%dT%H:%M:%S')                   
- 
+                
                 # get first read
                 for R2,R1 in replace_map.items():
                     if R2 in os.path.basename(v):
