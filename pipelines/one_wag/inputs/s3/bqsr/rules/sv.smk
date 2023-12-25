@@ -128,7 +128,7 @@ rule sv_gridss:
                 -a {output.gridss_bam} \
                 --jvmheap 32g \
                 -w {params.work_dir} \
-                {input.final_bam} \
+                {input.final_bam}
 
             # removed -i "FILTER == '.'" as no records were returned
             # unclear if issue sample or larger...
