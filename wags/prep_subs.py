@@ -55,7 +55,8 @@ refs = [
     "tiger",
     "Fca126_mat1.0",
     "alpaca",
-    "ARS-UI_Ramb_v3.0"
+    "ARS-UI_Ramb_v3.0",
+    "ARS1.2"
 ]
 #remotes = ["local","s3","sftp"]
 
@@ -616,7 +617,8 @@ if __name__ == '__main__':
     if os.path.isfile(sif):
         print("wags image found!")
     else:
-        print("wags image not found - confirm sif location")
+        print("wags image not found - confirm location")
+        sys.exit(1)
 
     # check if scratch dir exists
     if not os.path.exists(outdir):
