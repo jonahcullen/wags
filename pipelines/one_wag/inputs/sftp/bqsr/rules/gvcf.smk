@@ -51,14 +51,14 @@ rule haplotype_caller:
     output:
         hc_gvcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/{sample_name}.{split}.g.vcf.gz"
     params:
-        java_opt  = "-Xmx10G -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10",
+        java_opt  = "-Xmx24G -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10",
         ref_fasta = config['ref_fasta'],
     benchmark:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/benchmarks/{sample_name}.{split}.hc.benchmark.txt"
     threads: 4
     resources:
          time   = 1080,
-         mem_mb = 8000
+         mem_mb = 26000
     shell:
         '''
             gatk --java-options "{params.java_opt}" \

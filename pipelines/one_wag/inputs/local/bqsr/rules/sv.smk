@@ -166,7 +166,7 @@ rule sv_smoove:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.sv_smoove.benchmark.txt"
     threads: 4
     resources:
-         time   = 2880,
+         time   = 1440,
          mem_mb = 60000
     shell:
         '''
