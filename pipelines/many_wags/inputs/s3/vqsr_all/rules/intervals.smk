@@ -81,6 +81,34 @@ rule bed_to_interval_list:
                 SD={params.ref_dict}
         '''
 
+# chromosome-length intervals - again excluding chrUn WHICH needs to be
+# adjustable in the config
+if "chroms" in config['anchor_type']:
+    rule chrom_intervals:
+        output:
+            ival = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/acgt.chrom.interval_list",
+        params:
+            ref_dict = os.path.basename(config['ref_dict'])
+        run:
+            d = {}
+            header = []
+            with open(params.ref_dict, 'r') as f_in, open(output.ival, 'w') as f_out:
+                for line in f_in:
+                    if line.startswith("@"):
+                        header.append(line)
+                    line = line.strip().split()
+                    if line[0] == "@SQ":
+                        # get chrom from header
+                        chrom = line[1].split(":")[1]
+                        length = int(line[2].split(":")[1])
+                        d[chrom] = length
+                
+                # write to file
+                print(*header, sep="", end="", file=f_out)
+                for k,v in d.items():
+                    if 'chrUn' not in k:
+                        print(k, '1', v, '+\tACGTmer', sep='\t', file=f_out)
+
 # intervals based on nruns (default as does not require the reference genome
 # to have a quality annotation file)
 if "nruns" in config['anchor_type']:
@@ -103,11 +131,19 @@ if "nruns" in config['anchor_type']:
                 sed -i '/^chrUn/d' {output}
             '''
 
+def get_interval_type(wc):
+    if "nruns" in config['anchor_type']:
+        return "{bucket}/wgs/pipeline/{ref}/{date}/intervals/acgt.N50.interval_list"
+    elif "chroms" in config['anchor_type']:
+        return "{bucket}/wgs/pipeline/{ref}/{date}/intervals/acgt.chrom.interval_list"
+    else:
+        "{bucket}/wgs/pipeline/{ref}/{date}/intervals/intergenic_midp.interval_list"
+
 checkpoint generate_intervals:
     input:
-       #ival_list = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/intergenic_midp.interval_list"
-        ival_list = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/acgt.N50.interval_list"
-            if "nruns" in config['anchor_type'] else "{bucket}/wgs/pipeline/{ref}/{date}/intervals/intergenic_midp.interval_list"
+        ival_list = get_interval_type
+       #ival_list = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/acgt.N50.interval_list"
+       #    if "nruns" in config['anchor_type'] else "{bucket}/wgs/pipeline/{ref}/{date}/intervals/intergenic_midp.interval_list"
     output:
         directory("{bucket}/wgs/pipeline/{ref}/{date}/intervals/import"),
     params:

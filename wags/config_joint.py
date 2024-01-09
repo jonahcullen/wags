@@ -20,8 +20,12 @@ from collections import defaultdict
 
 refs = [
     "canfam3","canfam4","UU_Cfam_GSD_1.0_ROSY",
-    "goldenPath",
-    "tiger"
+    "goldenPath","Arabian","Shire",
+    "tiger",
+    "Fca126_mat1.0",
+    "alpaca",
+    "ARS-UI_Ramb_v3.0",
+    "ARS1.2"
 ]
 
 def main():
@@ -146,17 +150,17 @@ if __name__ == '__main__':
     optional.add_argument(
         "-f", "--fasta",
         metavar="\b",
-        help="path to reference fasta"
+        help="(if custom ref) path to reference fasta"
     )
     optional.add_argument(
         "-d", "--fasta_dict",
         metavar="\b",
-        help="path to reference dict"
+        help="(if custom ref) path to reference dict"
     )
     optional.add_argument(
         "-g", "--gtf",
         metavar="\b",
-        help="path to reference gtf"
+        help="(if custom ref) path to reference gtf"
     )
     optional.add_argument(
         "--profile",

@@ -20,8 +20,12 @@ from collections import defaultdict
 
 refs = [
     "canfam3","canfam4","UU_Cfam_GSD_1.0_ROSY",
-    "goldenPath",
-    "tiger"
+    "goldenPath","Arabian","Shire",
+    "tiger",
+    "Fca126_mat1.0",
+    "alpaca",
+    "ARS-UI_Ramb_v3.0",
+    "ARS1.2"
 ]
 
 # https://stackoverflow.com/questions/2892931/longest-common-substring-from-more-than-two-strings
