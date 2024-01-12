@@ -136,8 +136,10 @@ def get_interval_type(wc):
         return "{bucket}/wgs/pipeline/{ref}/{date}/intervals/acgt.N50.interval_list"
     elif "chroms" in config['anchor_type']:
         return "{bucket}/wgs/pipeline/{ref}/{date}/intervals/acgt.chrom.interval_list"
+    elif "intergenic" in config['anchor_type']:
+        return "{bucket}/wgs/pipeline/{ref}/{date}/intervals/intergenic_midp.interval_list"
     else:
-        "{bucket}/wgs/pipeline/{ref}/{date}/intervals/intergenic_midp.interval_list"
+        print("Check config file for correct anchor type: nruns, chroms, intergenic")
 
 checkpoint generate_intervals:
     input:
