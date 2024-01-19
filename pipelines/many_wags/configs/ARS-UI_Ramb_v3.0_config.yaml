@@ -1,0 +1,56 @@
+joint_cohort : gvcfs.tsv
+species      : sheep
+ref          : ARS-UI_Ramb_v3.0
+date         : ''
+bucket       : ''
+alias        : s3
+profile      : ''
+
+# SINGULARITY IMAGE
+sif : /path/to/wags.sif
+
+# CONDA ENV
+conda_envs :
+  qc : bcftools
+
+# INTERVAL ANCHOR METHOD
+anchor_type : nruns
+# INTERVAL SIZES
+nrun_length     : 50
+interval_length : 10000000
+
+# DB IMPORT
+batch_size : 50
+
+# REFERENCE FILES
+ref_fasta : /home/refgen/sheep/ARS-UI_Ramb_v3.0/GCF_016772045.2_ARS-UI_Ramb_v3.0_genomic.nice.fna
+ref_dict  : /home/refgen/sheep/ARS-UI_Ramb_v3.0/GCF_016772045.2_ARS-UI_Ramb_v3.0_genomic.nice.dict
+ref_gtf   : /home/refgen/sheep/ARS-UI_Ramb_v3.0/GCF_016772045.2_ARS-UI_Ramb_v3.0_genomic.sorted.nice.gtf.gz
+
+# TMP DIRS
+tmp_dir :
+  sites_only_gather_vcf : /path/to/.sites_gather
+  unfilt_gather_vcf     : /path/to/.unfilt_gather
+
+# RECAL
+snp_recalibration_tranche_values    : [
+  "100.0", "99.95", "99.9", "99.5", "99.0", "98.0", 
+  "97.0", "96.0", "95.0", "94.0", "93.0", "92.0", "91.0", "90.0"]
+snp_recalibration_annotation_values : ["QD", "MQRankSum", "ReadPosRankSum", "FS", "MQ", "SOR", "DP"]
+snp_filter_level   : 99.0
+
+indel_recalibration_tranche_values    : [
+  "100.0", "99.95", "99.9", "99.5", "99.0", "98.0", 
+  "97.0", "96.0", "95.0", "94.0", "93.0", "92.0", "91.0", "90.0"]
+indel_recalibration_annotation_values : ["FS", "ReadPosRankSum", "MQRankSum", "QD", "SOR", "DP"]
+indel_filter_level : 99.0
+
+# RESOURCE FILES (FROM CONTAINER)
+known_sites    : /path/to/known_sites.vcf.gz
+coverage_sites : /path/to/coverage_sites.vcf.gz
+
+# OUTPUT OPTIONS
+# PHASING
+phasing  : false
+link_map : /path/to/linkage.map
+

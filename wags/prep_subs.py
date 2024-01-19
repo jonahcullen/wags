@@ -51,7 +51,7 @@ class RawFile(object):
 
 refs = [
     "canfam3","canfam4","UU_Cfam_GSD_1.0_ROSY",
-    "goldenPath","Arabian","Shire",
+    "goldenPath","Arabian","Shire","Thoroughbred",
     "tiger",
     "Fca126_mat1.0",
     "alpaca",
@@ -290,7 +290,7 @@ def main():
         # SBATCH directives 
         header = (
             "#!/bin/bash -l\n"
-            "#SBATCH -t 60:00:00\n"
+            "#SBATCH -t 48:00:00\n"
             "#SBATCH --nodes=1\n"
             "#SBATCH --ntasks-per-node=1\n"
             "#SBATCH --cpus-per-task=1\n"
