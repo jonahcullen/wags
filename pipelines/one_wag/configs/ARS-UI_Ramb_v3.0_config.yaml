@@ -26,6 +26,8 @@ ref_dict  : GCF_016772045.2_ARS-UI_Ramb_v3.0_genomic.nice.dict
 ref_fasta : /home/refgen/sheep/ARS-UI_Ramb_v3.0/GCF_016772045.2_ARS-UI_Ramb_v3.0_genomic.nice.fna
 
 # RESOURCE FILES FOR BQSR (OPTIONAL)
+known_sites :
+  eva_refsnp : /home/refgen/sheep/ARS-UI_Ramb_v3.0/resources/9940_GCA_016772045.1_current_ids.nice.vcf.gz
 
 # SV CONDA ENVS
 conda_envs :
