@@ -12,7 +12,7 @@ WAGS consists of three pipelines, adapted from GATK's Best Practices. The first 
 - [Mamba](https://github.com/mamba-org/mamba) or [Conda](https://conda.io/)
 - [Snakemake](https://snakemake.readthedocs.io/)
 - [Snakemake-Profiles](https://github.com/Snakemake-Profiles)
-- Miscellaneous python modules [pyaml](https://pyyaml.org/), [wget](https://bitbucket.org/techtonik/python-wget/), and [xlsxwriter](https://xlsxwriter.readthedocs.io/)
+- Miscellaneous python modules [pyaml](https://pyyaml.org/) and [xlsxwriter](https://xlsxwriter.readthedocs.io/)
 - [Apptainer/Singularity](https://apptainer.org/)
 - [MinIO Client](https://min.io/docs/minio/linux/reference/minio-mc.html)
 
@@ -21,6 +21,8 @@ WAGS consists of three pipelines, adapted from GATK's Best Practices. The first 
 **1. Install dependencies**
 
 If you do not have `conda` already installed, the Snakemake developers **recommend** to install via [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge).
+
+**NOTE:** *In January of 2024, Snakamake underwent a major update to version 8 which introduced a number of WAGS-breaking changes. Until these are addressed, we suggest using version 7 which can be specified using version number as below.*
 
 ```
 # download Mambaforge installer (assuming Unix-like platform)
@@ -35,7 +37,7 @@ mamba update mamba -c conda-forge
 mamba create \
     -c conda-forge -c bioconda \
     -n snakemake \ # name of the environment
-    snakemake pyaml wget xlsxwriter
+    snakemake=7.19 pyaml xlsxwriter
 ```
 
 Alternatively, if you are already familiar with `conda` and creating environments, it is suggested to install `mamba` in your base environment and use that to build your environment.
