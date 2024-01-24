@@ -161,7 +161,7 @@ def get_vep_vcfs(wildcards):
     INTERVALS, = glob_wildcards(os.path.join(ivals_dir,"{interval}-scattered.interval_list"))
     # return list of split intervals recal.vcf.gz
     return sorted(expand(
-        "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/wags_{vep_interval}/{sample_name}.{interval}.vep.vcf.gz",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/wags_{vep_interval}/{sample_name}.{vep_interval}.vep.vcf.gz",
         bucket = config['bucket'],
         breed=breed,
         sample_name = sample_name,
