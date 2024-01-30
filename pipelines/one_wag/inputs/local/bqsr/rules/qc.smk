@@ -9,10 +9,10 @@ rule fastqc:
         r2_html = "{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}_R2_fastqc.html"
     params:
         outdir = "{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}",
-        r1_html = lambda wildcards, input: os.path.basename(input.r1.replace(".fastq.gz","_fastqc.html")),
-        r1_zip  = lambda wildcards, input: os.path.basename(input.r1.replace(".fastq.gz","_fastqc.zip")),
-        r2_html = lambda wildcards, input: os.path.basename(input.r2.replace(".fastq.gz","_fastqc.html")),
-        r2_zip  = lambda wildcards, input: os.path.basename(input.r2.replace(".fastq.gz","_fastqc.zip")),
+        r1_html = lambda wildcards, input: os.path.basename(re.sub(r'\.(fastq|fq)\.gz$', '_fastqc.html', input.r1)),
+        r1_zip  = lambda wildcards, input: os.path.basename(re.sub(r'\.(fastq|fq)\.gz$', '_fastqc.zip', input.r1)),
+        r2_html = lambda wildcards, input: os.path.basename(re.sub(r'\.(fastq|fq)\.gz$', '_fastqc.html', input.r2)),
+        r2_zip  = lambda wildcards, input: os.path.basename(re.sub(r'\.(fastq|fq)\.gz$', '_fastqc.zip', input.r2)),
     benchmark:
         "{bucket}/wgs/{breed}/{sample_name}/fastqc/{sample_name}/{flowcell}/{readgroup_name}.fastqc.benchmark.txt"
     threads: 6

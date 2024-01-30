@@ -1,5 +1,6 @@
-import pandas as pd
+import re
 import os
+import pandas as pd
 
 #######################################
 # S3 with BQSR ########################

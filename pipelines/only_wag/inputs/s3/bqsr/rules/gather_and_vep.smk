@@ -163,7 +163,7 @@ def get_vep_vcfs(wildcards):
     return sorted(expand(
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/wags_{vep_interval}/{sample_name}.{vep_interval}.vep.vcf.gz",
         bucket = config['bucket'],
-        breed=breed,
+        breed = breed,
         sample_name = sample_name,
         ref = config['ref'],
         vep_interval = INTERVALS
@@ -173,12 +173,12 @@ rule final_gather_veps:
     input:
         get_vep_vcfs
     output:
-        vep_vcf       = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz"),
-        vep_vcf_index = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz.tbi"),
+        vep_vcf = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz"),
+        vep_tbi = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz.tbi"),
     params:
         vcf_tmp = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/joint_genotype.{ref}.TMP.gz",
         veps    = lambda wildcards, input: " --input ".join(map(str,input)),
-    threads: 24
+    threads: 12
     resources:
          time   = 1440,
          mem_mb = 22000
@@ -193,7 +193,7 @@ rule final_gather_veps:
                 --input {params.veps} \
                 --output {params.vcf_tmp}
 
-            zcat {params.vcf_tmp} | bgzip --threads 24 -c > {output.vep_vcf} &&
+            zcat {params.vcf_tmp} | bgzip --threads {threads} -c > {output.vep_vcf} &&
             tabix -p vcf {output.vep_vcf}
 
             rm -f {params.vcf_tmp}

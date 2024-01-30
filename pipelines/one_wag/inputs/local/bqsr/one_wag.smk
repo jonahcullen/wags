@@ -1,5 +1,6 @@
-import pandas as pd
+import re
 import os
+import pandas as pd
 
 #######################################
 # local with BQSR #####################
@@ -34,7 +35,6 @@ rule all:
             breed=breed,
             sample_name=sample_name,
             ref=config["ref"],
-            
         ),
         # structural variants
         expand(
