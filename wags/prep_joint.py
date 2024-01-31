@@ -100,6 +100,7 @@ def main():
     doc['scatter_size']    = int(scat_size)
 
     # get values from config
+    speces    = doc['species']
     profile   = doc['profile']
     alias     = doc['alias']
     bucket    = doc['bucket']
@@ -208,6 +209,17 @@ def main():
         print("set -e\n",file=f)
         print(f"conda activate {snake_env}",file=f)
         print("cd $SLURM_SUBMIT_DIR\n",file=f)
+        
+        if "chrom" in anchor_type:
+            print("# extract reference dict from container",end="",file=f)
+            print(
+                textwrap.dedent(
+                    f"""
+                    singularity exec --bind $PWD {sif} \\
+                        cp /home/refgen/{species}/{ref}/{ref_dict} $PWD
+                    """
+                ),file=f
+            )
 
         if ref not in refs:
             print(f"FASTA_DIR={ref_fasta}\n", end="", file=f)
@@ -441,23 +453,13 @@ if __name__ == '__main__':
     # if non default sif location
     if sif != os.path.join(os.path.expanduser("~"),".sif/wags.sif"):
         sif = os.path.realpath(os.path.expanduser(sif))
-       #if "~" in sif:
-       #    sif = os.path.expanduser(sif)
-       #else:
-       #    sif = os.path.abspath(sif)
     
     # confirm image exitst
     if os.path.isfile(sif):
         print("wags image found!")
     else:
-        sif_dir = os.path.join(os.path.expanduser("~"),".sif")
-        print(
-            f"wags image not found at {os.path.realpath(sif)} -> downloading to {sif_dir}"
-        )
-        url = "https://s3.msi.umn.edu/wags/wags.sif"
-        os.makedirs(sif_dir,exist_ok=True)
-        wget.download(url,sif_dir)
-        sys.exit("\nrerun without --sif or point to directory containing wags.sif")
+        print("wags image not found - confirm location")
+        sys.exit(1)
 
     main()
         

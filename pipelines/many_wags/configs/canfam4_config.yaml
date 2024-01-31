@@ -1,5 +1,5 @@
 joint_cohort : gvcfs.list
-species      : ''
+species      : dog
 ref          : canfam4
 date         : ''
 bucket       : ''
