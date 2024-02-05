@@ -209,7 +209,22 @@
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
     },
+    "scatter_commons" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    },
+    "split_commons" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    },
     "select_common_vars" :
+    {
+        "output" : ".logs/{rule}/{wildcards.common_interval}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.common_interval}/%j.{rule}.err"
+    },
+    "gather_common_vcfs" :
     {
         "output" : ".logs/{rule}/%j.{rule}.out",
         "error"  : ".logs/{rule}/%j.{rule}.err"
