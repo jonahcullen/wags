@@ -1,31 +1,10 @@
-# check if vcf with only common variants (AF > 0.005) has been generated for 
-# cohort VCF and generate if not
-if not os.path.isfile(config['common_vcf']):
-    rule select_common_vars:
-        output:
-            common_vcf = config['common_vcf'],
-        params:
-            pop_vcf     = config['pop_vcf'],
-            allele_freq = config['allele_freq']
-        threads: 8
-        resources:
-             time   = 2160,
-             mem_mb = 32000
-        shell:
-            '''
-                bcftools view -Oz \
-                    -i 'AF[*]>{params.allele_freq}' \
-                    {params.pop_vcf} \
-                    -o {output.common_vcf}
-
-                tabix -p vcf {output.common_vcf}
-            '''
 
 rule select_variants_to_table:
     input:            
         final_vcf  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz"),
         final_tbi  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz.tbi"),
         common_vcf = config['common_vcf'],
+       #common_tbi = config['common_vcf']+'.tbi'
     output:
         unique_vars           = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.unique_vars.vcf",
         rare_and_common_vars  = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.rare_and_common_vars.vcf",
