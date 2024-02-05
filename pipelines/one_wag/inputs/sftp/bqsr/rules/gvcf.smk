@@ -49,7 +49,8 @@ rule haplotype_caller:
             if not config['left_align'] else SFTP.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai"),
         interval  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/{split}-scattered.interval_list"
     output:
-        hc_gvcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/{sample_name}.{split}.g.vcf.gz"
+        hc_gvcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/{sample_name}.{split}.g.vcf.gz",
+        hc_tbi  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/{sample_name}.{split}.g.vcf.gz.tbi"
     params:
         java_opt  = "-Xmx24G -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10",
         ref_fasta = config['ref_fasta'],
