@@ -120,6 +120,10 @@ rule sv_gridss:
             set +eu
             source activate {params.conda_env}
             set -e
+            
+            # due to an issue with certain which aliases found on some hpcs
+            # need to unset which
+            unset -f which
 
             gridss \
                 -t 8 \
