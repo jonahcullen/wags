@@ -115,8 +115,10 @@ if __name__ == '__main__':
     
     required.add_argument(
         "-r", "--ref",
-        default="canfam4",
-        metavar="",
+       #default="canfam4",
+       #metavar="",
+        default=argparse.SUPPRESS,
+        metavar="\b",
         help=textwrap.dedent(f'''\
             select reference to use: {", ".join(refs)}.
             included references have --fasta, --dict, and
@@ -231,17 +233,17 @@ if __name__ == '__main__':
         sif = os.path.realpath(os.path.expanduser(sif))
     
     # confirm image exitst
-    if os.path.isfile(sif):
-        print("wags image found!")
-    else:
-        sif_dir = os.path.join(os.path.expanduser("~"),".sif")
-        print(
-            f"wags image not found at {os.path.realpath(sif)} -> downloading to {sif_dir}"
-        )
-        url = "https://s3.msi.umn.edu/wags/wags.sif"
-        os.makedirs(sif_dir,exist_ok=True)
-        wget.download(url,sif_dir)
-        sys.exit("\nrerun without --sif or point to directory containing wags.sif")
+   #if os.path.isfile(sif):
+   #    print("wags image found!")
+   #else:
+   #    sif_dir = os.path.join(os.path.expanduser("~"),".sif")
+   #    print(
+   #        f"wags image not found at {os.path.realpath(sif)} -> downloading to {sif_dir}"
+   #    )
+   #    url = "https://s3.msi.umn.edu/wags/wags.sif"
+   #    os.makedirs(sif_dir,exist_ok=True)
+   #    wget.download(url,sif_dir)
+   #    sys.exit("\nrerun without --sif or point to directory containing wags.sif")
 
     main()
         
