@@ -290,7 +290,7 @@ def main():
         # SBATCH directives 
         header = (
             "#!/bin/bash -l\n"
-            "#SBATCH -t 48:00:00\n"
+            f"#SBATCH -t {walltime}:00:00\n"
             "#SBATCH --nodes=1\n"
             "#SBATCH --ntasks-per-node=1\n"
             "#SBATCH --cpus-per-task=1\n"
@@ -469,6 +469,14 @@ if __name__ == '__main__':
         help="default scheduler account"
     )
     optional.add_argument(
+        "--walltime",
+        default='48',
+        help=textwrap.dedent('''\
+            wall time (hours) for main job runner
+            [default: 48]
+        ''')
+    )
+    optional.add_argument(
         "--ref-dir",
         default=os.path.join(os.path.expanduser("~"),".wags/"),
         help=textwrap.dedent('''\
@@ -567,6 +575,7 @@ if __name__ == '__main__':
     partition   = args.partition
     email       = args.email
     account     = args.account
+    walltime    = args.walltime
     sif         = args.sif
     ref         = args.ref
     ref_dir     = os.path.realpath(os.path.expanduser(args.ref_dir))

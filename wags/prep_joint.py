@@ -189,7 +189,7 @@ def main():
     # sbatch directives 
     header = (
         "#!/bin/bash -l\n"
-        "#SBATCH -t 72:00:00\n"
+        f"#SBATCH -t {walltime}:00:00\n"
         "#SBATCH --nodes=1\n"
         "#SBATCH --ntasks-per-node=1\n"
         "#SBATCH --cpus-per-task=1\n"
@@ -346,6 +346,14 @@ if __name__ == '__main__':
         help="path to out dir"
     )
     optional.add_argument(
+        "--walltime",
+        default='72',
+        help=textwrap.dedent('''\
+            wall time (hours) for main job runner
+            [default: 48]
+        ''')
+    )
+    optional.add_argument(
         "--vqsr-snps",
         action='store_true',
         help=textwrap.dedent('''\
@@ -435,6 +443,7 @@ if __name__ == '__main__':
     partition   = args.partition
     email       = args.email
     account     = args.account
+    walltime    = args.walltime
     sif         = args.sif
     profile     = args.profile
     remote      = args.remote.lower()
