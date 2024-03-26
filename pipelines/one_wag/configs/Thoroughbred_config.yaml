@@ -22,8 +22,8 @@ nrun_length  : 50
 scatter_size : 50
 
 # REFERENCE FILES
-ref_dict  : T2T_TB.v3.dict
-ref_fasta : /home/refgen/horse/Thoroughbred/T2T_TB.v3.fa
+ref_dict  : T2T_TB.v5.dict
+ref_fasta : /home/refgen/horse/Thoroughbred/T2T_TB.v5.fa
 
 # RESOURCE FILES FOR BQSR (OPTIONAL)
 
