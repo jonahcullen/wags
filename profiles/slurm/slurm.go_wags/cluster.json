@@ -184,6 +184,11 @@
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
     },
+    "pre_vep_select_variants" :
+    {
+        "output" : ".logs/{rule}/{wildcards.vep_interval}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.vep_interval}/{wildcards.ref}/%j.{rule}.err"
+    },
     "SIFT_vep_by_interval" :
     {
         "output" : ".logs/{rule}/{wildcards.vep_interval}/{wildcards.ref}/%j.{rule}.out",
@@ -195,6 +200,11 @@
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
     },
     "gbindex_vep_vcf" :
+    {
+        "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
+    },
+    "vars_to_table" :
     {
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"

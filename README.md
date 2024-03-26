@@ -37,7 +37,7 @@ mamba update mamba -c conda-forge
 mamba create \
     -c conda-forge -c bioconda \
     -n snakemake \ # name of the environment
-    snakemake=7.19 pyaml xlsxwriter
+    python=3.10 snakemake=7.19 pyaml xlsxwriter
 ```
 
 Alternatively, if you are already familiar with `conda` and creating environments, it is suggested to install `mamba` in your base environment and use that to build your environment.
@@ -50,7 +50,7 @@ conda install -n base -c conda-forge mamba
 mamba create \
     -c conda-forge -c bioconda \
     -n snakemake \ # name of the environment
-    snakemake pyaml wget xlsxwriter
+    python=3.10 snakemake=7.19 pyaml xlsxwriter
 ```
 
 **2. Download the container**
