@@ -52,5 +52,5 @@ coverage_sites : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/SRZ189891_722g.
 # OUTPUT OPTIONS
 # PHASING
 phasing  : false
-link_map : /home/refgen/dog/canfam3/canFam3.linkage.map.wgs
+link_map : /home/refgen/dog/canfam4/canFam4.linkage.map
 

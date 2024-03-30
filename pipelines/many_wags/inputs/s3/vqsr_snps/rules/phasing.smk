@@ -61,7 +61,7 @@ rule phase_x_chrom:
         phase_vcf = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/phasing/phased/joint_call.{ref}.{chrom}.phased.vcf.gz"),
         phase_tbi = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/phasing/phased/joint_call.{ref}.{chrom}.phased.vcf.gz.tbi"),
     params:
-        link_map     = "/home/refgen/dog/canfam3/canFam3.linkage.map.wgs",
+        link_map     = config['link_map'],
         eff_pop_size = 200,
         window       = 120,
         overlap      = 10,

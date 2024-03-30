@@ -55,4 +55,7 @@ illumina_snp_vcf : /home/refgen/dog/canfam4/resources/canFam4.illumina.snps.sort
 # AF FREQ
 var_to_table_dir : /panfs/roc/groups/0/fried255/fried255/working/all_dogs
 
-
+# OUTPUT OPTIONS
+# PHASING
+phasing  : false
+link_map : /home/refgen/dog/canfam4/canFam4.linkage.map

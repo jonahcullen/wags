@@ -52,3 +52,7 @@ broad_snp_vcf    : /home/refgen/dog/canfam3/resources/final.broad.snps.vcf
 axelsson_snp_vcf : /home/refgen/dog/canfam3/resources/final.axelsson.snps.vcf
 illumina_snp_vcf : /home/refgen/dog/canfam3/resources/illumina.snps.vcf
 
+# OUTPUT OPTIONS
+# PHASING
+phasing  : false
+link_map : /home/refgen/dog/canfam3/canFam3.linkage.map.wgs
