@@ -23,8 +23,8 @@ interval_length : 10000000
 batch_size : 50
 
 # REFERENCE FILES
-ref_fasta : /home/refgen/horse/Thoroughbred/T2T_TB.v3.fa
-ref_dict  : /home/refgen/horse/Thoroughbred/T2T_TB.v3.dict
+ref_fasta : /home/refgen/horse/Thoroughbred/T2T_TB.v5.fa
+ref_dict  : /home/refgen/horse/Thoroughbred/T2T_TB.v5.dict
 ref_gtf   : /home/refgen/horse/Thoroughbred/MISSING.gtf
 
 # TMP DIRS
