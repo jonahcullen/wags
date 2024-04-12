@@ -49,7 +49,10 @@ include: "rules/genotype.smk"
 include: "rules/gather_and_select.smk"
 include: "rules/hardfltr.smk"
 include: "rules/gather_and_vep.smk"
-include: "rules/qc.smk"
+
+qc_rules = "rules/qc.smk" if config['coverage_sites'] else 'rules/qc.no_cov.smk'
+include: qc_rules
+
 include: "rules/table.smk"
 include: "rules/phasing.smk"
 
