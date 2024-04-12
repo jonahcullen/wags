@@ -52,6 +52,9 @@ broad_snp_vcf    : /home/refgen/dog/canfam4/resources/canFam4.final.broad.snps.s
 axelsson_snp_vcf : /home/refgen/dog/canfam4/resources/canFam4.final.axelsson.snps.sorted.fixed.header.chr.vcf
 illumina_snp_vcf : /home/refgen/dog/canfam4/resources/canFam4.illumina.snps.sorted.fixed.header.chr.vcf
 
+# same coverage as UU_Cfam_GSD_1.0_ROSY (canfam4+ROSY)
+coverage_sites : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/SRZ189891_722g.simp.header.CanineHD.names.GSD_1.0.filter.vcf.gz
+
 # AF FREQ
 var_to_table_dir : /panfs/roc/groups/0/fried255/fried255/working/all_dogs
 

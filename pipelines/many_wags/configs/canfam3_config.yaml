@@ -52,6 +52,9 @@ broad_snp_vcf    : /home/refgen/dog/canfam3/resources/final.broad.snps.vcf
 axelsson_snp_vcf : /home/refgen/dog/canfam3/resources/final.axelsson.snps.vcf
 illumina_snp_vcf : /home/refgen/dog/canfam3/resources/illumina.snps.vcf
 
+# using dbsnp positions for now
+coverage_sites : /home/refgen/dog/canfam3/resources/dbsnp146.snp.vcf
+
 # OUTPUT OPTIONS
 # PHASING
 phasing  : false
