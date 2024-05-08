@@ -54,6 +54,11 @@
         "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.ref}/%j.{rule}.err"
     },
+    "left_align_bam" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/{wildcards.ref}/%j.{rule}.err"
+    },
     "bam_to_cram" :
     {
         "output" : ".logs/{rule}/{wildcards.sample_name}/{wildcards.ref}/%j.{rule}.out",
