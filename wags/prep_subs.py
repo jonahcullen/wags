@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import re
 import sys
 import csv
 import bz2
@@ -63,7 +64,8 @@ replace_map = {
     "_R2.fq.gz": "_R1.fq.gz",
     "_2.fastq.gz": "_1.fastq.gz",
     "_R2.fastq.gz": "_R1.fastq.gz",
-    "_R2_001.fastq.gz": "_R1_001.fastq.gz"
+    "_R2_001.fastq.gz": "_R1_001.fastq.gz",
+    "_R2_002.fastq.gz": "_R1_002.fastq.gz"
 }
 
 def extract_pu(s):
@@ -96,21 +98,27 @@ def main():
             "fastq_1","fastq_2","library_name",
             "platform_unit","flowcell","run_date",
             "platform_name","sequencing_center"]
-    
+
+    r2_pat = re.compile(r'.*(_R2|_2|\.R2|\.2|_R2_001|_2_001|_R2_002|_2_002).*')
+    r1_pat = re.compile(r'.*(_R1|_1|\.R1|\.1|_R1_001|_1_001|_R1_002|_1_002).*')
+   
     with open(sample_meta) as ids:
         reader = csv.reader(ids, delimiter=',')
         next(reader, None)
         for line in reader:
             
-            # new strategy using pathlib - still not perfect as it requires
-            # "guessing" the R1/R2 naming strategy
+            # updated strategy using pathlib AND regex - still not perfect as 
+            # it requires certain the R1/R2 naming strategies
             tmp = [
                 f for f in Path(fq_dir).rglob(f"{line[-1]}*")
-                if any(ext in str(f) for ext in [".fastq.gz", ".fq.gz"]) 
-                and any(part in str(f) for part in ["_R2", "_2", ".R2", ".2", "_R2_001", "_2_001"])
+                if any(ext in str(f) for ext in [".fastq.gz", ".fq.gz"])
+                and r2_pat.match(str(f))
+                and not r1_pat.match(str(f))
             ]
+
             # drop any md5 files that came along for the ride
             tmp = [f for f in tmp if not f.name.endswith('.md5')]
+            print(tmp)
             # add fastq information for each pair per sample
             sample_input = []  
             for i,v in enumerate(sorted(tmp)):
@@ -119,14 +127,19 @@ def main():
                 cdate = datetime.fromtimestamp(os.path.getctime(v)).strftime('%Y-%m-%dT%H:%M:%S')                   
                 
                 # get first read
+                v1 = None
                 for R2,R1 in replace_map.items():
+                    print(R2, R1, v)
                     if R2 in os.path.basename(v):
                         v1 = os.path.join(
                             os.path.dirname(v),
                             os.path.basename(v).replace(R2, R1)
                         )
                         break
- 
+                print(f"{line[0]}: {v1}, {v}")
+               #if v1 is None or not os.path.exists(v1):
+               #    raise FileNotFoundError(f"matching R1 read for {v} (R2) not found")
+
                 sample_input.append(
                     [   
                         line[1],
