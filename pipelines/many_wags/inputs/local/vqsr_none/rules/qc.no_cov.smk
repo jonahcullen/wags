@@ -1,9 +1,9 @@
 
 rule plot_interval_lengths:
     input:
-        S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vep.vcf.gz"),
+        "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vep.vcf.gz"
     output:
-        len_barplt = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/intervals/interval_lengths_mqc.tiff")
+        len_barplt = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/interval_lengths_mqc.tiff"
     params:
         lengths = f"{config['bucket']}/wgs/pipeline/{config['ref']}/{config['date']}/intervals/collapsed_lengths.csv",
     threads: 1
@@ -15,9 +15,9 @@ rule plot_interval_lengths:
 
 rule bcftools_stats:
     input:
-        final_vcf = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz"),
+        final_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz",
     output:
-        all_stats = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/join_call.{ref}.{date}.vchk"),
+        all_stats = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/join_call.{ref}.{date}.vchk",
     params:
         ref_fasta = config['ref_fasta'],
         conda_env = config['conda_envs']['qc']
@@ -35,9 +35,9 @@ rule bcftools_stats:
 
 rule bcftools_plot:
     input:
-        all_stats = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/join_call.{ref}.{date}.vchk"),
+        all_stats = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/join_call.{ref}.{date}.vchk",
     output:
-        summary = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort/summary.pdf")
+        summary = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort/summary.pdf"
     params:
         prefix    = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort",
         conda_env = config['conda_envs']['qc']
@@ -69,11 +69,11 @@ def get_vep_htmls(wildcards):
 rule qc_cohort:
     input:
         get_vep_htmls,
-        len_barplt      = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/intervals/interval_lengths_mqc.tiff"),
-        all_stats       = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/join_call.{ref}.{date}.vchk"),
-        summary         = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort/summary.pdf"),
+        len_barplt      = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/interval_lengths_mqc.tiff",
+        all_stats       = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/join_call.{ref}.{date}.vchk",
+        summary         = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort/summary.pdf",
     output: 
-        S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/multiqc_report.html")
+        "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/multiqc_report.html"
     params:
         outdir = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/"
     threads: 4
