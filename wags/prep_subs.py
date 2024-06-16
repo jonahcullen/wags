@@ -89,6 +89,50 @@ def extract_pu(s):
             ycoord = head[-1].split(" ",1)[0] # modify headers with additional info (eg length=150)
             return f"{head[2]}.{head[3]}.{ycoord}"
 
+#def find_r2s(name, fq_dir):
+#    """ find r2s based on provided substring """
+#    r2_pat = re.compile(rf'{name}.*(_R2|_2|\.R2|\.2|_R2_001|_2_001|_R2_002|_2_002).*\.fastq\.gz$')
+#    r1_pat = re.compile(rf'{name}.*(_R1|_1|\.R1|\.1|_R1_001|_1_001|_R1_002|_1_002).*\.fastq\.gz$')
+#
+#    matched = []
+#
+#    for f in Path(fq_dir).rglob(f"{name}*"):
+#        if r2_pat.match(str(f)) and not r1_pat.match(f):
+#            matched.append(f)
+#
+#    matched = [f for f in matched if not f.name.endswith('.md5')]
+#
+#    return matched
+
+def find_r2s(name, fq_dir):
+    """ find R2 files based on provided substring """
+    r2_patterns = [
+        "_R2_001.fastq.gz", "_R2_002.fastq.gz", "_R2.fastq.gz", 
+        "_2_001.fastq.gz", "_2_002.fastq.gz", "_2.fastq.gz",
+        "_R2_001.fq.gz", "_R2_002.fq.gz", "_R2.fq.gz", "_2_001.fq.gz", 
+        "_2_002.fq.gz", "_2.fq.gz"
+    ]
+    r1_patterns = [
+        "_R1_001.fastq.gz", "_R1_002.fastq.gz", "_R1.fastq.gz", 
+        "_1_001.fastq.gz", "_1_002.fastq.gz", "_1.fastq.gz",
+        "_R1_001.fq.gz", "_R1_002.fq.gz", "_R1.fq.gz", 
+        "_1_001.fq.gz", "_1_002.fq.gz", "_1.fq.gz"
+    ]
+
+    matched = []
+
+    for f in Path(fq_dir).rglob(f"{name}*"):
+        is_r2 = any(str(f).endswith(indicator) for indicator in r2_patterns)
+        is_not_r1 = not any(str(f).endswith(indicator) for indicator in r1_patterns)
+        
+        if is_r2 and is_not_r1:
+            matched.append(f)
+
+    matched = [f for f in matched if not f.name.endswith('.md5')]
+
+    return matched
+
+
 def main():
     global profile
    
@@ -99,27 +143,15 @@ def main():
             "platform_unit","flowcell","run_date",
             "platform_name","sequencing_center"]
 
-    r2_pat = re.compile(r'.*(_R2|_2|\.R2|\.2|_R2_001|_2_001|_R2_002|_2_002).*')
-    r1_pat = re.compile(r'.*(_R1|_1|\.R1|\.1|_R1_001|_1_001|_R1_002|_1_002).*')
-   
     with open(sample_meta) as ids:
         reader = csv.reader(ids, delimiter=',')
         next(reader, None)
         for line in reader:
             
-            # updated strategy using pathlib AND regex - still not perfect as 
-            # it requires certain the R1/R2 naming strategies
-            tmp = [
-                f for f in Path(fq_dir).rglob(f"{line[-1]}*")
-                if any(ext in str(f) for ext in [".fastq.gz", ".fq.gz"])
-                and r2_pat.match(str(f))
-                and not r1_pat.match(str(f))
-            ]
-
-            # drop any md5 files that came along for the ride
-            tmp = [f for f in tmp if not f.name.endswith('.md5')]
-            print(tmp)
-            # add fastq information for each pair per sample
+            tmp = find_r2s(line[-1], fq_dir)
+            # print the number of found fastq pairs/sample
+            pairs = "pair" if len(tmp) == 1 else "pairs"
+            print(f"found {len(tmp)} FASTQ {pairs} for {line[-1]}")
             sample_input = []  
             for i,v in enumerate(sorted(tmp)):
                 
@@ -129,16 +161,12 @@ def main():
                 # get first read
                 v1 = None
                 for R2,R1 in replace_map.items():
-                    print(R2, R1, v)
                     if R2 in os.path.basename(v):
                         v1 = os.path.join(
                             os.path.dirname(v),
                             os.path.basename(v).replace(R2, R1)
                         )
                         break
-                print(f"{line[0]}: {v1}, {v}")
-               #if v1 is None or not os.path.exists(v1):
-               #    raise FileNotFoundError(f"matching R1 read for {v} (R2) not found")
 
                 sample_input.append(
                     [   
