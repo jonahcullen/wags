@@ -16,7 +16,7 @@ rule plot_interval_lengths:
 rule collect_metrics_on_vcf:
     input:
         final_vcf      = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz",
-        final_tbi      = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz.tbi"
+        final_tbi      = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/joint_call.{ref}.{date}.vcf.gz.tbi",
         eval_ival_list = get_interval_type
     output:
         detail_metrics  = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort.variant_calling_detail_metrics",
