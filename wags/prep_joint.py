@@ -73,11 +73,10 @@ def validate_mapping(f):
 def main():
     
     # load known config
-    #prep_path = Path(__file__).resolve()
-    #config_path = prep_path.parent.parent / f"pipelines/many_wags/configs/{config}_config.yaml"
+    prep_path = Path(__file__).resolve()
+    config_path = prep_path.parent.parent / f"pipelines/many_wags/configs/{config}_config.yaml"
     try:
-        with open(config) as f:
-        #with open(config_path) as f:
+        with open(config_path) as f:
             doc = yaml.safe_load(f)
     except FileNotFoundError:
         print(f"{config} does not exist - ensure correct path")
@@ -85,7 +84,7 @@ def main():
     # update config with sif, mapping cohort, interval options, and temp dirs
     doc['sif'] = sif
     doc['joint_cohort'] = os.path.basename(gvcfs)
-    doc['date']        = datetime.today().strftime('%Y%m%d')
+    doc['date'] = datetime.today().strftime('%Y%m%d')
     if os.path.isfile(gvcfs):
         if validate_mapping(gvcfs):
             doc['joint_cohort'] = os.path.join(outdir, os.path.basename(gvcfs))
