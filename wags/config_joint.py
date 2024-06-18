@@ -1,22 +1,13 @@
 #!/usr/bin/env python3
 
 import os
-import sys
-import csv
-import gzip
-import wget
 import yaml
 import glob
 import shutil
-import string
-import pathlib
 import textwrap
 import argparse
-import fileinput
 import pandas as pd
 from pathlib import Path
-from datetime import datetime
-from collections import defaultdict
 
 refs = [
     "canfam3","canfam4","UU_Cfam_GSD_1.0_ROSY",
@@ -35,11 +26,12 @@ def main():
     # avaiable within container and do not need
     # to be specified
     prep_dir = os.path.dirname(os.path.realpath(__file__))
+    wags_configs = "pipelines/many_wags/configs"
     if ref in refs:
         config_n  = f"{ref}_config.yaml"
         config = os.path.join(
             str(Path(prep_dir).parents[0]),
-            "pipelines/many_wags/configs",
+            wags_configs,
             config_n
         )
         # load known config
@@ -53,7 +45,7 @@ def main():
         config_n = f"{ref}_config.yaml"
         config = os.path.join(
             str(Path(prep_dir).parents[0]),
-            "pipelines/many_wags/configs/custom_config.yaml",
+            os.path.join(wags_configs, "custom_config.yaml"),
         )
         # load known config
         with open(config) as f:
@@ -67,13 +59,13 @@ def main():
     
     # set directory for config file
     if not args.out:
-        outdir = os.path.join(os.path.expanduser("~"), f".wags/{species}/{ref}/many_wags")
+       #outdir = os.path.join(os.path.expanduser("~"), f".wags/{species}/{ref}/many_wags")
+        outdir = "pipelines/many_wags/configs"
     else:
         outdir = os.path.realpath(os.path.expanduser(args.out))
     os.makedirs(outdir, exist_ok=True)
 
     # update known ref config with user cli args
-   #doc['date']               = date
     doc['bucket']             = bucket
     doc['alias']              = alias
     doc['sif']                = sif
@@ -87,17 +79,20 @@ def main():
     # check if exists and dump
     config_out = os.path.join(outdir, config_n)
     if os.path.isfile(config_out):
-        ow = input(f"config already exists at {config_out} - overwrite? [y/n] ")
-        if ow.lower() == 'y':
-            with open(config_out,'w') as f:
-                yaml.dump(doc, f, sort_keys=False)
-                print(f"{ref}_config.yaml saved to {outdir}")
-        else:
-            print("nothing to do - confirm ref name correct or try again")
-    else:
-        with open(config_out,'w') as f:
-            yaml.dump(doc, f, sort_keys=False)
-            print(f"{ref}_config.yaml saved to {outdir}")
+        bak_config_out = config_out + ".bak"
+        shutil.copy(config_out, bak_config_out)
+        print(f"backup of the original {config_n} created at {bak_config_out}")
+       #ow = input(f"config already exists at {config_out} - overwrite? [y/n] ")
+       #if ow.lower() == 'y':
+    with open(config_out,'w') as f:
+        yaml.dump(doc, f, sort_keys=False)
+        print(f"{ref}_config.yaml saved to {outdir}")
+       #else:
+       #    print("nothing to do - confirm ref name correct or try again")
+   #else:
+   #    with open(config_out,'w') as f:
+   #        yaml.dump(doc, f, sort_keys=False)
+   #        print(f"{ref}_config.yaml saved to {outdir}")
 
 if __name__ == '__main__':
     
@@ -142,7 +137,12 @@ if __name__ == '__main__':
     optional.add_argument(
         "-o", "--out",
         metavar="\b",
-        help="location of config out [default: ~/.wags/SPECIES/REF/many_wags/REF_config.yaml]"
+       #help="location of config out [default: ~/.wags/SPECIES/REF/many_wags/REF_config.yaml]"
+        help=textwrap.dedent("""
+            location of config out: for genomes included
+            in the container the repository config is updated
+            unless --out is specified
+        """)
     )
     optional.add_argument(
         "-s", "--species",
