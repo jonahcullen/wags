@@ -51,7 +51,11 @@ def main():
     
     shutil.copytree(profile_dir,os.path.join(ref_home,f"{profile}.go_wags"),dirs_exist_ok=True)
     
-    job_sub = os.path.join(ref_home,f"{profile}.go_wags/{profile}-submit.py")
+    if profile == 'lsf':
+        job_sub = os.path.join(ref_home,f"{profile}.go_wags/{profile}_submit.py")
+    else:
+        job_sub = os.path.join(ref_home,f"{profile}.go_wags/{profile}-submit.py")
+
     with fileinput.FileInput(job_sub,inplace=True,backup=".bak") as file:
         for line in file:
             line = line.replace("DUMMY_PAR",partition)
@@ -98,7 +102,7 @@ def main():
     submiss = os.path.join(ref_home,f"{species}_{ref}.{job_name}.{profile}")
     
     # SBATCH directives 
-    header = (
+    default_header = (
         "#!/bin/bash -l\n"
         "#SBATCH -t 6:00:00\n"
         "#SBATCH --nodes=1\n"
@@ -112,13 +116,28 @@ def main():
         f"#SBATCH -e slurm_logs/%j.{species}_{ref}.{job_name}.err\n"
         f"#SBATCH -A {account}\n"
     )             
- 
+    lsf_header = (
+        "#!/bin/bash -l\n"
+        f"#BSUB -W 6:00\n"
+        "#BSUB -n 1\n"
+        "#BSUB -R span[hosts=1]\n"
+        "#BSUB -R rusage[mem=12GB]\n"
+        f"#BSUB -J {species}_{ref}.{job_name}\n"
+        f"#BSUB -o {profile}_logs/%J.{species}_{ref}.{job_name}.out\n"
+        f"#BSUB -e {profile}_logs/%J.{species}_{ref}.{job_name}.err\n"
+        f"#BSUB -q {partition}\n"
+        f"#BSUB -B -N -u {email}\n"
+    ) 
     # job submission body 
     with open(submiss, "w") as f:
-        print(header, file=f)
+        if profile == 'lsf':
+            print(lsf_header, file=f)
+        else:
+            print(default_header, file=f)
         print("set -e\n",file=f)
         print(f"conda activate {snake_env}",file=f)
-        print("cd $SLURM_SUBMIT_DIR\n",file=f)
+        if profile != 'lsf':
+            print("cd $SLURM_SUBMIT_DIR\n",file=f)
 
         print(
             textwrap.dedent(
