@@ -20,7 +20,7 @@ from collections import defaultdict
 
 refs = [
     "canfam3","canfam4","UU_Cfam_GSD_1.0_ROSY",
-    "goldenPath","Arabian","Shire",
+    "goldenPath","Arabian","Shire","Thoroughbred",
     "tiger",
     "Fca126_mat1.0",
     "alpaca",
