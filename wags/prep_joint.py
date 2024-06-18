@@ -223,7 +223,7 @@ def main():
         if profile == 'lsf':
             print(lsf_header, file=f)
         else:
-            print(header, file=f)
+            print(default_header, file=f)
         print("set -e\n",file=f)
         print(f"conda activate {snake_env}",file=f)
         if profile != 'lsf':
