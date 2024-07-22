@@ -348,8 +348,8 @@ def main():
             "#SBATCH --mail-type=ALL\n"
             f"#SBATCH --mail-user={email}\n"
             f"#SBATCH --job-name {v['breed']}_{k}.{job_name}.{profile}\n"
-            f"#SBATCH -o slurm_logs/%j.{v['breed']}_{k}.{job_name}.out\n"
-            f"#SBATCH -e slurm_logs/%j.{v['breed']}_{k}.{job_name}.err\n"
+            f"#SBATCH -o {v['work_dir']}/slurm_logs/%j.{v['breed']}_{k}.{job_name}.out\n"
+            f"#SBATCH -e {v['work_dir']}/slurm_logs/%j.{v['breed']}_{k}.{job_name}.err\n"
             f"#SBATCH -A {account}\n"
             f"#SBATCH -p {partition}\n"
         )             
@@ -374,7 +374,7 @@ def main():
             print("set -e\n",file=f)
             print(f"conda activate {snake_env}",file=f)
             if profile != 'lsf':
-                print("cd $SLURM_SUBMIT_DIR\n",file=f)
+                print(f"cd {v['work_dir']}\n",file=f)
 
             if ref not in refs:
                 print(f"REF_DIR={ref_dir}",end="",file=f)
