@@ -70,6 +70,10 @@ replace_map = {
     "_R2_001.part_002.fastq.gz": "_R1_001.part_002.fastq.gz",
     "_R2_001.part_003.fastq.gz": "_R1_001.part_003.fastq.gz",
     "_R2_001.part_004.fastq.gz": "_R1_001.part_004.fastq.gz",
+    "_R2.part_001.fastq.gz": "_R1.part_001.fastq.gz",
+    "_R2.part_002.fastq.gz": "_R1.part_002.fastq.gz",
+    "_R2.part_003.fastq.gz": "_R1.part_003.fastq.gz",
+    "_R2.part_004.fastq.gz": "_R1.part_004.fastq.gz",
 }
 
 def extract_pu(s):
@@ -116,7 +120,9 @@ def find_r2s(name, fq_dir):
         "_R2_001.fq.gz", "_R2_002.fq.gz", "_R2.fq.gz", "_2_001.fq.gz", 
         "_2_002.fq.gz", "_2.fq.gz",
         "_R2_001.part_001.fastq.gz", "_R2_001.part_002.fastq.gz",
-        "_R2_001.part_003.fastq.gz", "_R2_001.part_004.fastq.gz"
+        "_R2_001.part_003.fastq.gz", "_R2_001.part_004.fastq.gz",
+        "_R2.part_001.fastq.gz", "_R2.part_002.fastq.gz",
+        "_R2.part_003.fastq.gz", "_R2.part_004.fastq.gz"
     ]
     r1_patterns = [
         "_R1_001.fastq.gz", "_R1_002.fastq.gz", "_R1.fastq.gz", 
@@ -124,7 +130,9 @@ def find_r2s(name, fq_dir):
         "_R1_001.fq.gz", "_R1_002.fq.gz", "_R1.fq.gz", "_1_001.fq.gz", 
         "_1_002.fq.gz", "_1.fq.gz",
         "_R1_001.part_001.fastq.gz", "_R1_001.part_002.fastq.gz",
-        "_R1_001.part_003.fastq.gz", "_R1_001.part_004.fastq.gz"
+        "_R1_001.part_003.fastq.gz", "_R1_001.part_004.fastq.gz",
+        "_R1.part_001.fastq.gz", "_R1.part_002.fastq.gz",
+        "_R1.part_003.fastq.gz", "_R1.part_004.fastq.gz"
     ]
 
     matched = []
