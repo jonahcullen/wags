@@ -70,3 +70,58 @@ def sequence_grouping(base,ref_dict):
                     v = v.split(':')[0]
                     print(v, "0", d[v], sep="\t", file=f)
 
+# functions for generating intervals suitable for the t2t throughbred assembly
+
+def natural_sort_key(s):
+    return [int(text) if text.isdigit() else text.lower() for text in re.split('([0-9]+)', s)]
+
+def natural_sort(l):
+    return sorted(l, key=natural_sort_key)
+
+def read_genome_dict(dict_file):
+    chrom_lengths = {}
+    dict_lines = []
+    with open(dict_file, 'r') as file:
+        lines = file.readlines()
+        dict_lines = lines[:]
+        for line in lines:
+            if line.startswith('@SQ'):
+                parts = line.split()
+                chrom = parts[1].split(':')[1]
+                length = int(parts[2].split(':')[1])
+                chrom_lengths[chrom] = length
+    return dict_lines, chrom_lengths
+
+def process_gaps(gaps_file, chrom_lengths):
+    with open(gaps_file, 'r') as file:
+        lines = file.readlines()
+    
+    contigs = []
+    output = []
+    for chrom in sorted(chrom_lengths.keys(), key=natural_sort_key):
+        chrom_gaps = [line.strip() for line in lines if line.split(':')[0] == chrom]
+        if not chrom_gaps:
+            contigs.append(f"{chrom}\t1\t{chrom_lengths[chrom]}\t+\tACGTmer")
+            continue
+
+        midpoints = []
+        for gap in chrom_gaps:
+            positions = gap.split(':')[1]
+            start, end = map(int, positions.split('-'))
+            midpoint = (start + end) // 2
+            midpoints.append(midpoint)
+        
+        previous_end = 1
+        for i, midpoint in enumerate(midpoints):
+            if i == 0:
+                output.append(f"{chrom}\t{previous_end}\t{midpoint}\t+\tACGTmer")
+            else:
+                output.append(f"{chrom}\t{midpoints[i-1] + 1}\t{midpoint}\t+\tACGTmer")
+            previous_end = midpoint
+        
+        output.append(f"{chrom}\t{previous_end + 1}\t{chrom_lengths[chrom]}\t+\tACGTmer")
+    # add contigs for inclusion
+    output.extend(contigs)
+
+    return output
+
