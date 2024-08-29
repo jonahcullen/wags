@@ -23,14 +23,28 @@ rule fastqc:
         '''
             set -e
 
-            fastqc -t {threads} \
-                --outdir {params.outdir} \
-                {input.r1} {input.r2}
+            if [ {input.r1} == {input.r2} ]; then
+                echo "Processing {wildcards.sample_name} as SINGLE"
 
-            mv {params.outdir}/{params.r1_html} {output.r1_html}
-            mv {params.outdir}/{params.r2_html} {output.r2_html}
-            mv {params.outdir}/{params.r1_zip} {output.r1_zip}
-            mv {params.outdir}/{params.r2_zip} {output.r2_zip}
+                fastqc -t {threads} \
+                    --outdir {params.outdir} \
+                    {input.r1}
+
+                touch {output.r2_html} {output.r2_zip} # Create empty files
+                mv {params.outdir}/{params.r1_html} {output.r1_html}
+                mv {params.outdir}/{params.r1_zip} {output.r1_zip}
+            else
+                echo "Processing {wildcards.sample_name} as PAIRED"
+
+                fastqc -t {threads} \
+                    --outdir {params.outdir} \
+                    {input.r1} {input.r2}
+
+                mv {params.outdir}/{params.r1_html} {output.r1_html}
+                mv {params.outdir}/{params.r2_html} {output.r2_html}
+                mv {params.outdir}/{params.r1_zip} {output.r1_zip}
+                mv {params.outdir}/{params.r2_zip} {output.r2_zip}
+            fi
         '''
 
 rule flagstat:

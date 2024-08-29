@@ -21,21 +21,41 @@ rule fastqs_to_ubam:
          mem_mb = lambda wildcards, attempt: 2**(attempt-1)*40000,
     shell:
         '''
-            mkdir -p {params.tmp_dir}
+            if [ {input.r1} == {input.r2} ]; then
+                echo "Processing {wildcards.sample_name} as SINGLE"
 
-            gatk --java-options {params.java_opt} \
-                FastqToSam \
-                --TMP_DIR {params.tmp_dir} \
-                --FASTQ {input.r1} \
-                --FASTQ2 {input.r2} \
-                --OUTPUT {output.ubam} \
-                --READ_GROUP_NAME {wildcards.readgroup_name} \
-                --SAMPLE_NAME {wildcards.sample_name} \
-                --LIBRARY_NAME {params.library_name} \
-                --PLATFORM_UNIT {params.platform_unit} \
-                --RUN_DATE {params.run_date} \
-                --PLATFORM {params.platform_name} \
-                --SEQUENCING_CENTER {params.sequencing_center}
+                mkdir -p {params.tmp_dir}
+
+                gatk --java-options {params.java_opt} \
+                    FastqToSam \
+                    --TMP_DIR {params.tmp_dir} \
+                    --FASTQ {input.r1} \
+                    --OUTPUT {output.ubam} \
+                    --READ_GROUP_NAME {wildcards.readgroup_name} \
+                    --SAMPLE_NAME {wildcards.sample_name} \
+                    --LIBRARY_NAME {params.library_name} \
+                    --PLATFORM_UNIT {params.platform_unit} \
+                    --RUN_DATE {params.run_date} \
+                    --PLATFORM {params.platform_name} \
+                    --SEQUENCING_CENTER {params.sequencing_center}
+            else
+                echo "Procesing {wildcards.sample_name} as PAIRED"
+                mkdir -p {params.tmp_dir}
+
+                gatk --java-options {params.java_opt} \
+                    FastqToSam \
+                    --TMP_DIR {params.tmp_dir} \
+                    --FASTQ {input.r1} \
+                    --FASTQ2 {input.r2} \
+                    --OUTPUT {output.ubam} \
+                    --READ_GROUP_NAME {wildcards.readgroup_name} \
+                    --SAMPLE_NAME {wildcards.sample_name} \
+                    --LIBRARY_NAME {params.library_name} \
+                    --PLATFORM_UNIT {params.platform_unit} \
+                    --RUN_DATE {params.run_date} \
+                    --PLATFORM {params.platform_name} \
+                    --SEQUENCING_CENTER {params.sequencing_center}
+            fi
         '''
 
 rule mark_adapters:
