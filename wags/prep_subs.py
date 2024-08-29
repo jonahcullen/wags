@@ -115,9 +115,9 @@ def extract_pu(s):
 def find_r2s(name, fq_dir):
     """ find R2 files based on provided substring """
     r2_patterns = [
-        "_R2_001.fastq.gz", "_R2_002.fastq.gz", "_R2.fastq.gz", 
+        "_R2_001.fastq.gz", "_R2_002.fastq.gz", "_R2.fastq.gz",
         "_2_001.fastq.gz", "_2_002.fastq.gz", "_2.fastq.gz",
-        "_R2_001.fq.gz", "_R2_002.fq.gz", "_R2.fq.gz", "_2_001.fq.gz", 
+        "_R2_001.fq.gz", "_R2_002.fq.gz", "_R2.fq.gz", "_2_001.fq.gz",
         "_2_002.fq.gz", "_2.fq.gz",
         "_R2_001.part_001.fastq.gz", "_R2_001.part_002.fastq.gz",
         "_R2_001.part_003.fastq.gz", "_R2_001.part_004.fastq.gz",
@@ -125,9 +125,9 @@ def find_r2s(name, fq_dir):
         "_R2.part_003.fastq.gz", "_R2.part_004.fastq.gz"
     ]
     r1_patterns = [
-        "_R1_001.fastq.gz", "_R1_002.fastq.gz", "_R1.fastq.gz", 
+        "_R1_001.fastq.gz", "_R1_002.fastq.gz", "_R1.fastq.gz",
         "_1_001.fastq.gz", "_1_002.fastq.gz", "_1.fastq.gz",
-        "_R1_001.fq.gz", "_R1_002.fq.gz", "_R1.fq.gz", "_1_001.fq.gz", 
+        "_R1_001.fq.gz", "_R1_002.fq.gz", "_R1.fq.gz", "_1_001.fq.gz",
         "_1_002.fq.gz", "_1.fq.gz",
         "_R1_001.part_001.fastq.gz", "_R1_001.part_002.fastq.gz",
         "_R1_001.part_003.fastq.gz", "_R1_001.part_004.fastq.gz",
@@ -135,23 +135,37 @@ def find_r2s(name, fq_dir):
         "_R1.part_003.fastq.gz", "_R1.part_004.fastq.gz"
     ]
 
-    matched = []
+    r1_files = []
+    r2_files = []
+    SE_files = []
 
     for f in Path(fq_dir).rglob(f"{name}*"):
+        is_r1 = any(str(f).endswith(indicator) for indicator in r1_patterns)
+        is_not_r2 = not any(str(f).endswith(indicator) for indicator in r2_patterns)
         is_r2 = any(str(f).endswith(indicator) for indicator in r2_patterns)
-        is_not_r1 = not any(str(f).endswith(indicator) for indicator in r1_patterns)
-        
+        is_not_r1 = any(str(f).endswith(indicator) for indicator in r2_patterns)
+
+        if is_r1 and is_not_r2:
+            r1_files.append(f)
         if is_r2 and is_not_r1:
-            matched.append(f)
+            r2_files.append(f)
 
-    matched = [f for f in matched if not f.name.endswith('.md5')]
+        r2_files = [f for f in r2_files if not f.name.endswith('.md5')]
+        r1_files = [f for f in r1_files if not f.name.endswith('.md5')]
 
-    return matched
+    if len(r2_files) != len(r1_files):
+        SE_files.append(f)
+
+        SE_files = [f for f in SE_files if not f.name.endswith('.md5')]
+    else:
+        SE_files.append("paired_end_data")
+
+    return SE_files, r2_files
 
 
 def main():
     global profile
-   
+
     d = defaultdict(dict)
 
     cols = ["breed","sample_name","readgroup_name",
@@ -163,47 +177,77 @@ def main():
         reader = csv.reader(ids, delimiter=',')
         next(reader, None)
         for line in reader:
-            
-            tmp = find_r2s(line[-1], fq_dir)
-            # print the number of found fastq pairs/sample
-            pairs = "pair" if len(tmp) == 1 else "pairs"
-            print(f"found {len(tmp)} FASTQ {pairs} for {line[-1]}")
-            sample_input = []  
-            for i,v in enumerate(sorted(tmp)):
-                
-                platform_unit = extract_pu(v)
-                cdate = datetime.fromtimestamp(os.path.getctime(v)).strftime('%Y-%m-%dT%H:%M:%S')                   
-                
-                # get first read
-                v1 = None
-                for R2,R1 in replace_map.items():
-                    if R2 in os.path.basename(v):
-                        v1 = os.path.join(
-                            os.path.dirname(v),
-                            os.path.basename(v).replace(R2, R1)
-                        )
-                        break
 
-                sample_input.append(
-                    [   
-                        line[1],
-                        line[0],
-                        f"{line[0]}_{string.ascii_uppercase[i]}",
-                        v1,
-                        v,
-                        f"illumina-{line[0]}",
-                        platform_unit,
-                        platform_unit.split(".")[0],
-                        cdate,
-                        "illumina",
-                        "unknown"
-                    ]
-                )
-            
-            d[line[0]]['work_dir'] = os.path.join(outdir,line[1],line[0],ref)
-            d[line[0]]['breed']    = line[1]
-            d[line[0]]['df']       = pd.DataFrame(sample_input, columns=cols)
-            
+            se,pe = find_r2s(line[-1], fq_dir)
+            if "paired_end_data" in se:
+                # print the number of found fastq pairs/sample
+                pairs = "pair" if len(pe) == 1 else "pairs"
+                print(f"found {len(pe)} FASTQ {pairs} for {line[-1]}")
+                sample_input = []
+                for i,v in enumerate(sorted(pe)):
+
+                    platform_unit = extract_pu(v)
+                    cdate = datetime.fromtimestamp(os.path.getctime(v)).strftime('%Y-%m-%dT%H:%M:%S')
+
+                    # get first read
+                    v1 = None
+                    for R2,R1 in replace_map.items():
+                        if R2 in os.path.basename(v):
+                            v1 = os.path.join(
+                                os.path.dirname(v),
+                                os.path.basename(v).replace(R2, R1)
+                            )
+                            break
+
+                    sample_input.append(
+                        [
+                            line[1],
+                            line[0],
+                            f"{line[0]}_{string.ascii_uppercase[i]}",
+                            v1,
+                            v,
+                            f"illumina-{line[0]}",
+                            platform_unit,
+                            platform_unit.split(".")[0],
+                            cdate,
+                            "illumina",
+                            "unknown"
+                        ]
+                    )
+
+                d[line[0]]['work_dir'] = os.path.join(outdir,line[1],line[0],ref)
+                d[line[0]]['breed']    = line[1]
+                d[line[0]]['df']       = pd.DataFrame(sample_input, columns=cols)
+            else:
+                for i,v in enumerate(sorted(se)):
+                    # print the number of found fastq pairs/sample
+                    singles = "single" if len(se) == 1 else "singles"
+                    print(f"found {len(se)} FASTQ {singles} for {line[-1]}")
+                    sample_input = []
+
+                    platform_unit = extract_pu(v)
+                    cdate = datetime.fromtimestamp(os.path.getctime(v)).strftime('%Y-%m-%dT%H:%M:%S')
+
+                    sample_input.append(
+                        [
+                            line[1],
+                            line[0],
+                            f"{line[0]}_{string.ascii_uppercase[i]}",
+                            v,
+                            v,
+                            f"illumina-{line[0]}",
+                            platform_unit,
+                            platform_unit.split(".")[0],
+                            cdate,
+                            "illumina",
+                            "unknown"
+                        ]
+                    )
+
+                d[line[0]]['work_dir'] = os.path.join(outdir,line[1],line[0],ref)
+                d[line[0]]['breed']    = line[1]
+                d[line[0]]['df']       = pd.DataFrame(sample_input, columns=cols)
+ 
     # copy pipeline input and submission file
     for k,v in d.items():
         # sample_name and breed
