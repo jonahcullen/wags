@@ -37,7 +37,7 @@ rule snps_var_recal:
     params:
         tranche_values    = " -tranche ".join(map(str,config["snp_recalibration_tranche_values"])),
         annotation_values = " -an ".join(map(str,config["snp_recalibration_annotation_values"])),
-        k9hd_axiom_vcf    = config["k9hd_axiom_vcf"],
+        snp_array         = config["snp_array"],
     threads: 4
     resources:
          time   = 240,
@@ -52,7 +52,7 @@ rule snps_var_recal:
                 -an {params.annotation_values} \
                 -mode SNP \
                 --max-gaussians 6 \
-                --resource:array,known=false,training=true,truth=true,prior=12 {params.k9hd_axiom_vcf} \
+                --resource:array,known=false,training=true,truth=true,prior=12 {params.snp_array} \
                 -O {output.snps_recal} \
                 --tranches-file {output.snps_tranches} \
                 --rscript-file {output.snps_plot}
