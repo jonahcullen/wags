@@ -51,16 +51,16 @@ rule final_output:
         # write each df to the same excel sheet
         with pd.ExcelWriter(
                 output.excel_sheet,
-                engine="xlsxwriter",
-                options={"strings_to_formulas": False}
+                engine="xlsxwriter"
             ) as writer:
+            writer.book.strings_to_formulas = False
             for k,v in dfs.items():
                 v.to_excel(
                     writer,
                     sheet_name=k.split('.')[-1],
                     index=False
                 )
-            writer.save()
+            writer.close()
 
 rule manifest_and_archive:
     input:
