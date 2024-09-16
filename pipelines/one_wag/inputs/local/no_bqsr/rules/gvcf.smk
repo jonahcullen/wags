@@ -21,6 +21,8 @@ if "Thoroughbred" not in config['ref']:
             '''
 
     checkpoint split_intervals:
+        input:
+            acgt_ivals = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/acgt.interval_list",
         output:
             directory("{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered")
         params:
