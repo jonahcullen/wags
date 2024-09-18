@@ -411,7 +411,18 @@ def main():
                         """
                     ),file=f
                 )
- 
+                # added gap file from TK to use for T2T reference when public
+                if "Thoroughbred" in ref:
+                    print("# extract T2T gaps file from container",end="",file=f)
+                    print(
+                        textwrap.dedent(
+                            f"""
+                            singularity exec -B $PWD {sif} \\
+                                cp /home/refgen/horse/Thoroughbred/resources/TB-T2T_gaps.csv $PWD
+                            """
+                        ),file=f
+                    )
+
             print(
                 textwrap.dedent(
                     f"""
