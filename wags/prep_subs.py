@@ -54,6 +54,7 @@ refs = [
     "tiger",
     "Fca126_mat1.0",
     "alpaca",
+    "vicpac32",
     "ARS-UI_Ramb_v3.0",
     "ARS1.2"
 ]
