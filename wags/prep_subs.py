@@ -58,7 +58,19 @@ refs = [
     "ARS-UI_Ramb_v3.0",
     "ARS1.2"
 ]
-#remotes = ["local","s3","sftp"]
+
+# get config dir
+prep_dir = Path(__file__).resolve().parent.parent
+configs_dir = prep_dir / "pipelines" / "one_wag" / "configs"
+# put available configs into a dictionary
+config_d = {}
+for species_dir in configs_dir.iterdir():
+    if species_dir.is_dir():
+        for config_f in species_dir.iterdir():
+            if config_f.suffix == ".yaml":
+                species = config_f.stem.replace("_config", "")
+                config_d[species] = species_dir.name
+
 
 replace_map = {
     "_2.fq.gz": "_1.fq.gz",
@@ -97,21 +109,6 @@ def extract_pu(s):
             head = head.split(":")
             ycoord = head[-1].split(" ",1)[0] # modify headers with additional info (eg length=150)
             return f"{head[2]}.{head[3]}.{ycoord}"
-
-#def find_r2s(name, fq_dir):
-#    """ find r2s based on provided substring """
-#    r2_pat = re.compile(rf'{name}.*(_R2|_2|\.R2|\.2|_R2_001|_2_001|_R2_002|_2_002).*\.fastq\.gz$')
-#    r1_pat = re.compile(rf'{name}.*(_R1|_1|\.R1|\.1|_R1_001|_1_001|_R1_002|_1_002).*\.fastq\.gz$')
-#
-#    matched = []
-#
-#    for f in Path(fq_dir).rglob(f"{name}*"):
-#        if r2_pat.match(str(f)) and not r1_pat.match(f):
-#            matched.append(f)
-#
-#    matched = [f for f in matched if not f.name.endswith('.md5')]
-#
-#    return matched
 
 def find_r2s(name, fq_dir):
     """ find R2 files based on provided substring """
@@ -236,9 +233,10 @@ def main():
             config_n  = f"{ref}_only_wag.yaml"
  
         # copy snakefile, rules, config, and profile to working dir
-        prep_dir = os.path.dirname(os.path.realpath(__file__))
+       #prep_dir = os.path.dirname(os.path.realpath(__file__))
         smk = os.path.join(
-            str(Path(prep_dir).parents[0]),
+           #str(Path(prep_dir).parents[0]),
+            prep_dir,
             "pipelines",
             pipeline,
             f"inputs/{remote}/{bqsr}",
@@ -246,34 +244,37 @@ def main():
         )
         
         rules = os.path.join(
-            str(Path(prep_dir).parents[0]),
+            prep_dir,
             "pipelines",
             pipeline,
             f"inputs/{remote}/{bqsr}",
             rules
         )
         config = os.path.join(
-            str(Path(prep_dir).parents[0]),
+            prep_dir,
             "pipelines",
             pipeline,
             "configs",
+            config_d[ref],
             config_n
         )
         # selected reference not in container, presumed prep_custom_ref.py already
         # executed
+        # NEEDS TO BE FIXED ALONG WITH prep_custom_ref.py TO FORCE THE CONFIG DIR
+        # AS SPECIES AND CONFIG ARE PLACED WITH OTHERS
         if ref not in refs:
             tmp = glob.glob(f"{ref_dir}/**/{ref}_config.yaml",recursive=True)
             assert tmp, f"config not found for {ref}, ensure prep_custom_ref.py ran successfully and check ref_dir"
             config = tmp[0]
     
         profile_dir = os.path.join(
-            str(Path(prep_dir).parents[0]),
+            prep_dir,
             f"profiles/{profile}",
             profile_n
         )
         
         src = os.path.join(
-            str(Path(prep_dir).parents[0]),
+            prep_dir,
             "pipelines",
             pipeline,
             "src"
@@ -477,6 +478,22 @@ if __name__ == '__main__':
         formatter_class=argparse.RawTextHelpFormatter
     )
     
+    # list avilable species and configs and exit
+    parser.add_argument(
+        "--configs",
+        action="store_true",
+        help="list all available species and assemblies (configs)"
+    )
+
+    args, unknown = parser.parse_known_args()
+
+    if args.configs:
+        print("available species and assemblies (configs):")
+        for k,v in sorted(config_d.items(), key=lambda x: (x[1], x[0])):
+            print(f"  {k:20} ({v})")
+        sys.exit(0)
+
+    # define required only if --configs was not used
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
     
@@ -679,8 +696,25 @@ if __name__ == '__main__':
     sv_call     = args.sv
 
     # QUICK FIX FOR goldenPath - NEED TO ADJUST CONTAINER TO BE horse/goldenpath
-    if "golden" in ref:
-        ref = "goldenPath"
+   #if "golden" in ref:
+   #    ref = "goldenPath"
+
+    if ref not in config_d:
+        avail_refs = sorted(config_d.keys())
+        print(f"\nERROR: reference '{ref}' not found in available configs")
+        # get possible matches
+        poss_matches = [i for i in avail_refs if i.startswith(ref[:3])]
+        # and handle
+        if poss_matches:
+            print(f"did you mean one of these: {', '.join(poss_matches)}")
+        else:
+            print("no similar ref found")
+
+        # show how to list all available configs
+        print("\nto see available species and assemblies (configs), run the following command:")
+        print("    python prep_subs.py --species\n")
+
+        sys.exit(1)
 
     # get bqsq or no bqsr
     bqsr = "bqsr"
