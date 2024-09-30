@@ -1,0 +1,37 @@
+# INPUT AND SECONDARY 
+units   : input.tsv
+species : dog
+ref     : canfam4
+bucket  : wags
+alias   : s3
+profile : slurm
+
+# SINGULARITY IMAGE
+sif : /path/to/wags.sif
+
+# SORTSAM TEMP DIR
+tmp_dir :
+  sort_tmp  : /path/to/proc/dir
+  fastq_tmp : /path/to/proc/dir
+
+# LEFT ALIGN BAM
+left_align : false
+
+# INTERVAL SIZE SCATTER
+nrun_length  : 50
+scatter_size : 50
+
+# REFERENCE FILES
+ref_dict  : canFam4.dict 
+ref_fasta : /home/refgen/dog/canfam4/canFam4.fa
+
+# RESOURCE FILES FOR BQSR (OPTIONAL)
+known_sites :
+  dog10k_bed : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/UU_Cfam_GSD_1.0.BQSR.DB.bed.gz
+
+# SV CONDA ENVS
+conda_envs :
+  delly  : delly
+  gridss : gridss
+  smoove : smoove
+  manta  : manta
