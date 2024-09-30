@@ -22,10 +22,12 @@ nrun_length  : 50
 scatter_size : 50
 
 # REFERENCE FILES
-ref_dict  : Fca126_mat1.0.nice.dict
-ref_fasta : /home/refgen/cat/Fca126/Fca126_mat1.0.nice.fna
+ref_dict  : GCF_018350175.1_F.catus_Fca126_mat1.0_genomic.dict
+ref_fasta : /home/refgen/cat/Fca126_mat1.0/GCF_018350175.1_F.catus_Fca126_mat1.0_genomic.fna
 
 # RESOURCE FILES FOR BQSR (OPTIONAL)
+known_sites :
+  cat_bed : /path/to/known_sites.bed
 
 # SV CONDA ENVS
 conda_envs :
