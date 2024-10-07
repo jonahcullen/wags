@@ -394,6 +394,7 @@ def main():
             print(
                 textwrap.dedent(
                     f"""
+                    TMP_DIR=/share/stern/mwvandew/tmp
                     FQ_DIR={fq_dir}
                     PROC_DIR={outdir} 
                     """
@@ -429,7 +430,7 @@ def main():
                     f"""
                     snakemake -s {snake_n} \\
                         --use-singularity \\
-                        --singularity-args "-B $PWD,$REF_DIR,$POP_VCF,$FQ_DIR,$PROC_DIR" \\
+                        --singularity-args "-B $TMP_DIR,$PWD,$REF_DIR,$POP_VCF,$FQ_DIR,$PROC_DIR" \\
                         --profile {profile_n} \\
                         --configfile {config_n} \\
                         --keep-going

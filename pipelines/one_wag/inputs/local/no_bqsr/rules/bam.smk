@@ -208,7 +208,7 @@ rule sort_and_fix_tags:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.merge_bams.benchmark.txt"
     threads: 12
     resources:
-         time   = 720,
+         time   = 1440,
          mem_mb = lambda wildcards, attempt: 2**(attempt-1)*24000,
     shell:
         '''
