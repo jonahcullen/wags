@@ -154,10 +154,12 @@ rule sv_smoove:
         final_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai"
             if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai",
     output:
-        smoove_tmp = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.{ref}-smoove.genotyped.vcf.gz",
-        smoove_csi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.{ref}-smoove.genotyped.vcf.gz.csi",
+        smoove_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.vcf.gz",
+        smoove_csi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.vcf.gz.csi"
     params:
-        out_dir   = lambda wildcards, output: os.path.dirname(output.smoove_tmp),
+        tmp_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.{ref}-smoove.genotyped.vcf.gz",
+        tmp_csi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.{ref}-smoove.genotyped.vcf.gz.csi",
+        out_dir   = lambda wildcards, output: os.path.dirname(output.smoove_vcf),
         base_name = (
             lambda wildcards, input: re.split(
                 r'\.aligned|\.left_aligned|\.bam', 
@@ -177,53 +179,15 @@ rule sv_smoove:
             source activate {params.conda_env}
 
             smoove call \
-                -x \
-                -d \
                 --outdir {params.out_dir} \
                 --name {params.base_name} \
                 --fasta {params.ref_fasta} \
                 -p {threads} \
                 --genotype {input.final_bam}
-        '''
 
-rule sv_smoove_filter:
-    input:
-        smoove_tmp = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.{ref}-smoove.genotyped.vcf.gz",
-        smoove_csi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.{ref}-smoove.genotyped.vcf.gz.csi",
-    output:
-        sv_gz  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.vcf.gz",
-        sv_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.vcf.gz.tbi"
-    params:
-        smoove_filt = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.filt.tmp.vcf",
-        smoove_sort = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.sort.filt.tmp.vcf",
-        ref_dict    = config['ref_dict']
-    benchmark:
-        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.sv_smoove.filter.benchmark.txt"
-    threads: 8
-    resources:
-         time   = 480,
-         mem_mb = 60000
-    shell:
-        '''
-            set -e
-
-            # filter for pass and save as uncompressed vcf
-            bcftools filter \
-                -O v \
-                -o {params.smoove_filt} \
-                -i "FILTER == '.'" \
-                {input.smoove_tmp}
-           
-            # sort using ref dict
-            gatk SortVcf \
-                -SD {params.ref_dict} \
-                -I {params.smoove_filt} \
-                -O {params.smoove_sort}
-
-            # bgzip and index
-            bgzip --threads {threads} -c {params.smoove_sort} > {output.sv_gz}
-            tabix -p vcf {output.sv_gz}
-        '''
+           mv {params.tmp_vcf} {output.smoove_vcf}
+           mv {params.tmp_csi} {output.smoove_csi}
+        ''' 
 
 rule sv_manta:
     input:
@@ -292,7 +256,7 @@ rule sv_done:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz",
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz.tbi",
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.vcf.gz",
-        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.vcf.gz.tbi",
+        "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.vcf.gz.csi",
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/{sample_name}.manta.diploidSV.{ref}.vcf.gz",
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/{sample_name}.manta.diploidSV.{ref}.vcf.gz.tbi",
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/svCandidateGenerationStats.tsv",

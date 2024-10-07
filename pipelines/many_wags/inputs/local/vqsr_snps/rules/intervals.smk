@@ -118,6 +118,9 @@ if "nruns" in config['anchor_type']:
         params:
             nrun_length = config['nrun_length'],
             ref_fasta   = config['ref_fasta']
+        resources:
+            time = 60,
+            mem_mb = 20000        
         shell:
             '''
                 java -jar /opt/wags/src/picard.jar \
