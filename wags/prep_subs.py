@@ -56,7 +56,8 @@ refs = [
     "alpaca",
     "vicpac32",
     "ARS-UI_Ramb_v3.0",
-    "ARS1.2"
+    "ARS1.2",
+    "donkey.v2"
 ]
 
 # get config dir

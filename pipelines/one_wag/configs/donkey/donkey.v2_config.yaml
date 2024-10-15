@@ -1,0 +1,35 @@
+# INPUT AND SECONDARY 
+units   : input.tsv
+species : donkey
+ref     : donkey.v2
+bucket  : wags
+alias   : s3
+profile : slurm
+
+# SINGULARITY IMAGE
+sif : /path/to/wags.sif
+
+# SORTSAM TEMP DIR
+tmp_dir :
+  sort_tmp  : /path/to/proc/dir
+  fastq_tmp : /path/to/proc/dir
+
+# LEFT ALIGN BAM
+left_align : false
+
+# INTERVAL SIZE SCATTER
+nrun_length  : 50
+scatter_size : 50
+
+# REFERENCE FILES
+ref_dict  : Donkey_v2.dict
+ref_fasta : /home/refgen/donkey/donkey.v2/Donkey_v2.fa
+
+# RESOURCE FILES FOR BQSR (OPTIONAL)
+
+# SV CONDA ENVS
+conda_envs :
+  delly  : delly
+  gridss : gridss
+  smoove : smoove
+  manta  : manta
