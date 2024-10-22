@@ -1,0 +1,10 @@
+restart-times: 1
+jobscript: "local-jobscript.sh"
+cluster: null
+cluster-status: null
+jobs: 300
+max-jobs-per-second: 1
+max-status-checks-per-second: 5
+local-cores: 32
+latency-wait: 60
+keep-going: True

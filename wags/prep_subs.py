@@ -9,6 +9,7 @@ import gzip
 import lzma
 import yaml
 import glob
+import stat
 import shutil
 import string
 import textwrap
@@ -349,7 +350,7 @@ def main():
         submiss = os.path.join(v['work_dir'],f"{breed}_{sample_name}.{job_name}.{profile}")
         
         # SBATCH directives 
-        default_header = (
+        slurm_header = (
             "#!/bin/bash -l\n"
             f"#SBATCH -t {walltime}:00:00\n"
             "#SBATCH --nodes=1\n"
@@ -363,7 +364,8 @@ def main():
             f"#SBATCH -e slurm_logs/%j.{v['breed']}_{k}.{job_name}.err\n"
             f"#SBATCH -A {account}\n"
             f"#SBATCH -p {partition}\n"
-        )             
+        )
+
         lsf_header = (
             "#!/bin/bash -l\n"
             f"#BSUB -W {walltime}:00\n"
@@ -375,22 +377,30 @@ def main():
             f"#BSUB -e {profile}_logs/%J.{v['breed']}_{k}.{job_name}.err\n"
             f"#BSUB -q {partition}\n"
             f"#BSUB -B -N -u {email}\n"
-        ) 
+        )
+
+        local_header = (
+            "#!/bin/bash -l\n"
+        )
+
         # job submission body 
         with open(submiss, "w") as f:
-            if profile == 'lsf':
-                print(lsf_header, file=f)
-            else:
-                print(default_header, file=f)
-            print("set -e\n",file=f)
-            print(f"conda activate {snake_env}",file=f)
-            if profile != 'lsf':
-                print("cd $SLURM_SUBMIT_DIR\n",file=f)
+            # profile specific header
+            header = {'lsf': lsf_header, 'local': local_header}.get(profile, slurm_header)
+            print(header, file=f)
+
+            print("set -e\n", file=f)
+            if "local" not in profile:
+                print(f"conda activate {snake_env}", file=f)
+            
+            # slurm submit dir needed if using slurm cluster
+            if profile == "slurm":
+                print("cd $SLURM_SUBMIT_DIR\n", file=f)
 
             if ref not in refs:
-                print(f"REF_DIR={ref_dir}",end="",file=f)
+                print(f"REF_DIR={ref_dir}",end="", file=f)
             if money:
-                print(f"\nPOP_VCF={os.path.dirname(pop)}",end="",file=f)
+                print(f"\nPOP_VCF={os.path.dirname(pop)}",end="", file=f)
 
             print(
                 textwrap.dedent(
@@ -404,50 +414,68 @@ def main():
             # if ref in container, extract dictionary or generate from fasta 
             # if does not exist
             if ref in refs:
-                print("# extract reference dict from container",end="",file=f)
+                print("# extract reference dict from container", end="", file=f)
                 print(
                     textwrap.dedent(
                         f"""
                         singularity exec --bind $PWD {sif} \\
                             cp /home/refgen/{species}/{ref}/{ref_dict} $PWD
                         """
-                    ),file=f
+                    ), file=f
                 )
                 # added gap file from TK to use for T2T reference when public
                 if "Thoroughbred" in ref:
-                    print("# extract T2T gaps file from container",end="",file=f)
+                    print("# extract T2T gaps file from container", end="", file=f)
                     print(
                         textwrap.dedent(
                             f"""
                             singularity exec -B $PWD {sif} \\
                                 cp /home/refgen/horse/Thoroughbred/resources/TB-T2T_gaps.csv $PWD
                             """
-                        ),file=f
+                        ), file=f
                     )
-
-            print(
-                textwrap.dedent(
-                    f"""
-                    snakemake -s {snake_n} \\
-                        --use-singularity \\
-                        --singularity-args "-B $PWD,$REF_DIR,$POP_VCF,$FQ_DIR,$PROC_DIR" \\
-                        --profile {profile_n} \\
-                        --configfile {config_n} \\
-                        --keep-going
-                    """
-                ),file=f
-            ) 
+            if profile == "local":
+                print(
+                    textwrap.dedent(
+                        f"""
+                        conda run --live-stream -n {snake_env} snakemake -s {snake_n} \\
+                            --use-singularity \\
+                            --singularity-args "-B $PWD,$REF_DIR,$POP_VCF,$FQ_DIR,$PROC_DIR" \\
+                            --profile {profile_n} \\
+                            --configfile {config_n} \\
+                            --keep-going
+                        """
+                    ), file=f
+                ) 
+            else:
+                print(
+                    textwrap.dedent(
+                        f"""
+                        snakemake -s {snake_n} \\
+                            --use-singularity \\
+                            --singularity-args "-B $PWD,$REF_DIR,$POP_VCF,$FQ_DIR,$PROC_DIR" \\
+                            --profile {profile_n} \\
+                            --configfile {config_n} \\
+                            --keep-going
+                        """
+                    ), file=f
+                ) 
             
             if "s3" in remote:
-                print(f"# save {profile} err/out logs",end="",file=f)
+                print(f"# save {profile} err/out logs", end="", file=f)
                 print(
                     textwrap.dedent(
                         f"""
                         mc cp ./{profile}_logs/* \\
                             {alias}/{bucket}/wgs/{breed}/{sample_name}/{ref}/{profile}_logs/
                         """
-                    ),file=f
+                    ), file=f
                 )
+        
+        # make executable if local
+        if profile == 'local':
+            os.chmod(submiss, os.stat(submiss).st_mode | stat.S_IEXEC)
+
 
     plural = "sample"
     if len(d) > 1:
