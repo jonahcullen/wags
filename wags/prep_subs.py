@@ -274,7 +274,20 @@ def main():
             f"profiles/{profile}",
             profile_n
         )
-        
+       
+        # modify cores for local execution
+        if profile == "local":
+            tmp = os.path.join(profile_dir, 'config.yaml')
+            print(tmp)
+            cores = args.cores
+            with open(tmp, "r") as f:
+                local_config = yaml.safe_load(f)
+
+            local_config["local-cores"] = int(cores)
+
+            with open(tmp, "w") as f:
+                yaml.safe_dump(local_config, f)
+
         src = os.path.join(
             prep_dir,
             "pipelines",
@@ -612,6 +625,14 @@ if __name__ == '__main__':
         help=textwrap.dedent('''\
             wall time (hours) for main job runner
             [default: 48]
+        ''')
+    )
+    optional.add_argument(
+        "--cores",
+        default='16',
+        help=textwrap.dedent('''\
+            provide number of cores if local execution
+            [default: 16]
         ''')
     )
     optional.add_argument(
