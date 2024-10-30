@@ -1,0 +1,35 @@
+# INPUT AND SECONDARY 
+units   : input.tsv
+species : chicken
+ref     : GRCg7b
+bucket  : wags
+alias   : s3
+profile : slurm
+
+# SINGULARITY IMAGE
+sif : /path/to/wags.sif
+
+# SORTSAM TEMP DIR
+tmp_dir :
+  sort_tmp  : /path/to/proc/dir
+  fastq_tmp : /path/to/proc/dir
+
+# LEFT ALIGN BAM
+left_align : false
+
+# INTERVAL SIZE SCATTER
+nrun_length  : 50
+scatter_size : 50
+
+# REFERENCE FILES
+ref_dict  : GCF_016699485.2_GRCg7b_genomic_nice.dict
+ref_fasta : /home/refgen/chicken/GRCg7b/GCF_016699485.2_GRCg7b_genomic_nice.fa
+
+# RESOURCE FILES FOR BQSR (OPTIONAL)
+
+# SV CONDA ENVS
+conda_envs :
+  delly  : delly
+  gridss : gridss
+  smoove : smoove
+  manta  : manta

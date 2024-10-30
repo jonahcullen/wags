@@ -54,11 +54,11 @@ refs = [
     "goldenPath","Arabian","Shire","Thoroughbred",
     "tiger",
     "Fca126_mat1.0",
-    "alpaca",
-    "vicpac32",
+    "alpaca","vicpac32",
     "ARS-UI_Ramb_v3.0",
     "ARS1.2",
-    "donkey.v2"
+    "donkey.v2",
+    "GRCg7b"
 ]
 
 # get config dir
