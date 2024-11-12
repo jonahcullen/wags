@@ -26,6 +26,18 @@ refs = [
     "ARS1.2"
 ]
 
+# get config dir
+prep_dir = Path(__file__).resolve().parent.parent
+configs_dir = prep_dir / "pipelines" / "many_wags" / "configs"
+# put available configs into a dictionary
+config_d = {}
+for species_dir in configs_dir.iterdir():
+    if species_dir.is_dir():
+        for config_f in species_dir.iterdir():
+            if config_f.suffix == ".yaml":
+                species = config_f.stem.replace("_config", "")
+                config_d[species] = species_dir.name
+
 # https://stackoverflow.com/questions/2892931/longest-common-substring-from-more-than-two-strings
 def common_prefix(strings):
     '''
@@ -74,52 +86,57 @@ def main():
     
     # load known config
     prep_path = Path(__file__).resolve()
-    config_path = prep_path.parent.parent / f"pipelines/many_wags/configs/{config}_config.yaml"
+    config_path = prep_path.parent.parent / f"pipelines/many_wags/configs/{config_d[ref]}/{ref}_config.yaml"
     try:
         with open(config_path) as f:
             doc = yaml.safe_load(f)
     except FileNotFoundError:
         print(f"{config} does not exist - ensure correct path")
         
-    # update config with sif, mapping cohort, interval options, and temp dirs
+    # update config with user info, mapping cohort, interval options, and temp dirs
     doc['sif'] = sif
-    doc['joint_cohort'] = os.path.basename(gvcfs)
+    gvcf_name = Path(gvcfs).name
+    doc['joint_cohort'] = gvcf_name
     doc['date'] = datetime.today().strftime('%Y%m%d')
-    if os.path.isfile(gvcfs):
+    if Path(gvcfs).is_file():
         if validate_mapping(gvcfs):
-            doc['joint_cohort'] = os.path.join(outdir, os.path.basename(gvcfs))
+            doc['joint_cohort'] = str(Path(outdir) / gvcf_name)
+           #doc['joint_cohort'] = os.path.join(outdir, os.path.basename(gvcfs))
     else:
         sys.exit("mapping file (--gvcfs) does not exist - ensure correct path")
-    doc['tmp_dir']['sites_only_gather_vcf'] = os.path.join(outdir, '.sites_gather')
-    doc['tmp_dir']['unfilt_gather_vcf']     = os.path.join(outdir, '.unfilt_gather')
+    doc['tmp_dir']['sites_only_gather_vcf'] = str(Path(outdir) / ".sites_gather")
+    doc['tmp_dir']['unfilt_gather_vcf']     = str(Path(outdir) / ".unfilt_gather")
 
     # interval optional updates
     doc['anchor_type']     = anchor_type
     doc['nrun_length']     = int(nrun_length)
     doc['interval_length'] = int(ival_length)
     doc['scatter_size']    = int(scat_size)
+    
+    # other
+    doc['bucket']             = bucket
+    doc['alias']              = alias
+    doc['profile']            = profile
+    doc['snp_filter_level']   = snp_val
+    doc['indel_filter_level'] = indel_val
+    if phase is not None:
+        doc['phasing']  = true
+        doc['link_map'] = phase
 
     # get values from config
-    speces    = doc['species']
-    profile   = doc['profile']
-    alias     = doc['alias']
-    bucket    = doc['bucket']
-    ref       = doc['ref']
     ref_fasta = doc['ref_fasta']
     ref_dict  = doc['ref_dict']
     ref_gtf   = doc['ref_gtf']
 
     # dump modified config to outdir
-    os.makedirs(outdir, exist_ok=True)
-    config_out = os.path.join(outdir, os.path.basename(config))
+    Path(outdir).mkdir(parents=True, exist_ok=True)
+    config_out = str(Path(outdir) / f"{ref}_config.yaml")
     with open(config_out,'w') as f:
         yaml.dump(doc, f, sort_keys=False)
 
     # prepare outdir with pipeline inputs and profile
-    # create jobs dir if not exist
-    jobs = os.path.join(outdir, f"{profile}_logs")
-    if not os.path.exists(jobs):
-        os.makedirs(jobs)
+    jobs = Path(outdir) / f"{profile}_logs"
+    jobs.mkdir(parents=True, exist_ok=True)
 
     # input templates
     pipeline  = "many_wags"
@@ -128,65 +145,63 @@ def main():
     profile_n = f"{profile}.go_wags"
 
     # copy snakefile, rules, config, and profile to working dir
-    prep_dir = os.path.dirname(os.path.realpath(__file__))
-    smk = os.path.join(
-        str(Path(prep_dir).parents[0]),
-        "pipelines",
-        pipeline,
-        f"inputs/{remote}/{recal}",
-        snake_n
+    prep_dir = Path(__file__).resolve().parent
+
+    smk = (
+        prep_dir.parents[0]
+        / "pipelines/many_wags"
+        / f"inputs/{remote}/{recal}"
+        / snake_n
+    ) 
+    
+    rules = (
+        prep_dir.parents[0]
+        / "pipelines/many_wags"
+        / f"inputs/{remote}/{recal}"
+        / rules
     )
     
-    rules = os.path.join(
-        str(Path(prep_dir).parents[0]),
-        "pipelines",
-        pipeline,
-        f"inputs/{remote}/{recal}",
-        rules
+    profile_dir = (
+        prep_dir.parents[0]
+        / f"profiles/{profile}"
+        / profile_n
     )
     
-    profile_dir = os.path.join(
-        str(Path(prep_dir).parents[0]),
-        f"profiles/{profile}",
-        profile_n
+    src = (
+        prep_dir.parents[0]
+        / "pipelines/many_wags"
+        / "src"
     )
     
-    src = os.path.join(
-        str(Path(prep_dir).parents[0]),
-        "pipelines",
-        pipeline,
-        "src"
-    )
+    input_names = [snake_n, "rules", profile_n, "src"]
+    dst_files = [str(Path(outdir) / i) for i in input_names]
     
-    input_names = [snake_n,"rules",profile_n,"src"]
-    dst_files = [os.path.join(outdir,i) for i in input_names]
-    
-    for i in zip([smk,rules,profile_dir,src],dst_files):
-        if not os.path.exists(i[1]):
-            if os.path.isfile(i[0]):
+    for i in zip([smk, rules, profile_dir, src], dst_files):
+        if not Path(i[1]).exists():
+            if Path(i[0]).is_file():
                 shutil.copy(i[0],i[1])
             else:
                 shutil.copytree(i[0],i[1])
                 # modify profile profile-submit.py for user-supplied parition
-                if f"{profile}.go_wags" in i[0]:
+                if f"{profile}.go_wags" in str(i[0]):
                     if profile == 'lsf':
-                        job_sub = os.path.join(i[1],f"{profile}_submit.py")
+                        job_sub = str(Path(i[1]) / f"{profile}_submit.py")
                     else:
-                        job_sub = os.path.join(i[1],f"{profile}-submit.py")
-                    with fileinput.FileInput(job_sub,inplace=True,backup=".bak") as file:
+                        job_sub = str(Path(i[1]) / f"{profile}-submit.py")
+                    with fileinput.FileInput(job_sub, inplace=True, backup=".bak") as file:
                         for line in file:
                             line = line.replace("DUMMY_PAR",partition)
                             line = line.replace("DUMMY_ACC",account)
                             print(line,end='')
 
     # copy gvcfs to output
-    dst_gvcf = os.path.join(outdir, os.path.basename(gvcfs))
-    if not os.path.isfile(dst_gvcf):
+    dst_gvcf = Path(outdir) / gvcf_name
+    if not dst_gvcf.is_file():
         shutil.copy(gvcfs, dst_gvcf)
 
     # submission destination
     job_name = snake_n.split('.')[0]
-    gvcf_base = os.path.splitext(os.path.basename(gvcfs))[0]
+    gvcf_base = Path(gvcfs).stem
     submiss = os.path.join(outdir, f"{gvcf_base}_{ref}.{job_name}.{profile}")
      
     # sbatch directives 
@@ -240,37 +255,37 @@ def main():
                 ),file=f
             )
 
-        if ref not in refs:
-            print(f"FASTA_DIR={Path(ref_fasta).parent}\n", end="", file=f)
-            print(f"DICT_DIR={Path(ref_dict).parent}\n", end="", file=f)
-            print(f"GTF_DIR={Path(ref_gtf).parent}\n", end="", file=f)
+       #if ref not in refs:
+       #    print(f"FASTA_DIR={Path(ref_fasta).parent}\n", end="", file=f)
+       #    print(f"DICT_DIR={Path(ref_dict).parent}\n", end="", file=f)
+       #    print(f"GTF_DIR={Path(ref_gtf).parent}\n", end="", file=f)
 
-            print(
-                textwrap.dedent(
-                    f"""
-                    snakemake -s {snake_n} \\
-                        --use-singularity \\
-                        --singularity-args "-B $PWD,$FASTA_DIR,$DICT_DIR,$GTF_DIR" \\
-                        --profile {profile_n} \\
-                        --configfile {os.path.basename(config)} \\
-                        --keep-going
-                    """
-                ),file=f
-            ) 
-        else:     # NOTE - THE GVCF DIR IS HARDCODED BELOW AND NEEDS TO BE FIXED BY CHECKING THE GVCF FILE       
-            print(
-                textwrap.dedent(
-                    f"""
-                    GVCF_DIR={validate_mapping(gvcfs)}
-                    snakemake -s {snake_n} \\
-                        --use-singularity \\
-                        --singularity-args "-B $PWD,$GVCF_DIR" \\
-                        --profile {profile_n} \\
-                        --configfile {os.path.basename(config)} \\
-                        --keep-going
-                    """
-                ),file=f
-            ) 
+       #    print(
+       #        textwrap.dedent(
+       #            f"""
+       #            snakemake -s {snake_n} \\
+       #                --use-singularity \\
+       #                --singularity-args "-B $PWD,$FASTA_DIR,$DICT_DIR,$GTF_DIR" \\
+       #                --profile {profile_n} \\
+       #                --configfile {os.path.basename(ref)} \\
+       #                --keep-going
+       #            """
+       #        ),file=f
+       #    ) 
+       #else:     # NOTE - THE GVCF DIR IS HARDCODED BELOW AND NEEDS TO BE FIXED BY CHECKING THE GVCF FILE       
+        print(
+            textwrap.dedent(
+                f"""
+                GVCF_DIR={validate_mapping(gvcfs)}
+                snakemake -s {snake_n} \\
+                    --use-singularity \\
+                    --singularity-args "-B $PWD,$GVCF_DIR" \\
+                    --profile {profile_n} \\
+                    --configfile {ref}_config.yaml \\
+                    --keep-going
+                """
+            ),file=f
+        ) 
             
         if "s3" in remote:
             print(f"# save {profile} err/out logs",end="",file=f)
@@ -309,19 +324,37 @@ if __name__ == '__main__':
         formatter_class=argparse.RawTextHelpFormatter
     )
     
+    # list avilable species and configs and exit
+    parser.add_argument(
+        "--configs",
+        action="store_true",
+        help="list all available species and assemblies (configs)"
+    )
+
+    args, unknown = parser.parse_known_args()
+
+    if args.configs:
+        print("available species and assemblies (configs):")
+        for k,v in sorted(config_d.items(), key=lambda x: (x[1], x[0])):
+            print(f"  {k:20} ({v})")
+        sys.exit(0)
+
+    # define required only if --configs was not used
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
     
     required.add_argument(
-        "-c", "--config",
+        "-r", "--ref",
         default=argparse.SUPPRESS,
         metavar="\b",
         required=True,
-        help=textwrap.dedent(f"""\
-            either the reference name if listed below OR 
-            path to config file generated by config_joint.py
+        help=textwrap.dedent(f'''\
+            select reference to use: 
                 {", ".join(refs)}
-        """)
+            if using custom reference, ensure provided name
+            is exact match to name (--ref) used with 
+            prep_custom_ref.py
+        ''')
     )
     required.add_argument(
         "-g", "--gvcfs",
@@ -332,6 +365,16 @@ if __name__ == '__main__':
             path to file with mapping of sample name to
             gvcf in tab delimited format with no header
         """)
+    )
+    required.add_argument(
+        "-b", "--bucket",
+        default=argparse.SUPPRESS,
+        metavar="\b",
+        required=True,
+        help=textwrap.dedent('''\
+            results directory or bucket name if using
+            --remote s3
+        ''')
     )
     required.add_argument(
         "-s", "--snake-env",
@@ -441,6 +484,16 @@ if __name__ == '__main__':
         ''')
     )
     optional.add_argument(
+        "--snp-tranche-level",
+        default="99.0",
+        help="truth sensitivity level for snp filtering (vqsr only) [default: 99.0]",
+    )
+    optional.add_argument(
+        "--indel-tranche-level",
+        default="99.0",
+        help="truth sensitivity level for indel filtering (vqsr only) [default: 99.0]",
+    )
+    optional.add_argument(
         "--profile",
         default="slurm",
         help="HPC job scheduler [default: slurm]",
@@ -452,6 +505,16 @@ if __name__ == '__main__':
         help="save outputs to remote: S3, SFTP [default: local]",
     )
     optional.add_argument(
+        "--alias",
+        default="s3",
+        help="minio client S3 storage alias [default: s3]"
+    )
+    optional.add_argument(
+        "--phase",
+        metavar="\b",
+        help="path to linkage map to phase final vcf [default: false]"
+    )
+    optional.add_argument(
         "-h", "--help",
         action="help",
         default=argparse.SUPPRESS,
@@ -459,8 +522,9 @@ if __name__ == '__main__':
     )
 
     args        = parser.parse_args()
-    config      = args.config
+    ref         = args.ref
     gvcfs       = args.gvcfs
+    bucket      = args.bucket
     snps        = args.vqsr_snps
     indels      = args.vqsr_indels
     outdir      = os.path.realpath(os.path.expanduser(args.out))
@@ -472,10 +536,14 @@ if __name__ == '__main__':
     sif         = args.sif
     profile     = args.profile
     remote      = args.remote.lower()
+    alias       = args.alias
     anchor_type = args.anchor_type.lower()
     nrun_length = args.nrun_length
     scat_size   = args.scatter_size
     ival_length = args.interval_length
+    snp_val     = args.snp_tranche_level
+    indel_val   = args.indel_tranche_level
+    phase       = args.phase
 
     # based on snps/indels, define pipeline
     recal = "vqsr_none"
@@ -490,6 +558,22 @@ if __name__ == '__main__':
     else:
         print("wags image not found - confirm location")
         sys.exit(1)
+    
+    # check if user ref available
+    if ref not in config_d:
+        avail_refs = sorted(config_d.keys())
+        print(f"\nERROR: reference '{ref}' not found in available configs")
+        # get possible matches
+        poss_matches = [i for i in avail_refs if i.startswith(ref[:3])]
+        # and handle
+        if poss_matches:
+            print(f"did you mean one of these: {', '.join(poss_matches)}")
+        else:
+            print("no similar ref found")
+
+        # show how to list all available configs
+        print("\nto see available species and assemblies (configs), run the following command:")
+        print("    python prep_many.py --configs\n")
 
     main()
         

@@ -762,7 +762,7 @@ if __name__ == '__main__':
 
         # show how to list all available configs
         print("\nto see available species and assemblies (configs), run the following command:")
-        print("    python prep_subs.py --species\n")
+        print("    python prep_subs.py --configs\n")
 
         sys.exit(1)
 
