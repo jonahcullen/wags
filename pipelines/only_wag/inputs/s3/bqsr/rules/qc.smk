@@ -176,38 +176,6 @@ rule bcftools_plot:
                 {input.all_stats}
         '''
 
-#rule qc_cohort:
-#    input:
-#        html_veps = sorted(
-#            expand(
-#                "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/vep/wags_{interval}/recal.{interval}.vep.vcf_summary.html", 
-#                bucket=config['bucket'],
-#                ref=config['ref'],
-#                date=config['date'],
-#                interval=[str(i).zfill(4) for i in range(0,config['num_intervals']+1)]
-#            )
-#        ),
-#        len_barplt      = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/intervals/interval_lengths_mqc.tiff"),
-#        all_stats       = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort.{ref}.vchk"),
-#        summary         = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort/summary.pdf"),
-#        detail_metrics  = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort.variant_calling_detail_metrics"),
-#        summary_metrics = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/{ref}_{date}_cohort.variant_calling_summary_metrics"),
-#    output: 
-#        S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/final_gather/multiqc_report.html")
-#    params:
-#        outdir = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/"
-#    threads: 4
-#    resources:
-#        time   = 360,
-#        mem_mb = 12000
-#    shell:
-#        '''
-#            multiqc {wildcards.bucket} \
-#                --interactive \
-#                --force \
-#                -o {params.outdir}
-#        '''
-
 rule multiqc:
     input:
         r1_zip          = S3.remote(expand(

@@ -77,7 +77,6 @@ def get_common_vcfs(wildcards):
     INTERVALS, = glob_wildcards(os.path.join(ivals_dir,"{interval}-scattered.interval_list"))
     # return list of split intervals recal.vcf.gz
     return sorted(expand(
-       #"{bucket}/wgs/{breed}/{sample_name}/{ref}/money/common/wags_{vep_interval}/common_{vep_interval}.vep.vcf.gz",
         "common/common_intervals/scattered/common_{common_interval}.vep.vcf.gz",
         common_interval = INTERVALS
     ))
@@ -92,8 +91,6 @@ if not os.path.isfile(config['common_vcf']):
             common_vcf = config['common_vcf'],
             common_tbi = config['common_vcf']+'.tbi'
         params:
-           #vcf_tmp = 'hello',
-           #vcf_tmp = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/common/common_gather/joint_genotype.{ref}.TMP.gz",
             vcf_tmp = "common/common_vars.TMP.gz",
             commons = lambda wildcards, input: " --input ".join(map(str,input)),
         threads: 12

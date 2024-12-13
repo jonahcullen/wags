@@ -254,7 +254,12 @@
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
     },
-    "final_output" :
+    "reformat_vep_split" :
+    {
+        "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
+    },
+    "convert_to_excel" :
     {
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"

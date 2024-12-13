@@ -19,8 +19,6 @@ rule gather_unfltr_vcf:
     input:
         get_unfiltered_vcfs
     output:
-       #var_unfiltered_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/unfltr_vcf/all_vars.vcf.gz",
-       #var_unfiltered_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/unfltr_vcf/all_vars.vcf.gz.tbi"
         var_unfiltered_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/unfltr_vcf/all_vars.vcf.gz",
         var_unfiltered_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/unfltr_vcf/all_vars.vcf.gz.tbi"
     params:
@@ -54,8 +52,6 @@ rule gather_unfltr_vcf:
 
 rule select_nonsnps:
     input:
-       #var_unfiltered_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/unfltr_vcf/all_vars.vcf.gz",
-       #var_unfiltered_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/unfltr_vcf/all_vars.vcf.gz.tbi"
         var_unfiltered_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/unfltr_vcf/all_vars.vcf.gz",
         var_unfiltered_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/unfltr_vcf/all_vars.vcf.gz.tbi"
     output:
@@ -76,8 +72,6 @@ rule select_nonsnps:
 
 rule select_snps:
     input:
-       #var_unfiltered_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/unfltr_vcf/all_vars.vcf.gz",
-       #var_unfiltered_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/unfltr_vcf/all_vars.vcf.gz.tbi"
         var_unfiltered_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/unfltr_vcf/all_vars.vcf.gz",
         var_unfiltered_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/unfltr_vcf/all_vars.vcf.gz.tbi"
     output:
