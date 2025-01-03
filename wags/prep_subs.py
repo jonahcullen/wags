@@ -400,7 +400,6 @@ def main():
 
         # job submission body 
         with open(submiss, "w") as f:
-<<<<<<< Updated upstream
             # profile specific header
             header = {'lsf': lsf_header, 'local': local_header}.get(profile, slurm_header)
             print(header, file=f)
@@ -412,16 +411,6 @@ def main():
             # slurm submit dir needed if using slurm cluster
             if profile == "slurm":
                 print("cd $SLURM_SUBMIT_DIR\n", file=f)
-=======
-            if profile == 'lsf':
-                print(lsf_header, file=f)
-            else:
-                print(default_header, file=f)
-            print("set -e\n",file=f)
-            print(f"module load apptainer\nconda activate {snake_env}",file=f)
-            if profile != 'lsf':
-                print("cd $SLURM_SUBMIT_DIR\n",file=f)
->>>>>>> Stashed changes
 
             if ref not in refs:
                 print(f"REF_DIR={ref_dir}",end="", file=f)
