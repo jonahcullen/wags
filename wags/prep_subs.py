@@ -305,7 +305,7 @@ def main():
         species  = doc['species']
         ref_dict = doc['ref_dict']
         fasta    = doc['ref_fasta']
-        
+ 
         # update sif and other cli args
         doc['profile'] = profile
         doc['sif']     = sif
@@ -322,6 +322,17 @@ def main():
         # for private variant analysis, add pop.vcf and common.vcf path
         if money:
             doc['pop_vcf']     = pop
+
+            #lines to find a gtf for custom ref, it could probably be made better
+            if gtf:
+                doc['ref_gtf'] = gtf 
+            else:
+                try:
+                    doc['ref_gtf'] = doc['ref_gtf']
+                except Exception as ex:
+                    print("Could not find gtf, if using custom ref, provide path to gtf")
+                    sys.exit(1)
+
             doc['common_vcf']  = common
             doc['allele_freq'] = float(allele_freq)
             doc['tmp_dir']['select_variants_to_table'] = os.path.join(
@@ -717,6 +728,11 @@ if __name__ == '__main__':
         ''')
     )
     optional.add_argument(
+        "--gtf",
+        default=None,
+        help="if custom ref, reference gtf (only wags pipeline) [default: None]"
+    )
+    optional.add_argument(
         "-h", "--help",
         action="help",
         default=argparse.SUPPRESS,
@@ -747,13 +763,13 @@ if __name__ == '__main__':
     no_bqsr     = args.no_bqsr
     left_align  = args.left_align
     sv_call     = args.sv
+    gtf         = args.gtf
 
     # QUICK FIX FOR goldenPath - NEED TO ADJUST CONTAINER TO BE horse/goldenpath
    #if "golden" in ref:
    #    ref = "goldenPath"
 
-    if ref not in config_d and ref_dir == "~/.wags/": 
-        print(config_d, ref_dir, ref)
+    if ref not in config_d and ref_dir == "~/.wags/":  
         avail_refs = sorted(config_d.keys())
         print(f"\nERROR: reference '{ref}' not found in available configs")
         # get possible matches
