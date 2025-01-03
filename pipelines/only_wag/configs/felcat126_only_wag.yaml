@@ -1,0 +1,46 @@
+# INPUT AND SECONDARY 
+units   : input.tsv
+species : cat
+ref     : felcat126
+bucket  : wags
+alias   : s3
+profile : lsf
+
+# SINGULARITY IMAGE
+sif : /path/to/wags.sif
+
+# SORTSAM TEMP DIR
+tmp_dir :
+  sort_tmp  : /path/to/proc/dir
+  fastq_tmp : /path/to/proc/dir
+
+# LEFT ALIGN BAM
+left_align : false
+
+# INTERVAL SIZE SCATTER
+nrun_length  : 50
+scatter_size : 50
+
+# REFERENCE FILES
+ref_dict  : UU_Cfam_GSD_1.0_ROSY.dict
+ref_fasta : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/UU_Cfam_GSD_1.0_ROSY.fa
+ref_gtf   : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/UU_Cfam_GSD_1.0_ROSY.refSeq.ensformat.gtf.gz
+
+# RESOURCE FILES FOR BQSR (OPTIONAL)
+known_sites :
+  dog10k_bed : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/UU_Cfam_GSD_1.0.BQSR.DB.bed.gz
+
+# ALLELE FREQUENCY FOR COMPARISON TO POPULATION
+allele_freq : 0.005
+
+# NOTE DO WE NEED THESE?
+# RESOURCE FILES (FROM CONTAINER)
+k9hd_axiom_vcf : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/SRZ189891_722g.simp.header.CanineHDandAxiom_K9_HD.GSD_1.0.vcf.gz
+coverage_sites : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/SRZ189891_722g.simp.header.CanineHD.names.GSD_1.0.filter.vcf.gz
+
+# SV CONDA ENVS
+conda_envs :
+  delly  : delly
+  gridss : gridss
+  smoove : smoove
+  manta  : manta

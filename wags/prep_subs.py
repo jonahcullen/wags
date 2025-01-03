@@ -252,14 +252,7 @@ def main():
             f"inputs/{remote}/{bqsr}",
             rules
         )
-        config = os.path.join(
-            prep_dir,
-            "pipelines",
-            pipeline,
-            "configs",
-            config_d[ref],
-            config_n
-        )
+ 
         # selected reference not in container, presumed prep_custom_ref.py already
         # executed
         # NEEDS TO BE FIXED ALONG WITH prep_custom_ref.py TO FORCE THE CONFIG DIR
@@ -268,6 +261,15 @@ def main():
             tmp = glob.glob(f"{ref_dir}/**/{ref}_config.yaml",recursive=True)
             assert tmp, f"config not found for {ref}, ensure prep_custom_ref.py ran successfully and check ref_dir"
             config = tmp[0]
+        else:
+            config = os.path.join(
+                prep_dir,
+                "pipelines",
+                pipeline,
+                "configs",
+                config_d[ref],
+                config_n
+            )
     
         profile_dir = os.path.join(
             prep_dir,
@@ -398,6 +400,7 @@ def main():
 
         # job submission body 
         with open(submiss, "w") as f:
+<<<<<<< Updated upstream
             # profile specific header
             header = {'lsf': lsf_header, 'local': local_header}.get(profile, slurm_header)
             print(header, file=f)
@@ -409,6 +412,16 @@ def main():
             # slurm submit dir needed if using slurm cluster
             if profile == "slurm":
                 print("cd $SLURM_SUBMIT_DIR\n", file=f)
+=======
+            if profile == 'lsf':
+                print(lsf_header, file=f)
+            else:
+                print(default_header, file=f)
+            print("set -e\n",file=f)
+            print(f"module load apptainer\nconda activate {snake_env}",file=f)
+            if profile != 'lsf':
+                print("cd $SLURM_SUBMIT_DIR\n",file=f)
+>>>>>>> Stashed changes
 
             if ref not in refs:
                 print(f"REF_DIR={ref_dir}",end="", file=f)
@@ -750,7 +763,8 @@ if __name__ == '__main__':
    #if "golden" in ref:
    #    ref = "goldenPath"
 
-    if ref not in config_d:
+    if ref not in config_d and ref_dir == "~/.wags/": 
+        print(config_d, ref_dir, ref)
         avail_refs = sorted(config_d.keys())
         print(f"\nERROR: reference '{ref}' not found in available configs")
         # get possible matches
