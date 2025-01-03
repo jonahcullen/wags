@@ -1,7 +1,7 @@
 
 rule reformat_vep_split:
     input:
-        vep_vcf   = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz"),
+        vep_vcf   = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz",
         vep_split = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.{var_type}_vars.vep_split.txt",
     output:
         reform = "{bucket}/compare_pop/final_output/{ref}/{breed}_{sample_name}.{ref}.{var_type}_vars.vep_split.reform.txt",
