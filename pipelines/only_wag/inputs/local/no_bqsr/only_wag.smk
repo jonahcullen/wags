@@ -54,7 +54,7 @@ rule all:
         ),
         #money archive
         expand(
-            "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/{breed}_{sample_name}.{ref}.FEL_MM.tar.gz",
+            "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/{breed}_{sample_name}.{ref}.MM.tar.gz",
             bucket=config['bucket'],
             breed=breed,
             sample_name=sample_name,
