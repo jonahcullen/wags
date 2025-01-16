@@ -1,0 +1,72 @@
+joint_cohort: gvcfs.tsv
+species: cat
+ref: Fca126_nice
+date: ''
+bucket: friedlab
+alias: s3
+profile: slurm
+sif: /home/fried255/cull0084/.sif/wags.sif
+conda_envs:
+  qc: bcftools
+anchor_type: nruns
+nrun_length: 50
+interval_length: 10000000
+batch_size: 50
+ref_fasta: /home/refgen/cat/Fca126/Fca126_mat1.0.nice.fna
+ref_dict: /home/refgen/cat/Fca126/Fca126_mat1.0.nice.dict
+ref_gtf: /home/refgen/cat/Fca126/MISSING.gft
+tmp_dir:
+  sites_only_gather_vcf: /path/to/.sites_gather
+  unfilt_gather_vcf: /path/to/.unfilt_gather
+snp_recalibration_tranche_values:
+- '100.0'
+- '99.95'
+- '99.9'
+- '99.5'
+- '99.0'
+- '98.0'
+- '97.0'
+- '96.0'
+- '95.0'
+- '94.0'
+- '93.0'
+- '92.0'
+- '91.0'
+- '90.0'
+snp_recalibration_annotation_values:
+- QD
+- MQRankSum
+- ReadPosRankSum
+- FS
+- MQ
+- SOR
+- DP
+snp_filter_level: '99.0'
+indel_recalibration_tranche_values:
+- '100.0'
+- '99.95'
+- '99.9'
+- '99.5'
+- '99.0'
+- '98.0'
+- '97.0'
+- '96.0'
+- '95.0'
+- '94.0'
+- '93.0'
+- '92.0'
+- '91.0'
+- '90.0'
+indel_recalibration_annotation_values:
+- FS
+- ReadPosRankSum
+- MQRankSum
+- QD
+- SOR
+- DP
+indel_filter_level: '99.0'
+#snp_array: /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/SRZ189891_722g.simp.header.CanineHDandAxiom_K9_HD.GSD_1.0.vcf.gz
+#coverage_sites: /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/SRZ189891_722g.simp.header.CanineHD.names.GSD_1.0.filter.vcf.gz
+coverage_sites: ''
+phasing: false
+link_map: /home/refgen/cat/Fca126/MISSING.linkage.map

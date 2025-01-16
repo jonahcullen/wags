@@ -20,7 +20,7 @@ refs = [
     "canfam3","canfam4","UU_Cfam_GSD_1.0_ROSY",
     "goldenPath","Arabian","Shire","Thoroughbred",
     "tiger",
-    "Fca126_mat1.0",
+    "Fca126_mat1.0","Fca126_nice",
     "alpaca",
     "ARS-UI_Ramb_v3.0",
     "ARS1.2"
