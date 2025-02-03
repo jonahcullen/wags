@@ -4,7 +4,7 @@ rule reformat_vep_split:
         vep_vcf   = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz",
         vep_split = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.{var_type}_vars.vep_split.txt",
     output:
-        reform = "{bucket}/compare_pop/final_output/{ref}/{breed}_{sample_name}.{ref}.{var_type}_vars.vep_split.reform.txt",
+        reform = "{bucket}/compare_pop/final_output/{ref}/{breed}_{sample_name}.{ref}.{var_type}_vars.vep_split.reform.tsv",
     threads: 1
     resources:
          time   = 30,
@@ -35,7 +35,7 @@ rule reformat_vep_split:
 rule convert_to_excel:
     input:
         reforms = expand(
-            "{bucket}/compare_pop/final_output/{ref}/{breed}_{sample_name}.{ref}.{var_type}_vars.vep_split.reform.txt",
+            "{bucket}/compare_pop/final_output/{ref}/{breed}_{sample_name}.{ref}.{var_type}_vars.vep_split.reform.tsv",
             bucket=config['bucket'],
             breed=breed,
             sample_name=sample_name,
@@ -51,6 +51,11 @@ rule convert_to_excel:
     run:
         import pandas as pd
 
+        def drop_empties(df):
+            missing_mask = df.isin(['.', '..', ''])
+            drop_cols = df.columns[missing_mask.all()]
+            return df.drop(columns=drop_cols)
+
         dfs = {}
         # read each input reform vep split into a df
         for i in input.reforms:
@@ -62,6 +67,17 @@ rule convert_to_excel:
                     print(f"Headers are correctly aligned for {var_type}.")
                 else:
                     raise ValueError(f"Headers misaligned in {i}. Check the file format.")
+                
+                # drop variants in unassembled contigs
+                df = df[~df['chrom'].str.startswith('chrUn_')]
+                print("dropped variants on unassembled contigs")
+
+                # drop empty columns
+                orig_cols = df.shape[1]
+                df = drop_empties(df)
+                removed_cols = orig_cols - df.shape[1]
+
+                print(f"dropped {removed_cols} columns with all missing values")
                 print(f"df for {var_type} head:\n{df.head()}")
             except Exception as e:
                 print(f"error reading file {i}: {e}")
