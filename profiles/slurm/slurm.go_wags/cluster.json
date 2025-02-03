@@ -246,6 +246,16 @@
     },
     "select_variants_to_table" :
     {
+        "output" : ".logs/{rule}/{wildcards.ref}/{wildcards.split}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.ref}/{wildcards.split}/%j.{rule}.err"
+    },
+    "merge_uniq_vcfs" :
+    {
+        "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
+    },
+    "merge_rare_vcfs" :
+    {
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
     },

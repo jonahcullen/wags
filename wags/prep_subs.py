@@ -138,11 +138,15 @@ def find_r2s(name, fq_dir):
     matched = []
 
     for f in Path(fq_dir).rglob(f"{name}*"):
-        is_r2 = any(str(f).endswith(indicator) for indicator in r2_patterns)
-        is_not_r1 = not any(str(f).endswith(indicator) for indicator in r1_patterns)
-        
-        if is_r2 and is_not_r1:
-            matched.append(f)
+
+        filename = f.name
+        # only consider files that start with the exact fastq name
+        if filename.startswith(name):
+            is_r2 = any(str(f).endswith(indicator) for indicator in r2_patterns)
+            is_not_r1 = not any(str(f).endswith(indicator) for indicator in r1_patterns)
+
+            if is_r2 and is_not_r1:
+                matched.append(f)
 
     matched = [f for f in matched if not f.name.endswith('.md5')]
 
