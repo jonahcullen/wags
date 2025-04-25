@@ -451,7 +451,7 @@ if __name__ == '__main__':
             anchor type for generating intervals.
             'intergenic' requires an annotation file
             (e.g. gff/gtf) to be included during
-            config_joint.py setup [options: nruns, intergenic, chroms]
+            config_joint.py setup [options: nruns, intergenic, chroms, patched]
         ''')
     )
     optional.add_argument(

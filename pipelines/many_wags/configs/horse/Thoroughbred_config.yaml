@@ -1,10 +1,10 @@
 joint_cohort : gvcfs.tsv
-species      : horse
-ref          : Thoroughbred
-date         : ''
-bucket       : ''
-alias        : s3
-profile      : ''
+species : horse
+ref : Thoroughbred
+date : ''
+bucket : ''
+alias : s3
+profile : ''
 
 # SINGULARITY IMAGE
 sif : /home/fried255/cull0084/.sif/wags.sif
@@ -16,7 +16,7 @@ conda_envs :
 # INTERVAL ANCHOR METHOD
 anchor_type : nruns
 # INTERVAL SIZES
-nrun_length     : 50
+nrun_length : 50
 interval_length : 10000000
 
 # DB IMPORT
@@ -24,22 +24,24 @@ batch_size : 50
 
 # REFERENCE FILES
 ref_fasta : /home/refgen/horse/Thoroughbred/T2T_TB.v5.fa
-ref_dict  : /home/refgen/horse/Thoroughbred/T2T_TB.v5.dict
-ref_gtf   : /home/refgen/horse/Thoroughbred/MISSING.gtf
+ref_dict : /home/refgen/horse/Thoroughbred/T2T_TB.v5.dict
+ref_gtf : /home/refgen/horse/Thoroughbred/GCF_041296265.1_TB-T2T_genomic.nice.sorted.gtf.gz
+map_gaps : /home/refgen/horse/Thoroughbred/resources/TB-T2T_gaps.csv
+var_deserts : /home/refgen/horse/Thoroughbred/resources/TB-T2T_deserts.csv
 
 # TMP DIRS
 tmp_dir :
   sites_only_gather_vcf : /path/to/.sites_gather
-  unfilt_gather_vcf     : /path/to/.unfilt_gather
+  unfilt_gather_vcf : /path/to/.unfilt_gather
 
 # RECAL
-snp_recalibration_tranche_values    : [
+snp_recalibration_tranche_values : [
   "100.0", "99.95", "99.9", "99.5", "99.0", "98.0", 
   "97.0", "96.0", "95.0", "94.0", "93.0", "92.0", "91.0", "90.0"]
 snp_recalibration_annotation_values : ["QD", "MQRankSum", "ReadPosRankSum", "FS", "MQ", "SOR", "DP"]
 snp_filter_level   : 99.0
 
-indel_recalibration_tranche_values    : [
+indel_recalibration_tranche_values : [
   "100.0", "99.95", "99.9", "99.5", "99.0", "98.0", 
   "97.0", "96.0", "95.0", "94.0", "93.0", "92.0", "91.0", "90.0"]
 indel_recalibration_annotation_values : ["FS", "ReadPosRankSum", "MQRankSum", "QD", "SOR", "DP"]

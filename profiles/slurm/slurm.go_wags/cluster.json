@@ -379,4 +379,9 @@
         "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
     },
+    "desert_bed_to_interval_list" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    }
 }
