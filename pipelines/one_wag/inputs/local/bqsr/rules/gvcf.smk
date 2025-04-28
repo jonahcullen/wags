@@ -141,7 +141,7 @@ rule haplotype_caller:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/benchmarks/{sample_name}.{split}.hc.benchmark.txt"
     threads: 4
     resources:
-         time   = 1080,
+         time   = 1440,
          mem_mb = 26000
     shell:
         '''

@@ -76,7 +76,7 @@ def main():
         print(f"backup of the original {config_n} created at {bak_config_out}")
     with open(config_out,'w') as f:
         yaml.dump(doc, f, sort_keys=False)
-        print(f"{ref}_config.yaml saved to {outdir}")
+        print(f"{ref} saved to {outdir}")
 
 if __name__ == '__main__':
     
