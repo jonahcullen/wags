@@ -400,9 +400,8 @@ def main():
             "#BSUB -R rusage[mem=12GB]\n"
             f"#BSUB -J {v['breed']}_{k}.{job_name}.{profile}\n"
             f"#BSUB -o {profile}_logs/%J.{v['breed']}_{k}.{job_name}.out\n"
-            f"#BSUB -e {profile}_logs/%J.{v['breed']}_{k}.{job_name}.err\n"
-            f"#BSUB -q {partition}\n"
-            f"#BSUB -B -N -u {email}\n"
+            f"#BSUB -e {profile}_logs/%J.{v['breed']}_{k}.{job_name}.err\n\n"
+            "module load apptainer"
         )
 
         local_header = (

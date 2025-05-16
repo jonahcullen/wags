@@ -38,10 +38,10 @@ rule sv_delly_filter:
         sv_csi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.{sv_type}.filter_delly.bcf.gz.csi"
     benchmark:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.{sv_type}.delly.filter.benchmark.txt"
-    threads: 12
+    threads: 2
     resources:
-         time   = 1440,
-         mem_mb = 60000
+         time   = 120,
+         mem_mb = 40000
     shell:
         '''
             # filter for pass and save as compressed bcf
@@ -170,9 +170,9 @@ rule sv_smoove:
         conda_env = config['conda_envs']['smoove'],
     benchmark:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.sv_smoove.benchmark.txt"
-    threads: 4
+    threads: 2
     resources:
-         time   = 1440,
+         time   = 4320,
          mem_mb = 60000
     shell:
         '''
@@ -211,9 +211,9 @@ rule sv_manta:
         ref_fasta   = config['ref_fasta'],
     benchmark:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/{sample_name}.manta.benchmark.txt"
-    threads: 24
+    threads: 12
     resources:
-         time   = 1440,
+         time   = 700,
          mem_mb = 60000,
     shell:
         '''

@@ -38,10 +38,10 @@ rule sv_delly_filter:
         sv_csi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.{sv_type}.filter_delly.bcf.gz.csi"
     benchmark:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.{sv_type}.delly.filter.benchmark.txt"
-    threads: 12
+    threads: 2
     resources:
-         time   = 1440,
-         mem_mb = 60000
+         time   = 120,
+         mem_mb = 40000
     shell:
         '''
             # filter for pass and save as compressed bcf

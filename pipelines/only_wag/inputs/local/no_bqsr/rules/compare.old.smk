@@ -1,11 +1,15 @@
 
-rule select_unique_variants:
-    input:
+rule select_variants_to_table:
+    input:            
         final_vcf  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz",
-        final_tbi  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz.tbi" 
+        final_tbi  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz.tbi",
+        common_vcf = config['common_vcf'], 
     output:
-        unique_vars = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.unique_vars.vcf",
-        unique_vars_vep_split = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.unique_vars.vep_split.txt"
+        unique_vars           = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.unique_vars.vcf",
+        rare_and_common_vars  = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.rare_and_common_vars.vcf",
+        rare_vars             = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.rare_vars.vcf",
+        unique_vars_vep_split = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.unique_vars.vep_split.txt",
+        rare_vars_vep_split   = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.rare_vars.vep_split.txt"
     params:
         tmp_dir   = config['tmp_dir']['select_variants_to_table'],
         ref_fasta = config['ref_fasta'],
@@ -26,61 +30,26 @@ rule select_unique_variants:
                 --tmp-dir {params.tmp_dir} \
                 -O {output.unique_vars}
 
+            # all common and  rare variants
+            gatk SelectVariants \
+                -R {params.ref_fasta} \
+                -V {input.final_vcf} \
+                -disc {input.common_vcf} \
+                -O {output.rare_and_common_vars}
+
+            # rare only variants
+            gatk SelectVariants \
+                -R {params.ref_fasta} \
+                -V {output.rare_and_common_vars} \
+                -disc {output.unique_vars} \
+                -O {output.rare_vars}
+
             # vars to table - all unique
             bcftools +split-vep \
                 {output.unique_vars} \
                 -f '%CHROM\t%POS\t%REF\t%ALT\t%AC\t%CSQ\n' \
                 -d -A tab \
                 -o {output.unique_vars_vep_split}
-        '''
-
-rule select_rare_and_unique_variants:
-    input:
-        final_vcf  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz",
-        final_tbi  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz.tbi",
-        common_vcf = config['common_vcf'],
-    output:
-        rare_and_unique_vars  = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.rare_and_unique_vars.vcf",
-    params: 
-        ref_fasta = config['ref_fasta'],
-        tmp_dir   = config['tmp_dir']['select_variants_to_table']
-    threads: 4
-    resources:
-         time   = 2880,
-         mem_mb = 16000
-    shell:
-        ''' 
-            mkdir -p {params.tmp_dir} results/select_vars_to_table
-
-            # all unique and  rare variants
-            gatk SelectVariants \
-                -R {params.ref_fasta} \
-                -V {input.final_vcf} \
-                -disc {input.common_vcf} \
-                -O {output.rare_and_unique_vars}
-        '''
-
-rule select_rare_variants:
-    input:
-        rare_and_unique_vars  = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.rare_and_unique_vars.vcf",
-        unique_vars = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.unique_vars.vcf", 
-    output:
-        rare_vars             = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.rare_vars.vcf",
-        rare_vars_vep_split   = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.rare_vars.vep_split.txt"
-    params:
-        ref_fasta = config['ref_fasta']
-    threads: 4
-    resources:
-         time   = 2880,
-         mem_mb = 16000
-    shell:
-        '''
-            # rare only variants
-            gatk SelectVariants \
-                -R {params.ref_fasta} \
-                -V {input.rare_and_unique_vars} \
-                -disc {input.unique_vars} \
-                -O {output.rare_vars}
 
             # vars to table - rare only
             bcftools +split-vep \

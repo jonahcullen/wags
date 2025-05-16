@@ -86,13 +86,11 @@ def main():
     
     # load known config
     prep_path = Path(__file__).resolve()
-<<<<<<< Updated upstream:wags/prep_many.py
     config_path = prep_path.parent.parent / f"pipelines/many_wags/configs/{config_d[ref]}/{ref}_config.yaml"
-=======
+
     #config_path = prep_path.parent.parent / f"pipelines/many_wags/configs/{config}_config.yaml"
->>>>>>> Stashed changes:wags/prep_joint.py
     try:
-        with open(config) as f:
+        with open(config_path) as f:
             doc = yaml.safe_load(f)
     except FileNotFoundError:
         print(f"{config} does not exist - ensure correct path")
