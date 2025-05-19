@@ -482,7 +482,8 @@ def main():
                             --singularity-args "-B $TMP_DIR,$PWD,$REF_DIR,$POP_VCF,$FQ_DIR,$PROC_DIR" \\
                             --profile {profile_n} \\
                             --configfile {config_n} \\
-                            --keep-going
+                            --keep-going \\
+                            --rerun-incomplete
                         """
                     ), file=f
                 )   
