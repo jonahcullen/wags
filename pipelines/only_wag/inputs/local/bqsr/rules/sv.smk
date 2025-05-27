@@ -66,8 +66,8 @@ rule sv_delly_concat:
             sv_type=["BND","DEL","DUP","INS","INV"],
         ))
     output:
-        sv_gz  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz"),
-        sv_tbi = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz.tbi")
+        sv_gz  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz",
+        sv_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.vcf.gz.tbi"
     params:
         vcf_tmp = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/delly/{sample_name}.delly.{ref}.tmp.vcf",
     benchmark:
@@ -100,9 +100,9 @@ rule sv_gridss:
         final_bai = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bai"
             if not config['left_align'] else "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bai",
     output:
-        gridss_bam = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.bam"),
-        sv_gz      = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz"),
-        sv_tbi     = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz.tbi")
+        gridss_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.bam",
+        sv_gz      = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz",
+        sv_tbi     = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.vcf.gz.tbi"
     params:
         gridss_tmp  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.tmp.vcf",
         gridss_filt = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/gridss/{sample_name}.gridss.{ref}.tmp.filt.vcf",
@@ -137,7 +137,7 @@ rule sv_gridss:
                 -O v \
                 -o {params.gridss_filt} \
                 {params.gridss_tmp}
-            
+
             # bgzip and index
             bgzip --threads {threads} -c {params.gridss_filt} > {output.sv_gz}
             tabix -p vcf {output.sv_gz}
@@ -156,7 +156,7 @@ rule sv_smoove:
         out_dir   = lambda wildcards, output: os.path.dirname(output.smoove_tmp),
         base_name = (
             lambda wildcards, input: re.split(
-                r'\.aligned|\.left_aligned|\.bam', 
+                r'\.aligned|\.left_aligned|\.bam',
                 os.path.basename(input.final_bam)
             )[0]
         ),
@@ -187,8 +187,8 @@ rule sv_smoove_filter:
         smoove_tmp = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.{ref}-smoove.genotyped.vcf.gz",
         smoove_csi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.{ref}-smoove.genotyped.vcf.gz.csi",
     output:
-        sv_gz  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.vcf.gz"),
-        sv_tbi = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.vcf.gz.tbi")
+        sv_gz  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.vcf.gz",
+        sv_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.vcf.gz.tbi"
     params:
         smoove_filt = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.filt.tmp.vcf",
         smoove_sort = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/smoove/{sample_name}.smoove.{ref}.sort.filt.tmp.vcf",
@@ -209,7 +209,7 @@ rule sv_smoove_filter:
                 -o {params.smoove_filt} \
                 -i "FILTER == '.'" \
                 {input.smoove_tmp}
-           
+
             # sort using ref dict
             gatk SortVcf \
                 -SD {params.ref_dict} \
@@ -230,11 +230,11 @@ rule sv_manta:
     output:
         config     = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/runWorkflow.py",
         pickle     = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/runWorkflow.py.config.pickle",
-        sv_gz      = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/{sample_name}.manta.diploidSV.{ref}.vcf.gz"),
-        sv_tbi     = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/{sample_name}.manta.diploidSV.{ref}.vcf.gz.tbi"),
-        cand_stat  = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/svCandidateGenerationStats.tsv"),
-        graph_stat = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/svLocusGraphStats.tsv"),
-        align_stat = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/alignmentStatsSummary.txt"),
+        sv_gz      = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/{sample_name}.manta.diploidSV.{ref}.vcf.gz",
+        sv_tbi     = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/{sample_name}.manta.diploidSV.{ref}.vcf.gz.tbi",
+        cand_stat  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/svCandidateGenerationStats.tsv",
+        graph_stat = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/svLocusGraphStats.tsv",
+        align_stat = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/stats/alignmentStatsSummary.txt",
     params:
         manta_tmp  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/variants/diploidSV.vcf.gz",
         manta_filt = "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/manta/results/variants/diploidSV.filt.vcf",
@@ -257,7 +257,7 @@ rule sv_manta:
                 --bam {input.final_bam} \
                 --reference {params.ref_fasta} \
                 --runDir {params.work_dir}
-           
+
             # cd to working dir
             cd {params.work_dir}
 
@@ -275,7 +275,7 @@ rule sv_manta:
                 -o {params.manta_filt} \
                 -i "FILTER == 'PASS'" \
                 {params.manta_tmp}
-            
+
             # bgzip and index
             bgzip --threads {threads} -c {params.manta_filt} > {output.sv_gz}
             tabix -p vcf {output.sv_gz}

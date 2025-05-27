@@ -4,14 +4,12 @@ import textwrap
 import pandas as pd
 
 #######################################
-# S3 with BQSR ########################
+# Local with BQSR ########################
 #######################################
 
 localrules: sv_done,
             manifest_and_archive,
-            multiqc,
-            upload_fastqs,
-            upload_pipe_and_logs
+            multiqc
 
 singularity: config['sif']
 include: "src/utils.py"
@@ -52,23 +50,7 @@ rule all:
             breed=breed,
             sample_name=sample_name,
             ref=config["ref"],
-            
-        ),
-        # upload fastqs
-        expand(
-            "{bucket}/fastqc/{breed}/{sample_name}/{u.readgroup_name}.upload",
-            u=units.itertuples(), 
-            bucket=config["bucket"],
-            breed=breed,
-            sample_name=sample_name,
-        ),
-        # upload pipeline, and logs
-        expand(
-            "{bucket}/wgs/{breed}/{sample_name}/{ref}/upload_pipe.done",
-            bucket=config["bucket"],
-            breed=breed,
-            sample_name=sample_name,
-            ref=config["ref"],
+
         ),
 
 # rules to include based on user setup
@@ -83,5 +65,4 @@ include: "rules/common.smk"
 include: "rules/compare.smk"
 include: "rules/final_output.smk"
 include: "rules/qc.smk"
-include: "rules/save.smk"
 
