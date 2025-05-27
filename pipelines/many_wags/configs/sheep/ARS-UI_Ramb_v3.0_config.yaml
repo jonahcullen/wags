@@ -26,6 +26,8 @@ batch_size : 50
 ref_fasta : /home/refgen/sheep/ARS-UI_Ramb_v3.0/GCF_016772045.2_ARS-UI_Ramb_v3.0_genomic.nice.fna
 ref_dict  : /home/refgen/sheep/ARS-UI_Ramb_v3.0/GCF_016772045.2_ARS-UI_Ramb_v3.0_genomic.nice.dict
 ref_gtf   : /home/refgen/sheep/ARS-UI_Ramb_v3.0/GCF_016772045.2_ARS-UI_Ramb_v3.0_genomic.sorted.nice.gtf.gz
+map_gaps : /path/to/map_gas.csv
+var_deserts : /path/to/var_deserts.csv
 
 # TMP DIRS
 tmp_dir :

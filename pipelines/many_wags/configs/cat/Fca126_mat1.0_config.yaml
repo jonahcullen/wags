@@ -15,6 +15,8 @@ batch_size: 50
 ref_fasta: /home/refgen/cat/Fca126_mat1.0/GCF_018350175.1_F.catus_Fca126_mat1.0_genomic.fna
 ref_dict: /home/refgen/cat/Fca126_mat1.0/GCF_018350175.1_F.catus_Fca126_mat1.0_genomic.dict
 ref_gtf: /home/refgen/cat/Fca126_mat1.0/MISSING.gtf
+map_gaps : /path/to/map_gas.csv
+var_deserts : /path/to/var_deserts.csv
 tmp_dir:
   sites_only_gather_vcf: /path/to/.sites_gather
   unfilt_gather_vcf: /path/to/.unfilt_gather

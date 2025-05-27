@@ -30,6 +30,8 @@ batch_size : 50
 ref_fasta : /home/refgen/dog/canfam4/canFam4.fa
 ref_dict  : /home/refgen/dog/canfam4/canFam4.dict
 ref_gtf   : /home/refgen/dog/canfam4/UU_Cfam_GSD_1.0_ROSY.refSeq.ensformat.gtf.gz
+map_gaps : /path/to/map_gas.csv
+var_deserts : /path/to/var_deserts.csv
 
 # TMP DIRS
 tmp_dir :

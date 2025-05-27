@@ -28,6 +28,8 @@ batch_size : 50
 ref_fasta : ''
 ref_dict  : ''
 ref_gtf   : ''
+map_gaps : /path/to/map_gas.csv
+var_deserts : /path/to/var_deserts.csv
 
 # TMP DIRS
 tmp_dir :
