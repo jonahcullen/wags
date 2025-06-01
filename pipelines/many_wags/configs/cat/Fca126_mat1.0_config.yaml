@@ -1,6 +1,6 @@
 joint_cohort: gvcfs.list
 species: cat
-ref: felcat126
+ref: Fca126_mat1.0
 date: ''
 bucket: output
 alias: s3
