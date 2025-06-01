@@ -230,9 +230,9 @@ def main():
         "#BSUB -R rusage[mem=12GB]\n"
         f"#BSUB -J {gvcf_base}_{ref}.{job_name}\n"
         f"#BSUB -o {profile}_logs/%J.{gvcf_base}_{ref}.{job_name}.out\n"
-        f"#BSUB -e {profile}_logs/%J.{gvcf_base}_{ref}.{job_name}.err\n"
-        f"#BSUB -q {partition}\n"
-        f"#BSUB -B -N -u {email}\n"
+        f"#BSUB -e {profile}_logs/%J.{gvcf_base}_{ref}.{job_name}.err\n\n"
+        "module load apptainer"
+        
     )
 
     # job submission body 
