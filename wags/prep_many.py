@@ -284,7 +284,8 @@ def main():
                     --singularity-args "-B $PWD,$GVCF_DIR" \\
                     --profile {profile_n} \\
                     --configfile {ref}_config.yaml \\
-                    --keep-going
+                    --keep-going \\
+                    --rerun-incomplete
                 """
             ),file=f
         ) 
