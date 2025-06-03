@@ -26,6 +26,8 @@ batch_size : 50
 ref_fasta : /home/refgen/tiger/tiger/Tiger_final.fasta
 ref_dict  : /home/refgen/tiger/tiger/Tiger_final.dict
 ref_gtf   : /home/refgen/tiger/tiger/Tiger_final.sorted.gtf.gz
+map_gaps : /path/to/map_gas.csv
+var_deserts : /path/to/var_deserts.csv
 
 # TMP DIRS
 tmp_dir :

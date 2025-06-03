@@ -1,20 +1,20 @@
 joint_cohort: gvcfs.tsv
 species: cat
-ref: Fca126_mat1.0
+ref: Fca126_nice
 date: ''
 bucket: friedlab
 alias: s3
 profile: slurm
-sif: /path/to/wags.sif
+sif: /home/fried255/cull0084/.sif/wags.sif
 conda_envs:
   qc: bcftools
 anchor_type: nruns
 nrun_length: 50
 interval_length: 10000000
 batch_size: 50
-ref_fasta: /home/refgen/cat/Fca126_mat1.0/GCF_018350175.1_F.catus_Fca126_mat1.0_genomic.fna
-ref_dict: /home/refgen/cat/Fca126_mat1.0/GCF_018350175.1_F.catus_Fca126_mat1.0_genomic.dict
-ref_gtf: /home/refgen/cat/Fca126_mat1.0/MISSING.gtf
+ref_fasta: /home/refgen/cat/Fca126/Fca126_mat1.0.nice.fna
+ref_dict: /home/refgen/cat/Fca126/Fca126_mat1.0.nice.dict
+ref_gtf: /home/refgen/cat/Fca126/MISSING.gft
 map_gaps : /path/to/map_gas.csv
 var_deserts : /path/to/var_deserts.csv
 tmp_dir:
@@ -71,4 +71,4 @@ indel_filter_level: '99.0'
 #coverage_sites: /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/SRZ189891_722g.simp.header.CanineHD.names.GSD_1.0.filter.vcf.gz
 coverage_sites: ''
 phasing: false
-link_map: /home/refgen/cat/Fca126_mat1.0/MISSING.linkage.map
+link_map: /home/refgen/cat/Fca126/MISSING.linkage.map

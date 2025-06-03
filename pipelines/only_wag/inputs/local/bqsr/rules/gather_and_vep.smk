@@ -6,8 +6,8 @@ rule combine_snps_nonsnps:
         nonsnp_filtered_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/hardflt_vcf/nonsnp_fltr.vcf.gz",
         nonsnp_filtered_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/hardflt_vcf/nonsnp_fltr.vcf.gz.tbi"
     output:
-        final_vcf = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vcf.gz"),
-        final_tbi = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vcf.gz.tbi"),
+        final_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vcf.gz",
+        final_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vcf.gz.tbi",
     threads: 12
     resources:
          time   = 600,
@@ -26,19 +26,18 @@ rule combine_snps_nonsnps:
 
 rule vep_by_interval:
     input:
-        final_vcf = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vcf.gz"),
-        final_tbi = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vcf.gz.tbi"),
+        final_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vcf.gz",
+        final_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vcf.gz.tbi",
         interval  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/hc_intervals/scattered/{vep_interval}-scattered.interval_list"
     output:
         final_interval    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/split/wags_{vep_interval}/{sample_name}.{vep_interval}.vcf.gz",
-        interval_vep      = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/wags_{vep_interval}/{sample_name}.{vep_interval}.vep.vcf.gz", 
-        interval_vep_tbi  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/wags_{vep_interval}/{sample_name}.{vep_interval}.vep.vcf.gz.tbi", 
-        interval_vep_html = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/wags_{vep_interval}/{sample_name}.{vep_interval}.vep.vcf_summary.html", 
+        interval_vep      = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/wags_{vep_interval}/{sample_name}.{vep_interval}.vep.vcf.gz",
+        interval_vep_tbi  = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/wags_{vep_interval}/{sample_name}.{vep_interval}.vep.vcf.gz.tbi",
+        interval_vep_html = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/vep/wags_{vep_interval}/{sample_name}.{vep_interval}.vep.vcf_summary.html",
     params:
         out_name = lambda wildcards, output: os.path.splitext(output.interval_vep)[0],
         ref_fasta = config["ref_fasta"],
-        ref_gtf   = config["ref_gtf"],
-        phylop    = config["phylop"],
+        ref_gtf   = config["ref_gtf"]
     threads: 6
     resources:
          time   = 720,
@@ -59,7 +58,6 @@ rule vep_by_interval:
                 -i {output.final_interval} \
                 -o {params.out_name} \
                 --gtf {params.ref_gtf} \
-                --custom file={params.phylop},short_name=PhyloP_score,format=bed,type=exact,coords=0 \
                 --fasta {params.ref_fasta} \
                 --fork {threads} \
                 --everything \
@@ -104,8 +102,8 @@ rule final_gather_veps:
     input:
         get_vep_vcfs
     output:
-        vep_vcf = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz"),
-        vep_tbi = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz.tbi"),
+        vep_vcf = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz",
+        vep_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz.tbi",
     params:
         vcf_tmp = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/joint_genotype.{ref}.TMP.gz",
         veps    = lambda wildcards, input: " --input ".join(map(str,input)),

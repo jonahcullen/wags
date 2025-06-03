@@ -55,7 +55,7 @@ rule mark_adapters:
     shell:
         '''
             mkdir -p {params.tmp_dir}
-
+            
             java -Xmx8G -jar /opt/wags/src/picard.jar  \
                 MarkIlluminaAdapters \
                 --INPUT {input.ubam} \
@@ -162,7 +162,7 @@ rule mark_duplicates:
             bucket=config['bucket'],
             breed=breed,
             sample_name=sample_name,
-            ref=config['ref'],
+            ref=config['ref'], 
             readgroup_name=list(units['readgroup_name']),
         )
     output:
@@ -171,7 +171,7 @@ rule mark_duplicates:
     params:
         bams       = lambda wildcards, input: " --INPUT ".join(map(str,input.merged_bams)),
         java_opt   = "-Xms4000m -Xmx16g",
-        tmp_dir    = f"/dev/shm/{os.environ['USER']}/{sample_name}_{ref}.md.tmp"
+        tmp_dir    = "/dev/shm/{sample_name}_{ref}.md.tmp"
     benchmark:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.mark_duplicates.benchmark.txt"
     threads: 4
@@ -208,8 +208,8 @@ rule sort_and_fix_tags:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.merge_bams.benchmark.txt"
     threads: 12
     resources:
-         time   = 2880,
-         mem_mb = lambda wildcards, attempt: 2**(attempt-1)*40000,
+         time   = 720,
+         mem_mb = lambda wildcards, attempt: 2**(attempt-1)*24000,
     shell:
         '''
             set -o pipefail
@@ -319,7 +319,7 @@ rule gather_bqsr_reports:
                 -I {params.reports} \
                 -O {output.report}
         '''
-
+        
 rule apply_bqsr:
     input:
         sorted_bam = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.aligned.duplicate_marked.sorted.bam"

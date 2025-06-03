@@ -20,7 +20,7 @@ refs = [
     "canfam3","canfam4","UU_Cfam_GSD_1.0_ROSY",
     "goldenPath","Arabian","Shire","Thoroughbred",
     "tiger",
-    "Fca126_mat1.0",
+    "Fca126_mat1.0","Fca126_nice",
     "alpaca",
     "ARS-UI_Ramb_v3.0",
     "ARS1.2"
@@ -454,7 +454,7 @@ if __name__ == '__main__':
             anchor type for generating intervals.
             'intergenic' requires an annotation file
             (e.g. gff/gtf) to be included during
-            config_joint.py setup [options: nruns, intergenic, chroms]
+            config_joint.py setup [options: nruns, intergenic, chroms, patched]
         ''')
     )
     optional.add_argument(

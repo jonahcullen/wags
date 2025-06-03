@@ -30,6 +30,8 @@ batch_size : 50
 ref_fasta : /home/refgen/dog/canfam3/canFam3.fa
 ref_dict  : /home/refgen/dog/canfam3/canFam3.dict
 ref_gtf   : /home/refgen/dog/canfam3/Canis_lupus_familiaris.CanFam3.1.103.gtf.gz
+map_gaps : /path/to/map_gas.csv
+var_deserts : /path/to/var_deserts.csv
 
 # TMP DIRS
 tmp_dir :

@@ -26,6 +26,8 @@ batch_size : 50
 ref_fasta : /home/refgen/horse/goldenPath/goldenPath.Ec_build-3.0_wMSY.fa
 ref_dict  : /home/refgen/horse/goldenPath/goldenPath.Ec_build-3.0_wMSY.dict
 ref_gtf   : /home/refgen/horse/goldenPath/MISSING.gtf
+map_gaps : /path/to/map_gas.csv
+var_deserts : /path/to/var_deserts.csv
 
 # TMP DIRS
 tmp_dir :
