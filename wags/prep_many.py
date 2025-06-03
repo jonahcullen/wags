@@ -87,6 +87,8 @@ def main():
     # load known config
     prep_path = Path(__file__).resolve()
     config_path = prep_path.parent.parent / f"pipelines/many_wags/configs/{config_d[ref]}/{ref}_config.yaml"
+
+    #config_path = prep_path.parent.parent / f"pipelines/many_wags/configs/{config}_config.yaml"
     try:
         with open(config_path) as f:
             doc = yaml.safe_load(f)
@@ -228,9 +230,9 @@ def main():
         "#BSUB -R rusage[mem=12GB]\n"
         f"#BSUB -J {gvcf_base}_{ref}.{job_name}\n"
         f"#BSUB -o {profile}_logs/%J.{gvcf_base}_{ref}.{job_name}.out\n"
-        f"#BSUB -e {profile}_logs/%J.{gvcf_base}_{ref}.{job_name}.err\n"
-        f"#BSUB -q {partition}\n"
-        f"#BSUB -B -N -u {email}\n"
+        f"#BSUB -e {profile}_logs/%J.{gvcf_base}_{ref}.{job_name}.err\n\n"
+        "module load apptainer"
+        
     )
 
     # job submission body 
@@ -282,7 +284,8 @@ def main():
                     --singularity-args "-B $PWD,$GVCF_DIR" \\
                     --profile {profile_n} \\
                     --configfile {ref}_config.yaml \\
-                    --keep-going
+                    --keep-going \\
+                    --rerun-incomplete
                 """
             ),file=f
         ) 

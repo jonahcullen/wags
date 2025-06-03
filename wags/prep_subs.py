@@ -256,14 +256,7 @@ def main():
             f"inputs/{remote}/{bqsr}",
             rules
         )
-        config = os.path.join(
-            prep_dir,
-            "pipelines",
-            pipeline,
-            "configs",
-            config_d[ref],
-            config_n
-        )
+ 
         # selected reference not in container, presumed prep_custom_ref.py already
         # executed
         # NEEDS TO BE FIXED ALONG WITH prep_custom_ref.py TO FORCE THE CONFIG DIR
@@ -272,6 +265,15 @@ def main():
             tmp = glob.glob(f"{ref_dir}/**/{ref}_config.yaml",recursive=True)
             assert tmp, f"config not found for {ref}, ensure prep_custom_ref.py ran successfully and check ref_dir"
             config = tmp[0]
+        else:
+            config = os.path.join(
+                prep_dir,
+                "pipelines",
+                pipeline,
+                "configs",
+                config_d[ref],
+                config_n
+            )
     
         profile_dir = os.path.join(
             prep_dir,
@@ -307,7 +309,7 @@ def main():
         species  = doc['species']
         ref_dict = doc['ref_dict']
         fasta    = doc['ref_fasta']
-        
+ 
         # update sif and other cli args
         doc['profile'] = profile
         doc['sif']     = sif
@@ -324,6 +326,17 @@ def main():
         # for private variant analysis, add pop.vcf and common.vcf path
         if money:
             doc['pop_vcf']     = pop
+
+            #lines to find a gtf for custom ref, it could probably be made better
+            if gtf:
+                doc['ref_gtf'] = gtf 
+            else:
+                try:
+                    doc['ref_gtf'] = doc['ref_gtf']
+                except Exception as ex:
+                    print("Could not find gtf, if using custom ref, provide path to gtf")
+                    sys.exit(1)
+
             doc['common_vcf']  = common
             doc['allele_freq'] = float(allele_freq)
             doc['tmp_dir']['select_variants_to_table'] = os.path.join(
@@ -391,9 +404,8 @@ def main():
             "#BSUB -R rusage[mem=12GB]\n"
             f"#BSUB -J {v['breed']}_{k}.{job_name}.{profile}\n"
             f"#BSUB -o {profile}_logs/%J.{v['breed']}_{k}.{job_name}.out\n"
-            f"#BSUB -e {profile}_logs/%J.{v['breed']}_{k}.{job_name}.err\n"
-            f"#BSUB -q {partition}\n"
-            f"#BSUB -B -N -u {email}\n"
+            f"#BSUB -e {profile}_logs/%J.{v['breed']}_{k}.{job_name}.err\n\n"
+            "module load apptainer"
         )
 
         local_header = (
@@ -422,6 +434,7 @@ def main():
             print(
                 textwrap.dedent(
                     f"""
+                    TMP_DIR=/share/stern/mwvandew/tmp
                     FQ_DIR={fq_dir}
                     PROC_DIR={outdir} 
                     """
@@ -457,10 +470,11 @@ def main():
                         f"""
                         conda run --live-stream -n {snake_env} snakemake -s {snake_n} \\
                             --use-singularity \\
-                            --singularity-args "-B $PWD,$REF_DIR,$POP_VCF,$FQ_DIR,$PROC_DIR" \\
+                            --singularity-args "-B $TMP_DIR,$PWD,$REF_DIR,$POP_VCF,$FQ_DIR,$PROC_DIR" \\
                             --profile {profile_n} \\
                             --configfile {config_n} \\
-                            --keep-going
+                            --keep-going \\
+                            --rerun-incomplete
                         """
                     ), file=f
                 ) 
@@ -470,14 +484,15 @@ def main():
                         f"""
                         snakemake -s {snake_n} \\
                             --use-singularity \\
-                            --singularity-args "-B $PWD,$REF_DIR,$POP_VCF,$FQ_DIR,$PROC_DIR" \\
+                            --singularity-args "-B $TMP_DIR,$PWD,$REF_DIR,$POP_VCF,$FQ_DIR,$PROC_DIR" \\
                             --profile {profile_n} \\
                             --configfile {config_n} \\
-                            --keep-going
+                            --keep-going \\
+                            --rerun-incomplete
                         """
                     ), file=f
-                ) 
-            
+                )   
+
             if "s3" in remote:
                 print(f"# save {profile} err/out logs", end="", file=f)
                 print(
@@ -718,6 +733,11 @@ if __name__ == '__main__':
         ''')
     )
     optional.add_argument(
+        "--gtf",
+        default=None,
+        help="if custom ref, reference gtf (only wags pipeline) [default: None]"
+    )
+    optional.add_argument(
         "-h", "--help",
         action="help",
         default=argparse.SUPPRESS,
@@ -748,12 +768,13 @@ if __name__ == '__main__':
     no_bqsr     = args.no_bqsr
     left_align  = args.left_align
     sv_call     = args.sv
+    gtf         = args.gtf
 
     # QUICK FIX FOR goldenPath - NEED TO ADJUST CONTAINER TO BE horse/goldenpath
    #if "golden" in ref:
    #    ref = "goldenPath"
 
-    if ref not in config_d:
+    if ref not in config_d and ref_dir == "~/.wags/":  
         avail_refs = sorted(config_d.keys())
         print(f"\nERROR: reference '{ref}' not found in available configs")
         # get possible matches

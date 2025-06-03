@@ -1,22 +1,20 @@
-joint_cohort: gvcfs.tsv
+joint_cohort: gvcfs.list
 species: cat
-ref: Fca126_mat1.0
+ref: felcat126
 date: ''
-bucket: friedlab
+bucket: output
 alias: s3
-profile: slurm
-sif: /path/to/wags.sif
+profile: lsf
+sif: /usr/local/usrapps/stern/mwvandew/wags_sif/wags.sif
 conda_envs:
   qc: bcftools
 anchor_type: nruns
 nrun_length: 50
 interval_length: 10000000
 batch_size: 50
-ref_fasta: /home/refgen/cat/Fca126_mat1.0/GCF_018350175.1_F.catus_Fca126_mat1.0_genomic.fna
-ref_dict: /home/refgen/cat/Fca126_mat1.0/GCF_018350175.1_F.catus_Fca126_mat1.0_genomic.dict
-ref_gtf: /home/refgen/cat/Fca126_mat1.0/MISSING.gtf
-map_gaps : /path/to/map_gas.csv
-var_deserts : /path/to/var_deserts.csv
+ref_fasta: /share/stern/mwvandew/joanna_cats/ref/cat/felcat126/GCF_018350175.1_F.catus_Fca126_mat1.0_genomic.fna
+ref_dict: /share/stern/mwvandew/joanna_cats/ref/cat/felcat126/GCF_018350175.1_F.catus_Fca126_mat1.0_genomic.fna.dict
+ref_gtf: /share/stern/mwvandew/joanna_cats/ref/cat/felcat126/GCF_018350175.1_F.catus_Fca126_mat1.0_genomic.gtf
 tmp_dir:
   sites_only_gather_vcf: /path/to/.sites_gather
   unfilt_gather_vcf: /path/to/.unfilt_gather
@@ -67,8 +65,7 @@ indel_recalibration_annotation_values:
 - SOR
 - DP
 indel_filter_level: '99.0'
-#snp_array: /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/SRZ189891_722g.simp.header.CanineHDandAxiom_K9_HD.GSD_1.0.vcf.gz
-#coverage_sites: /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/SRZ189891_722g.simp.header.CanineHD.names.GSD_1.0.filter.vcf.gz
-coverage_sites: ''
+k9hd_axiom_vcf: /path/to/known_sites.vcf.gz
+coverage_sites: /path/to/known_sites.vcf.gz
 phasing: false
-link_map: /home/refgen/cat/Fca126_mat1.0/MISSING.linkage.map
+link_map: /home/refgen/dog/canfam3/canFam3.linkage.map.wgs

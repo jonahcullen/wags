@@ -71,3 +71,60 @@ snp_array: /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/SRZ189891_722g.simp.h
 coverage_sites: /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/SRZ189891_722g.simp.header.CanineHD.names.GSD_1.0.filter.vcf.gz
 phasing: false
 link_map: /home/refgen/dog/canfam4/canFam4.linkage.map
+
+joint_cohort : gvcfs.tsv
+species      : dog
+ref          : UU_Cfam_GSD_1.0_ROSY
+date         : ''
+bucket       : ''
+alias        : s3
+profile      : lsf
+
+# SINGULARITY IMAGE
+sif : /home/fried255/cull0084/.sif/wags.sif
+
+# CONDA ENV
+conda_envs :
+  qc : bcftools
+
+# INTERVAL ANCHOR METHOD
+anchor_type : nruns
+# INTERVAL SIZES
+nrun_length     : 50
+interval_length : 10000000
+
+# DB IMPORT
+batch_size : 50
+
+# REFERENCE FILES
+ref_fasta : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/UU_Cfam_GSD_1.0_ROSY.fa
+ref_dict  : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/UU_Cfam_GSD_1.0_ROSY.dict
+ref_gtf   : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/UU_Cfam_GSD_1.0_ROSY.refSeq.ensformat.gtf.gz
+
+# TMP DIRS
+tmp_dir :
+  sites_only_gather_vcf : /path/to/.sites_gather
+  unfilt_gather_vcf     : /path/to/.unfilt_gather
+
+# RECAL
+snp_recalibration_tranche_values    : [
+  "100.0", "99.95", "99.9", "99.5", "99.0", "98.0", 
+  "97.0", "96.0", "95.0", "94.0", "93.0", "92.0", "91.0", "90.0"]
+snp_recalibration_annotation_values : ["QD", "MQRankSum", "ReadPosRankSum", "FS", "MQ", "SOR", "DP"]
+snp_filter_level   : 99.0
+
+indel_recalibration_tranche_values    : [
+  "100.0", "99.95", "99.9", "99.5", "99.0", "98.0", 
+  "97.0", "96.0", "95.0", "94.0", "93.0", "92.0", "91.0", "90.0"]
+indel_recalibration_annotation_values : ["FS", "ReadPosRankSum", "MQRankSum", "QD", "SOR", "DP"]
+indel_filter_level : 99.0
+
+# RESOURCE FILES (FROM CONTAINER)
+k9hd_axiom_vcf : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/SRZ189891_722g.simp.header.CanineHDandAxiom_K9_HD.GSD_1.0.vcf.gz
+coverage_sites : /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/SRZ189891_722g.simp.header.CanineHD.names.GSD_1.0.filter.vcf.gz
+
+# OUTPUT OPTIONS
+# PHASING
+phasing  : false
+link_map : /home/refgen/dog/canfam4/canFam4.linkage.map
+
