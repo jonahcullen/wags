@@ -26,6 +26,8 @@ ref_dict  : Fca126_mat1.0.nice.dict
 ref_fasta : /home/refgen/cat/Fca126/Fca126_mat1.0.nice.fna
 
 # RESOURCE FILES FOR BQSR (OPTIONAL)
+known_sites :
+  cat_bed : /path/to/known_sites.bed
 
 # SV CONDA ENVS
 conda_envs :
