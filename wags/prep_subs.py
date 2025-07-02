@@ -92,11 +92,37 @@ replace_map = {
     "_R2.part_004.fastq.gz": "_R1.part_004.fastq.gz",
 }
 
+def parse_complete_genomics_header(s):
+    """ parse complete genomics fastqs header format """
+
+    header = s.lstrip('@')
+    # regex cg format
+    # pattern: flowcellID + lane + cell + read + /readnumber
+    cg_pat = r'^([A-Z0-9]+)(L\d+)(C\d+)(R\d+)/([12])$'
+
+    mat = re.match(cg_pat, header)
+    if mat:
+        flowcell_id = mat.group(1)
+        lane_id = mat.group(2)
+        cell_id = mat.group(3)
+        # extract numeric parts
+        lane_num = lane_id[1:] # remove the L prefix
+        cell_num = cell_id[1:]  # remove the C
+
+        return f"{flowcell_id}.{lane_num}.{cell_num}"
+
+    return None
+
 def extract_pu(s):
     """ extracts platform unit from fastq header """
-   #with gzip.open(s,"rt") as f:
     with RawFile(str(s)) as f:
         head = f.readline().strip()
+
+        # check for complete genomics format
+        cg_pu = parse_complete_genomics_header(head)
+        if cg_pu:
+            return cg_pu
+
         if head.startswith("@SRR"): # handle SRR fastqs from NCBI
             return f"{head.split('.')[0][1:]}.NA.NA" # sample name in place of flowcell
         elif head.startswith("@HWI"): # older MiSeq (?) fastqs...
