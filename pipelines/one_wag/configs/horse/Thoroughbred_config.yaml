@@ -26,6 +26,8 @@ ref_dict  : T2T_TB.v5.dict
 ref_fasta : /home/refgen/horse/Thoroughbred/T2T_TB.v5.fa
 
 # RESOURCE FILES FOR BQSR (OPTIONAL)
+known_sites :
+  dog10k_bed : /path/to/known/sites.bed.gz
 
 # SV CONDA ENVS
 conda_envs :

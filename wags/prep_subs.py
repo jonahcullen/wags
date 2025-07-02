@@ -266,18 +266,24 @@ def main():
             config_n  = f"{ref}_only_wag.yaml"
  
         # copy snakefile, rules, config, and profile to working dir
-       #prep_dir = os.path.dirname(os.path.realpath(__file__))
+       #smk = os.path.join(
+       #   #str(Path(prep_dir).parents[0]),
+       #    prep_dir,
+       #    "pipelines",
+       #    pipeline,
+       #    f"inputs/{remote}/{bqsr}",
+       #    snake_n
+       #)
         smk = os.path.join(
            #str(Path(prep_dir).parents[0]),
-            prep_dir,
+            str(prep_dir),
             "pipelines",
             pipeline,
-            f"inputs/{remote}/{bqsr}",
             snake_n
         )
-        
+
         rules = os.path.join(
-            prep_dir,
+            str(prep_dir),
             "pipelines",
             pipeline,
             f"inputs/{remote}/{bqsr}",
@@ -343,6 +349,8 @@ def main():
         doc['alias']   = alias
         doc['bucket']  = bucket
         doc['left_align'] = left_align
+        doc['sv_call'] = sv_call
+        doc['remote'] = remote
         doc['tmp_dir']['sort_tmp']  = os.path.join(
             outdir,".sort",breed,sample_name,".tmp"
         )
