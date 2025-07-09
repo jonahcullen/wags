@@ -357,6 +357,9 @@ def main():
         doc['tmp_dir']['fastq_tmp'] = os.path.join(
             outdir,".fastq",breed,sample_name,".tmp"
         )
+        doc['tmp_dir']['general'] = os.path.join(
+            outdir,".tmp",breed,sample_name
+        )
         
         # for private variant analysis, add pop.vcf and common.vcf path
         if money:
@@ -469,7 +472,7 @@ def main():
             print(
                 textwrap.dedent(
                     f"""
-                    TMP_DIR=/share/stern/mwvandew/tmp
+                    TMP_DIR={doc['tmp_dir']['general']}
                     FQ_DIR={fq_dir}
                     PROC_DIR={outdir} 
                     """
