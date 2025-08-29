@@ -305,25 +305,28 @@ def main():
     print(f"many wags setup to process {num_gvcfs} samples at {outdir}")
         
 if __name__ == '__main__':
-    
+
+    BANNER = r"""
+           ___           ___           ___           ___      
+     MANY /__/\         /  /\         /  /\         /  /\     
+         _\_ \:\       /  /::\       /  /:/_       /  /:/_    
+        /__/\ \:\     /  /:/\:\     /  /:/ /\     /  /:/ /\   
+       _\_ \:\ \:\   /  /:/~/::\   /  /:/_/::\   /  /:/ /::\  
+      /__/\ \:\ \:\ /__/:/ /:/\:\ /__/:/__\/\:\ /__/:/ /:/\:\ 
+      \  \:\ \:\/:/ \  \:\/:/__\/ \  \:\ /~~/:/ \  \:\/:/~/:/ 
+       \  \:\ \::/   \  \::/       \  \:\  /:/   \  \::/ /:/  
+        \  \:\/:/     \  \:\        \  \:\/:/     \__\/ /:/   
+         \  \::/       \  \:\        \  \::/        /__/:/    
+          \__\/         \__\/         \__\/         \__\/      
+
+    *many* wags generates all required input to joint call GVCFs 
+    into a single VCF following GATK best practices.
+    """.strip("\n")
+
     parser = argparse.ArgumentParser(
         prog="wags",
         add_help=False,
-        description=(
-            "       ___           ___           ___           ___      \n"
-            " MANY /__/\         /  /\         /  /\         /  /\     \n"
-            "     _\_ \:\       /  /::\       /  /:/_       /  /:/_    \n"
-            "    /__/\ \:\     /  /:/\:\     /  /:/ /\     /  /:/ /\   \n"
-            "   _\_ \:\ \:\   /  /:/~/::\   /  /:/_/::\   /  /:/ /::\  \n"
-            "  /__/\ \:\ \:\ /__/:/ /:/\:\ /__/:/__\/\:\ /__/:/ /:/\:\ \n"
-            "  \  \:\ \:\/:/ \  \:\/:/__\/ \  \:\ /~~/:/ \  \:\/:/~/:/ \n"
-            "   \  \:\ \::/   \  \::/       \  \:\  /:/   \  \::/ /:/  \n"
-            "    \  \:\/:/     \  \:\        \  \:\/:/     \__\/ /:/   \n"
-            "     \  \::/       \  \:\        \  \::/        /__/:/    \n"
-            "      \__\/         \__\/         \__\/         \__\/   \n\n"
-            "*many* wags generates all required input to joint call GVCFs \n"
-            "into a single VCF following GATK best practices."
-        ),
+        description=BANNER,
         formatter_class=argparse.RawTextHelpFormatter
     )
     

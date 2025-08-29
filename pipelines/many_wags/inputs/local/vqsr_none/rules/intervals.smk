@@ -198,9 +198,13 @@ rule desert_and_patch:
 
         # read genome dict
         chrom_lengths = read_genome_dict(params.ref_dict)
-
-        # write to outputs
+        # prepare for output
         selected_df = pd.DataFrame(selected)
+        # sanitize
+        selected_df = selected_df.copy()
+        selected_df["chrom"]  = selected_df["chrom"].astype(str).str.strip()
+        selected_df["anchor"] = pd.to_numeric(selected_df["anchor"], errors="raise")
+        # write to outputs
         selected_df = selected_df.drop_duplicates(subset=["chrom", "anchor"])
         selected_df = selected_df.sort_values(["chrom", "anchor"])
         selected_df.to_csv(output.anchors, sep="\t", index=False, header=False)
@@ -252,6 +256,7 @@ checkpoint generate_intervals:
     run:
         os.makedirs(params.base,exist_ok=True)
         # process interval file and collapse intervals by chromosome    
+        chrom_re = re.compile(r'^chr(?:[0-9]+|X|Y|M|MT)$', re.IGNORECASE)
         d = {}
         header = []
 
@@ -269,6 +274,9 @@ checkpoint generate_intervals:
                     
                     # get chrom from header
                     chrom = line[1].split(":")[1]
+                    # keep only chrN, chrX, Y, M/Mt
+                    if not chrom_re.match(chrom):
+                        continue
                     d[chrom] = {}
                     # get chrom length from header
                     length = int(line[2].split(":")[1])

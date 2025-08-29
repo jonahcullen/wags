@@ -363,7 +363,7 @@ def main():
         
         # for private variant analysis, add pop.vcf and common.vcf path
         if money:
-            doc['pop_vcf']     = pop
+            doc['pop_vcf'] = pop
 
             #lines to find a gtf for custom ref, it could probably be made better
             if gtf:
@@ -554,26 +554,27 @@ def main():
         
 if __name__ == '__main__':
     
+    BANNER = r"""
+           ___           ___           ___           ___      
+     MANY /__/\         /  /\         /  /\         /  /\     
+         _\_ \:\       /  /::\       /  /:/_       /  /:/_    
+        /__/\ \:\     /  /:/\:\     /  /:/ /\     /  /:/ /\   
+       _\_ \:\ \:\   /  /:/~/::\   /  /:/_/::\   /  /:/ /::\  
+      /__/\ \:\ \:\ /__/:/ /:/\:\ /__/:/__\/\:\ /__/:/ /:/\:\ 
+      \  \:\ \:\/:/ \  \:\/:/__\/ \  \:\ /~~/:/ \  \:\/:/~/:/ 
+       \  \:\ \::/   \  \::/       \  \:\  /:/   \  \::/ /:/  
+        \  \:\/:/     \  \:\        \  \:\/:/     \__\/ /:/   
+         \  \::/       \  \:\        \  \::/        /__/:/    
+          \__\/         \__\/         \__\/         \__\/      
+
+    *many* wags generates all required input to joint call GVCFs 
+    into a single VCF following GATK best practices.
+    """.strip("\n")
+
     parser = argparse.ArgumentParser(
         prog="wags",
         add_help=False,
-        description=(
-            "       ___           ___           ___           ___      \n"
-            " ONE  /__/\         /  /\         /  /\         /  /\     \n"
-            "     _\_ \:\       /  /::\       /  /:/_       /  /:/_    \n"
-            "    /__/\ \:\     /  /:/\:\     /  /:/ /\     /  /:/ /\   \n"
-            "   _\_ \:\ \:\   /  /:/~/::\   /  /:/_/::\   /  /:/ /::\  \n"
-            "  /__/\ \:\ \:\ /__/:/ /:/\:\ /__/:/__\/\:\ /__/:/ /:/\:\ \n"
-            "  \  \:\ \:\/:/ \  \:\/:/__\/ \  \:\ /~~/:/ \  \:\/:/~/:/ \n"
-            "   \  \:\ \::/   \  \::/       \  \:\  /:/   \  \::/ /:/  \n"
-            "    \  \:\/:/     \  \:\        \  \:\/:/     \__\/ /:/   \n"
-            "     \  \::/       \  \:\        \  \::/        /__/:/    \n"
-            "      \__\/         \__\/         \__\/         \__\/   \n\n"
-            "wags generates all required input to process FASTQs to GVCF \n"
-            "following GATK best practices. For each sample (and associated \n"
-            "FASTQ pair), wags outputs a directory structure organized by \n"
-            "breed, wherein GATK pipeline input are contained by sample ID."
-        ),
+        description=BANNER,
         formatter_class=argparse.RawTextHelpFormatter
     )
     

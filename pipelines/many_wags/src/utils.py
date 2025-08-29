@@ -90,29 +90,27 @@ def read_genome_dict(f):
 
 def create_bed_from_anchors(df, d, bed_out):
     """
-    Create a bed file from the identified anchors
+    Create a BED file from anchors. df has columns: chrom, anchor
+    d maps chrom -> chromosome length.
     """
+    import csv, os
     bed_records = []
-    
-    # process each chromosome
-    for chrom, group in df.groupby("chrom"):
-        # Sort anchors within chromosome
-        anchors = sorted(group["anchor"].tolist())
-        chrom_length = d.get(chrom, 0)
-        
-        # first interval - from start of chromosome to first anchor
-        if anchors:
-            bed_records.append((chrom, 0, anchors[0]))
-            
-            # middle intervals between consecutive anchors
-            for i in range(len(anchors) - 1):
-                bed_records.append((chrom, anchors[i], anchors[i + 1]))
-            
-            # last interval - from last anchor to end of chromosome
-            bed_records.append((chrom, anchors[-1], chrom_length))
-    
-    # write to bed file
-    with open(bed_out, 'w') as f_out:
-        for record in bed_records:
-            f_out.write(f"{record[0]}\t{record[1]}\t{record[2]}\n")
 
+    for chrom, group in df.groupby("chrom"):
+        c = str(chrom).strip()
+        anchors = sorted(int(a) for a in group["anchor"].tolist())
+        clen = int(d.get(c, 0))
+        if not anchors or clen <= 0:
+            continue
+
+        # [0, first), [a[i], a[i+1)), [last, clen)
+        bed_records.append((c, 0, anchors[0]))
+        for i in range(len(anchors) - 1):
+            bed_records.append((c, anchors[i], anchors[i + 1]))
+        bed_records.append((c, anchors[-1], clen))
+
+    os.makedirs(os.path.dirname(bed_out), exist_ok=True)
+    with open(bed_out, "w", newline="") as f:
+        w = csv.writer(f, delimiter="\t", lineterminator="\n")
+        for c, s, e in bed_records:
+            w.writerow([c, int(s), int(e)])
