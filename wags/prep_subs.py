@@ -15,6 +15,7 @@ import string
 import textwrap
 import argparse
 import fileinput
+import subprocess
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
@@ -75,6 +76,48 @@ for species_dir in configs_dir.iterdir():
                 config_d[species] = species_dir.name
 
 
+def get_conda_source_command(conda_source_path=None):
+    """ auto-detect conda installation and return source command """
+    # if user provided path
+    if conda_source_path:
+        if os.path.exists(conda_source_path):
+            return f"source {conda_source_path}"
+        else:
+            print(f"provided conda source path not found: {conda_source_path}")
+            return None
+    try:
+        conda_exe = os.environ.get('CONDA_EXE')
+        if conda_exe and os.path.exists(conda_exe):
+           #print(f"DEBUG: Using CONDA_EXE: {conda_exe}")
+            # get conda base directory from CONDA_EXE path
+            # CONDA_EXE is typically /path/to/conda/bin/conda
+            conda_base = os.path.dirname(os.path.dirname(conda_exe))
+        else:
+            # fallback and try to run the conda command
+            result = subprocess.run(['conda', 'info', '--base'], 
+                                  capture_output=True, text=True, check=True)
+            conda_base = result.stdout.strip()
+        
+        # Debug output
+       #print(f"DEBUG: Found conda base at: {conda_base}")
+       #print(f"DEBUG: CONDA_DEFAULT_ENV: {os.environ.get('CONDA_DEFAULT_ENV', 'Not set')}")
+        
+        # check if we're in a conda environment
+        if 'CONDA_DEFAULT_ENV' in os.environ:
+            conda_sh = os.path.join(conda_base, 'etc', 'profile.d', 'conda.sh')
+           #print(f"DEBUG: Looking for conda.sh at: {conda_sh}")
+            if os.path.exists(conda_sh):
+               #print(f"DEBUG: Found conda.sh, will add source command")
+                return f"source {conda_sh}"
+            else:
+                print(f"DEBUG: conda.sh not found at expected location")
+        else:
+            print(f"DEBUG: Not in a conda environment, skipping source command")
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        print(f"DEBUG: Error detecting conda: {e}")
+        pass
+    
+    return None
 replace_map = {
     "_2.fq.gz": "_1.fq.gz",
     "_R2.fq.gz": "_R1.fq.gz",
@@ -265,15 +308,6 @@ def main():
             snake_n   = "only_wag.smk"
             config_n  = f"{ref}_only_wag.yaml"
  
-        # copy snakefile, rules, config, and profile to working dir
-       #smk = os.path.join(
-       #   #str(Path(prep_dir).parents[0]),
-       #    prep_dir,
-       #    "pipelines",
-       #    pipeline,
-       #    f"inputs/{remote}/{bqsr}",
-       #    snake_n
-       #)
         smk = os.path.join(
            #str(Path(prep_dir).parents[0]),
             str(prep_dir),
@@ -357,9 +391,9 @@ def main():
         doc['tmp_dir']['fastq_tmp'] = os.path.join(
             outdir,".fastq",breed,sample_name,".tmp"
         )
-        doc['tmp_dir']['general'] = os.path.join(
-            outdir,".tmp",breed,sample_name
-        )
+       #doc['tmp_dir']['general'] = os.path.join(
+       #    outdir,".tmp",breed,sample_name
+       #)
         
         # for private variant analysis, add pop.vcf and common.vcf path
         if money:
@@ -457,7 +491,11 @@ def main():
             print(header, file=f)
 
             print("set -e\n", file=f)
+            
             if "local" not in profile:
+                conda_source = get_conda_source_command(args.conda_source)
+                if conda_source:
+                    print(f"{conda_source}", file=f)
                 print(f"conda activate {snake_env}", file=f)
             
             # slurm submit dir needed if using slurm cluster
@@ -472,12 +510,12 @@ def main():
             print(
                 textwrap.dedent(
                     f"""
-                    TMP_DIR={doc['tmp_dir']['general']}
                     FQ_DIR={fq_dir}
                     PROC_DIR={outdir} 
                     """
                 ),file=f
             )
+                   #TMP_DIR={doc['tmp_dir']['general']}
 
             # if ref in container, extract dictionary or generate from fasta 
             # if does not exist
@@ -502,13 +540,20 @@ def main():
                             """
                         ), file=f
                     )
+            # build singularity bind arguments conditionally
+            bind_args = f"$PWD,$FQ_DIR,$PROC_DIR"
+            if ref not in refs:
+                bind_args = f"$REF_DIR,{bind_args}"
+            if money:
+                bind_args = f"$POP_VCF,{bind_args}"
+
             if profile == "local":
                 print(
                     textwrap.dedent(
                         f"""
                         conda run --live-stream -n {snake_env} snakemake -s {snake_n} \\
                             --use-singularity \\
-                            --singularity-args "-B $TMP_DIR,$PWD,$REF_DIR,$POP_VCF,$FQ_DIR,$PROC_DIR" \\
+                            --singularity-args "-B {bind_args}" \\
                             --profile {profile_n} \\
                             --configfile {config_n} \\
                             --keep-going \\
@@ -522,7 +567,7 @@ def main():
                         f"""
                         snakemake -s {snake_n} \\
                             --use-singularity \\
-                            --singularity-args "-B $TMP_DIR,$PWD,$REF_DIR,$POP_VCF,$FQ_DIR,$PROC_DIR" \\
+                            --singularity-args "-B {bind_args}" \\
                             --profile {profile_n} \\
                             --configfile {config_n} \\
                             --keep-going \\
@@ -676,6 +721,11 @@ if __name__ == '__main__':
         metavar="\b",
         required=True,
         help="default scheduler account"
+    )
+    optional.add_argument(
+        "--conda-source",
+        default=None,
+        help="path to conda.sh to source before activating environment (e.g. /path/to/conda/etc/profile.d/conda.sh)"
     )
     optional.add_argument(
         "--walltime",
