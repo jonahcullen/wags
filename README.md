@@ -177,7 +177,11 @@ SampleA,poodle,M,SampleA_20
 
 The input CSV may contain as many samples as desired where `prep_subs.py` will generate pipeline inputs for each included sample. A minimal example of running `prep_subs.py` for processing using S3 storage is below (for all required and optional arguments `prep_subs.py --help`)
 
+**Important:** Before running `prep_subs.py`, ensure your conda environment is activated so the script can auto-detect the conda installation path for job submissions:
+
 ```
+conda activate snakemake
+
 python ./wags/prep_subs.py \
     --meta input.csv \
     --fastqs PATH/TO/FASTQ_DIR \ 
@@ -192,7 +196,16 @@ python ./wags/prep_subs.py \
     --alias MINIO_ALIAS
 ```
 
+**Note for HPC users:** Some HPC systems require source conda initialization scripts before activating environments. If your job submissions fail with conda activation errors, you can manually specify the conda source path:
+
+```
+python ./wags/prep_subs.py \
+    --conda-source /path/to/conda/etc/profile.d/conda.sh \
+    [...other arguments...]
+```
+
 Note that `--bucket` here is the name of the per-sample output directory nested within `--out` and must be an available S3 bucket if using `--remote S3`. It should also be noted the importance of two additional options `run-length` and `scatter-size`. `run-length` determines the maximum number of missing bases allowed to define interval boundaries, while `scatter-size` determines the number of intervals that can be processed simultaneously, both of which have default values of 50. Together these options have an impact on processing speed for haplotype calling and BQSR (if desired). This will generate the following directory structure
+
 
 ```
 PATH/TO/OUTDIR/
