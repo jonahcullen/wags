@@ -171,7 +171,7 @@ rule mark_duplicates:
     params:
         bams       = lambda wildcards, input: " --INPUT ".join(map(str,input.merged_bams)),
         java_opt   = "-Xms4000m -Xmx16g",
-        tmp_dir    = f"/dev/shm/{os.environ['USER']}/{sample_name}_{ref}.md.tmp"
+        tmp_dir    = "/dev/shm/{os.environ['USER']}/{sample_name}_{ref}.md.tmp"
     benchmark:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.mark_duplicates.benchmark.txt"
     threads: 4

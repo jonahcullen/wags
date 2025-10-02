@@ -420,7 +420,7 @@ def main():
 
             print("set -e\n", file=f)
             if "local" not in profile:
-                print(f"conda activate {snake_env}", file=f)
+                print(f'eval "$(conda shell.bash hook)"\nconda activate {snake_env}', file=f)
             
             # slurm submit dir needed if using slurm cluster
             if profile == "slurm":
