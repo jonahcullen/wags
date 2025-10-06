@@ -9,7 +9,7 @@ singularity: config['sif']
 rule all:
     input:
         bwa_indices = expand(
-            f"{config['ref_fasta']}.{{ext}}",
+            "{}.{{ext}}".format(config['ref_fasta']),
             ext = ["bwt","pac","ann","amb","sa"]
         )
 
@@ -17,7 +17,7 @@ rule ref_index:
     input:
         ref_fasta = config['ref_fasta'],
     output:
-        ref_fai = f"{config['ref_fasta']}.fai"
+        ref_fai = "{}.fai".format(config['ref_fasta'])
     shell:
         '''
             samtools faidx {input.ref_fasta}
@@ -27,7 +27,7 @@ rule ref_dict:
     input:
         ref_fasta = config['ref_fasta'],
     output:
-        ref_dict = f"{os.path.splitext(config['ref_fasta'])[0]}.dict"
+        ref_dict = "{}.dict".format(os.path.splitext(config['ref_fasta'])[0])
     shell:
         '''
             gatk CreateSequenceDictionary \
@@ -36,15 +36,15 @@ rule ref_dict:
         
 rule bwa_index:
     input:
-        ref_dict  = f"{os.path.splitext(config['ref_fasta'])[0]}.dict",
-        ref_fai   = f"{config['ref_fasta']}.fai",
+        ref_dict  = "{}.dict".format(os.path.splitext(config['ref_fasta'])[0]),,
+        ref_fai   = "{}.fai".format(config['ref_fasta']),
         ref_fasta = config['ref_fasta'],
     output:
-        bwa_bwt = f"{config['ref_fasta']}.bwt",
-        bwa_pac = f"{config['ref_fasta']}.pac",
-        bwa_ann = f"{config['ref_fasta']}.ann",
-        bwa_amb = f"{config['ref_fasta']}.amb",
-        bwa_sa  = f"{config['ref_fasta']}.sa",
+        "{}.bwt".format(config['ref_fasta']),
+        "{}.pac".format(config['ref_fasta']),
+        "{}.ann".format(config['ref_fasta']),
+        "{}.amb".format(config['ref_fasta']),
+        "{}.sa".format(config['ref_fasta']),
     threads: 4
     resources:
          time   = 480,

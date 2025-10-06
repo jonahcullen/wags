@@ -45,7 +45,9 @@ rule mark_adapters:
         mark_adapt = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{readgroup_name}.mark_adapt.unmapped.bam"),
         metrics    = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{readgroup_name}.mark_adapt.metrics.txt"
     params:
-        tmp_dir = f"/dev/shm/{os.environ['USER']}/{{readgroup_name}}_mark_adapt/"
+        tmp_dir = lambda wildcards: "/dev/shm/{}/{}_mark_adapt/".format(
+            os.environ.get('user', 'user'), wildcards.readgroup_name
+        )
     benchmark:
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{readgroup_name}.mark_adapters.benchmark.txt"
     threads: 4
@@ -71,7 +73,9 @@ rule sam_to_fastq_and_bwa_mem:
         bwa_log = "{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{readgroup_name}.{ref}_aligned.unmerged.bwa.stderr.log",
         bam     = temp("{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{readgroup_name}.{ref}_aligned.unmerged.bam")
     params:
-        tmp_dir   = f"/dev/shm/{os.environ['USER']}/{{readgroup_name}}_sam_fastq/",
+        tmp_dir = lambda wildcards: "/dev/shm/{}/{}_sam_fastq/".format(
+            os.environ.get('USER', 'user'), wildcards.readgroup_name
+        ),
         java_opt  = "-Xms3000m",
         bwa_cl    = "mem -K 100000000 -p -v 3 -t 16 -Y",
         ref_fasta = config['ref_fasta'],

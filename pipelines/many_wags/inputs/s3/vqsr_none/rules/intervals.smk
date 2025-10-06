@@ -247,9 +247,15 @@ checkpoint generate_intervals:
         directory("{bucket}/wgs/pipeline/{ref}/{date}/intervals/import"),
     params:
         ival_length = config['interval_length'],
-        base        = f"{config['bucket']}/wgs/pipeline/{config['ref']}/{config['date']}/intervals/import",
-        lengths     = f"{config['bucket']}/wgs/pipeline/{config['ref']}/{config['date']}/intervals/collapsed_lengths.csv",
-        ivals_all   = f"{config['bucket']}/wgs/pipeline/{config['ref']}/{config['date']}/intervals/wags_intervals.list",
+        base = "{}/wgs/pipeline/{}/{}/intervals/import".format(
+            config['bucket'], config['ref'], config['date']
+        ),
+        lengths = "{}/wgs/pipeline/{}/{}/intervals/collapsed_lengths.csv".format(
+            config['bucket'], config['ref'], config['date']
+        ),
+        ivals_all = "{}/wgs/pipeline/{}/{}/intervals/wags_intervals.list".format(
+            config['bucket'], config['ref'], config['date']
+        ),
     run:
         os.makedirs(params.base,exist_ok=True)
         # process interval file and collapse intervals by chromosome    
@@ -307,25 +313,24 @@ checkpoint generate_intervals:
                 with open(
                         os.path.join(
                             params.base,
-                            f"wags_{str(ival).zfill(4)}.interval_list"),
+                            "wags_{}.interval_list".format(str(ival).zfill(4)),
                             "w"
                         ) as out:
                     ival += 1
-                    print(*header,sep="",end="",file=out)
+                    print(*header, sep="", end="", file=out)
                     print(k,
-                          j[0],j[1],
-                          "+",".",
-                          sep="\t",file=out)
+                          j[0], j[1],
+                          "+", ".",
+                          sep="\t", file=out)
          
         # generate file of import interval paths
         with open(params.ivals_all,"w") as out:
-            for ival in glob.glob(os.path.join(params.base,"*.interval_list")):
-                print(ival,file=out)
+            for ival in glob.glob(os.path.join(params.base, "*.interval_list")):
+                print(ival, file=out)
         
         # generate collapsed lengths
         with open(params.lengths, "w") as out:
-            print("chr","interval_number","interval_length",sep=",",file=out)
+            print("chr", "interval_number", "interval_length", sep=",", file=out)
             for k,v in d.items():
                 for i,j in enumerate(v["collapsed"]):
-                    print(k,f"interval_{i}",j[1]-j[0],sep=",",file=out)
-
+                    print(k, "interval_{}".format(i), j[1]-j[0], sep=",", file=out)

@@ -6,7 +6,8 @@ rule import_gvcfs:
     output:
         directory("{bucket}/wgs/pipeline/{ref}/{date}/import_gvcfs/wags_{interval}")
     params:
-        tmp_dir = lambda wildcards: f"/dev/shm/{wildcards.interval}",
+       #tmp_dir = lambda wildcards: f"/dev/shm/{wildcards.interval}",
+        tmp_dir = lambda wildcards: "/dev/shm/{}".format(wildcards.interval),
         batch   = config["batch_size"],
     threads: 6
     resources:

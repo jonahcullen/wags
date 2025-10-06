@@ -55,28 +55,28 @@ rule convert_to_excel:
         # read each input reform vep split into a df
         for i in input.reforms:
             var_type = os.path.basename(i).split(".")[-4]
-            print(f"Processing file: {i}, type: {var_type}")
+            print("Processing file: {}, type: {}".format(i, var_type))
             try:
                 df = pd.read_csv(i, sep="\t", dtype=str, engine="python")
                 if df.columns[0].startswith("chrom"):
-                    print(f"Headers are correctly aligned for {var_type}.")
+                    print("Headers are correctly aligned for {}.".format(var_type))
                 else:
-                    raise ValueError(f"Headers misaligned in {i}. Check the file format.")
-                print(f"df for {var_type} head:\n{df.head()}")
+                    raise ValueError("Headers misaligned in {}. Check the file format.".format(i))
+                print("df for {} head:\n{}".format(var_type, df.head()))
             except Exception as e:
-                print(f"error reading file {i}: {e}")
+                print("error reading file {}: {}".format(i, e))
     
             dfs[var_type] = df
 
-        print(f"Loaded DataFrames: {list(dfs.keys())}")
+        print("Loaded DataFrames: {}".format(list(dfs.keys())))
         # write to excel tabs
         with pd.ExcelWriter(output.excel_sheet, engine="xlsxwriter") as writer:
             for var_type, df in dfs.items():
-                print(f"Writing tab: {var_type} with {len(df)} rows.")
+                print("Writing tab: {} with {} rows.".format(var_type, len(df)))
                 try:
                     df.to_excel(writer, sheet_name=var_type, index=False)
                 except Exception as e:
-                    print(f"Error writing tab {var_type}: {e}")
+                    print("Error writing tab {}: {}".format(var_type, e))
                     raise
 
 localrules: manifest_and_archive
@@ -124,13 +124,15 @@ rule manifest_and_archive:
             # write the manifest
             manifest_path = os.path.join(staging_dir, os.path.basename(output.manifest))
             with open(manifest_path, "w") as manifest:
-                manifest.write(f"Manifest for {wildcards.breed}_{wildcards.sample_name}.{wildcards.ref} money (tar)ball\n\n")
+                manifest.write("Manifest for {}_{}.{} money (tar)ball\n\n".format(
+                    wildcards.breed, wildcards.sample_name, wildcards.ref
+                ))
                 manifest.write("Included files:\n")
                 for file, description in file_map.items():
-                    manifest.write(f"{os.path.basename(file)}: {description}\n")
+                    manifest.write("{}: {}\n".format(os.path.basename(file), description))
 
             # create money (tar)ball
-            shell(f"tar -czvf {output.money_tar_gz} -C {staging_dir} .")
+            shell("tar -czvf {} -C {} .".format(output.money_tar_gz, staging_dir))
 
             # copy the manifest to final destination
             shutil.copy(manifest_path, output.manifest)

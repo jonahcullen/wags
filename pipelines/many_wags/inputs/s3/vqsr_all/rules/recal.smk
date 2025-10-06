@@ -83,7 +83,9 @@ rule apply_recal:
         recal_vcf       = "{bucket}/wgs/pipeline/{ref}/{date}/var_recal/apply/wags_{interval}/recal.{interval}.vcf.gz",
         recal_vcf_index = "{bucket}/wgs/pipeline/{ref}/{date}/var_recal/apply/wags_{interval}/recal.{interval}.vcf.gz.tbi"
     params:
-        apply_recal_dir    = lambda wildcards: f"{wildcards.bucket}/wgs/pipeline/{wildcards.ref}/{wildcards.date}/var_recal/apply/wags_{wildcards.interval}",
+        apply_recal_dir = lambda wildcards: "{}/wgs/pipeline/{}/{}/var_recal/apply/wags_{}".format(
+            wildcards.bucket, wildcards.ref, wildcards.date, wildcards.interval
+        ),
         indel_filter_level = config["indel_filter_level"],
         snp_filter_level   = config["snp_filter_level"]
     resources:

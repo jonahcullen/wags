@@ -88,10 +88,11 @@ rule concat_phased:
     input:
         phase_vcf = expand(
             "{bucket}/wgs/pipeline/{ref}/{date}/phasing/phased/joint_call.{ref}.{chrom}.phased.vcf.gz",
-            bucket=config['bucket'],
-            ref=config['ref'],
-            date=config['date'],
-            chrom=[f"chr{i}" for i in range(1,39+1)]
+            bucket = config['bucket'],
+            ref = config['ref'],
+            date = config['date'],
+           #chrom=[f"chr{i}" for i in range(1,39+1)]
+            chrom = ["chr{}".format(i) for i in range(1, 39 + 1)]
         ),
     output:
         phase_vcf = "{bucket}/wgs/pipeline/{ref}/{date}/phasing/joint_call.{ref}.{date}.snps.phased.vcf.gz",

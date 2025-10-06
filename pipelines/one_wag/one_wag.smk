@@ -45,7 +45,7 @@ if using_s3:
     except ImportError as e:
         raise ImportError(
             "ERROR: S3 remote storage requested but snakemake S3 provider could not be imported. "
-            f"Please install required dependencies or use --remote local. Error: {e}"
+            "Please install required dependencies or use --remote local. Error: {}".format(e)
         )
 
 # read inputs
@@ -57,8 +57,8 @@ sample_name = units['sample_name'].values[0]
 
 # get sequence group intervals with unmapped and hc caller intervals
 sequence_grouping(config['bucket'],config['ref_dict'])
-intervals, = glob_wildcards(os.path.join(f"{config['bucket']}/seq_group/with_unmap","{interval}.tsv"))
-beds, = glob_wildcards(os.path.join(f"{config['bucket']}/bed_group/","{bed}.bed"))
+intervals, = glob_wildcards(os.path.join(config['bucket'], "seq_group", "with_unmap", "{interval}.tsv"))
+beds, = glob_wildcards(os.path.join(config['bucket'], "bed_group", "{bed}.bed"))
 
 core_targets = [
     # gvcf

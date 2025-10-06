@@ -5,7 +5,9 @@ rule plot_interval_lengths:
     output:
         len_barplt = S3.remote("{bucket}/wgs/pipeline/{ref}/{date}/intervals/interval_lengths_mqc.tiff")
     params:
-        lengths = f"{config['bucket']}/wgs/pipeline/{config['ref']}/{config['date']}/intervals/collapsed_lengths.csv",
+        lengths = "{}/wgs/pipeline/{}/{}/intervals/collapsed_lengths.csv".format(
+            config['bucket'], config['ref'], config['date']
+        )
     threads: 1
     resources:
          time   = 30,

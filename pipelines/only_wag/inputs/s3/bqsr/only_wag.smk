@@ -35,7 +35,9 @@ sample_name = units['sample_name'].values[0]
 
 # get sequence group intervals with unmapped and hc caller intervals
 sequence_grouping(config['bucket'],config['ref_dict'])
-intervals, = glob_wildcards(os.path.join(f"{config['bucket']}/seq_group/with_unmap","{interval}.tsv"))
+intervals, = glob_wildcards(os.path.join(
+    config['bucket'], "seq_group", "with_unmap", "{interval}.tsv"
+))
 
 rule all:
     input:

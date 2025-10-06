@@ -43,10 +43,13 @@ def sequence_grouping(base,ref_dict):
     # write sequence group list with unmapped to interval file so they are recalibrated as well
     tsv_string += '\n' + "unmapped"
     seq_group_unmapped = tsv_string.split("\n")
-    if not os.path.isdir(f"{base}/seq_group/with_unmap"):
-        os.makedirs(f"{base}/seq_group/with_unmap",exist_ok=True)
+    if not os.path.isdir(os.path.join(base, "seq_group", "with_unmap")):
+        os.makedirs(os.path.join(base, "seq_group", "with_unmap"), exist_ok=True)
         for i,v in enumerate(seq_group_unmapped):
-            with open(os.path.join(f"{base}/seq_group/with_unmap",f"group_{str(i).zfill(4)}.tsv"),"w") as f:
+            with open(
+                os.path.join(base, "seq_group", "with_unmap", "group_{:04d}.tsv".format(i)),
+                "w"
+            ) as f:
                 print(v,file=f)
     
     os.makedirs(os.path.join(base, "bed_group"), exist_ok=True)
@@ -55,7 +58,7 @@ def sequence_grouping(base,ref_dict):
         if 'unmapped' in v:
             continue
         # interval file name
-        bed_name = os.path.join(f"{base}/bed_group", f"bed_group_{str(i).zfill(4)}.bed")
+        bed_name = os.path.join(base, "bed_group", "bed_group_{:04d}.bed".format(i))
         # only generate if not already
         if not os.path.isfile(bed_name):
             # check if multiple contigs
@@ -101,7 +104,9 @@ def process_gaps(gaps_file, chrom_lengths):
     for chrom in sorted(chrom_lengths.keys(), key=natural_sort_key):
         chrom_gaps = [line.strip() for line in lines if line.split(':')[0] == chrom]
         if not chrom_gaps:
-            contigs.append(f"{chrom}\t1\t{chrom_lengths[chrom]}\t+\tACGTmer")
+            contigs.append(
+                "{}\t1\t{}\t+\tACGTmer".format(chrom, chrom_lengths[chrom])
+            )
             continue
 
         midpoints = []
@@ -114,12 +119,12 @@ def process_gaps(gaps_file, chrom_lengths):
         previous_end = 1
         for i, midpoint in enumerate(midpoints):
             if i == 0:
-                output.append(f"{chrom}\t{previous_end}\t{midpoint}\t+\tACGTmer")
+                output.append("{}\t{}\t{}\t+\tACGTmer".format(chrom, previous_end, midpoint))
             else:
-                output.append(f"{chrom}\t{midpoints[i-1] + 1}\t{midpoint}\t+\tACGTmer")
+                output.append("{}\t{}\t{}\t+\tACGTmer".format(chrom, midpoints[i - 1] + 1, midpoint))
             previous_end = midpoint
         
-        output.append(f"{chrom}\t{previous_end + 1}\t{chrom_lengths[chrom]}\t+\tACGTmer")
+        output.append("{}\t{}\t{}\t+\tACGTmer".format(chrom, previous_end + 1, chrom_lengths[chrom]))
     # add contigs for inclusion
     output.extend(contigs)
 

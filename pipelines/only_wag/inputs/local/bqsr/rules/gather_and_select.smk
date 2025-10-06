@@ -23,7 +23,10 @@ rule gather_unfltr_vcf:
         var_unfiltered_tbi = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/unfltr_vcf/all_vars.vcf.gz.tbi"
     params:
         vcfs    = lambda wildcards, input: " --input ".join(map(str,input)),
-        tmp_vcf = lambda wildcards: f"{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/money/unfltr_vcf/tmp.vcf.gz",
+       #tmp_vcf = lambda wildcards: f"{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/{wildcards.ref}/money/unfltr_vcf/tmp.vcf.gz",
+        tmp_vcf = lambda wildcards: "{}/wgs/{}/{}/{}/money/unfltr_vcf/tmp.vcf.gz".format(
+            wildcards.bucket, wildcards.breed, wildcards.sample_name, wildcards.ref
+        ),
         tmp_dir = config['tmp_dir']['unfilt_gather_vcf']
     threads: 12
     resources:

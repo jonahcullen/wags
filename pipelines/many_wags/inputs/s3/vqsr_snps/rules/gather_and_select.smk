@@ -21,7 +21,9 @@ rule gather_unfltr_vcf:
         var_unfiltered_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/unfltr_vcf/all_vars.vcf.gz.tbi"
     params:
         vcfs    = lambda wildcards, input: " --input ".join(map(str,input)),
-        tmp_vcf = lambda wildcards: f"{wildcards.bucket}/wgs/pipeline/{wildcards.ref}/{wildcards.date}/unfltr_vcf/tmp.vcf.gz",
+        tmp_vcf = lambda wildcards: "{}/wgs/pipeline/{}/{}/unfltr_vcf/tmp.vcf.gz".format(
+            wildcards.bucket, wildcards.ref, wildcards.date
+        ),
         tmp_dir = config['tmp_dir']['unfilt_gather_vcf']
     threads: 12
     resources:
@@ -117,7 +119,9 @@ rule sites_only_gather_vcf:
         gather_sites_only_tbi = "{bucket}/wgs/pipeline/{ref}/{date}/sites_only_gather_vcf/gather.sites_only.vcf.gz.tbi"
     params:
         vcfs    = lambda wildcards, input: " --input ".join(map(str,input)),
-        tmp_vcf = lambda wildcards: f"{wildcards.bucket}/wgs/pipeline/{wildcards.ref}/{wildcards.date}/sites_only_gather_vcf/tmp.vcf.gz",
+        tmp_vcf = lambda wildcards: "{}/wgs/pipeline/{}/{}/sites_only_gather_vcf/tmp.vcf.gz".format(
+            wildcards.bucket, wildcards.ref, wildcards.date
+        ),
         tmp_dir = config['tmp_dir']['sites_only_gather_vcf']
     threads: 12
     resources:

@@ -38,18 +38,24 @@ def sequence_grouping(base,ref_dict):
 
     # write sequence group list to interval files
     seq_group = tsv_string.split("\n")
-    if not os.path.isdir(f"{base}/seq_group/no_unmap"):
-        os.makedirs(f"{base}/seq_group/no_unmap",exist_ok=True)
+    if not os.path.isdir(os.path.join(base, "seq_group", "no_unmap")):
+        os.makedirs(os.path.join(base, "seq_group", "no_unmap"), exist_ok=True)
         for i,v in enumerate(seq_group):
-            with open(os.path.join(f"{base}/seq_group/no_unmap",f"group_{i}.tsv"),"w") as f:
+            with open(
+                os.path.join(base, "seq_group", "no_unmap", "group_{}.tsv".format(i)),
+                "w",
+            ) as f:
                 print(v,file=f)
 
     # write sequence group list with unmapped to interval file so they are recalibrated as well
     tsv_string += '\n' + "unmapped"
     seq_group_unmapped = tsv_string.split("\n")
-    if not os.path.isdir(f"{base}/seq_group/with_unmap"):
-        os.makedirs(f"{base}/seq_group/with_unmap",exist_ok=True)
+    if not os.path.isdir(os.path.join(base, "seq_group", "with_unmap")):
+        os.makedirs(os.path.join(base, "seq_group", "with_unmap"), exist_ok=True)
         for i,v in enumerate(seq_group_unmapped):
-            with open(os.path.join(f"{base}/seq_group/with_unmap",f"group_{i}.tsv"),"w") as f:
+            with open(
+                os.path.join(base, "seq_group", "with_unmap", "group_{}.tsv".format(i)),
+                "w",
+            ) as f:
                 print(v,file=f)
     

@@ -114,14 +114,14 @@ else:
                     f_out.writelines(ivals)
 
             for i,ival in enumerate(chr_ivals):
-                file_name = os.path.join(output.split, f"{i:04d}-scattered.interval_list")
+                file_name = os.path.join(output.split, "{:04d}-scattered.interval_list".format(i))
                 write_ivals(file_name, [ival])
 
-            haplotype1_file = os.path.join(output.split, f"{len(chr_ivals):04d}-scattered.interval_list")
+            haplotype1_file = os.path.join(output.split, "{:04d}-scattered.interval_list".format(len(chr_ivals)))
             write_ivals(haplotype1_file, hap1_ivals)
-            haplotype2_file = os.path.join(output.split, f"{len(chr_ivals)+1:04d}-scattered.interval_list")
+            haplotype2_file = os.path.join(output.split, "{:04d}-scattered.interval_list".format(len(chr_ivals)+1))
             write_ivals(haplotype2_file, hap2_ivals)
-            unassigned_file = os.path.join(output.split, f"{len(chr_ivals)+2:04d}-scattered.interval_list")
+            unassigned_file = os.path.join(output.split, "{:04d}-scattered.interval_list".format(len(chr_ivals)+2))
             write_ivals(unassigned_file, unass_ivals)
 
 rule haplotype_caller:
