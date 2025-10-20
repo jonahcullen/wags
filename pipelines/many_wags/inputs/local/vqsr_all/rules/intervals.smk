@@ -316,10 +316,10 @@ checkpoint generate_intervals:
                 with open(
                         os.path.join(
                             params.base,
-                           #f"wags_{str(ival).zfill(4)}.interval_list"),
-                            "wags_{}.interval_list".format(str(ival).zfill(4)),
-                            "w"
-                        ) as out:
+                            "wags_{}.interval_list".format(str(ival).zfill(4))
+                        ),
+                        "w",
+                ) as out:
                     ival += 1
                     print(*header, sep="", end="", file=out)
                     print(k,

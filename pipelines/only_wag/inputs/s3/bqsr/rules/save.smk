@@ -15,7 +15,7 @@ rule upload_fastqs:
         # a container and thus the below shell comand will be executed using
         # the user installed and configured mc
 
-        shell(f'''
+        shell('''
             mc cp {input.r1} {input.r2} \
                 {params.alias}/{wildcards.bucket}/wgs/{wildcards.breed}/{wildcards.sample_name}/fastq/{params.flowcell}/
         ''')
