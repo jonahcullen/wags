@@ -1,0 +1,35 @@
+
+manta_samples: /gpfs_common/share01/stern/mwvandew/oavtrs/complete/SVs/mv_snake_SV/discovery/sample_lists/manta.samples.txt
+
+gridss_samples: /gpfs_common/share01/stern/mwvandew/oavtrs/complete/SVs/mv_snake_SV/discovery/sample_lists/gridss.samples.txt
+
+delly_samples: /gpfs_common/share01/stern/mwvandew/oavtrs/complete/SVs/mv_snake_SV/discovery/sample_lists/delly.samples.txt
+
+smoove_samples: /gpfs_common/share01/stern/mwvandew/oavtrs/complete/SVs/mv_snake_SV/discovery/sample_lists/smoove.samples.txt
+
+cram_samples: /gpfs_common/share01/stern/mwvandew/oavtrs/complete/SVs/mv_snake_SV/discovery/sample_lists/crams.txt
+
+chr_list: /gpfs_common/share01/stern/mwvandew/oavtrs/complete/SVs/mv_snake_SV/discovery/reference/UU_Cfam_GSD_1.0_ROSY/chrms.txt
+
+ref_fasta: /gpfs_common/share01/stern/mwvandew/oavtrs/complete/SVs/mv_snake_SV/discovery/reference/UU_Cfam_GSD_1.0_ROSY/UU_Cfam_GSD_1.0_ROSY.fa
+
+cache: /gpfs_common/share01/stern/mwvandew/oavtrs/complete/SVs/mv_snake_SV/discovery/reference/UU_Cfam_GSD_1.0_ROSY/cache
+
+ref_gtf: /gpfs_common/share01/stern/mwvandew/oavtrs/complete/SVs/mv_snake_SV/discovery/reference/UU_Cfam_GSD_1.0_ROSY/UU_Cfam_GSD_1.0_ROSY.refSeq.ensformat.gtf.gz
+
+sif: /gpfs_common/share01/stern/mwvandew/oavtrs/complete/SVs/mv_snake_SV/discovery/sif/catmike_wags.sif
+
+suffix: UU_Cfam_GSD_1.0_ROSY.left_aligned
+
+ref: UU_Cfam_GSD_1.0_ROSY 
+
+species: dog
+
+conda_envs:
+  delly: delly
+  gridss: gridss
+  smoove: smoove
+  manta: manta
+
+
+
