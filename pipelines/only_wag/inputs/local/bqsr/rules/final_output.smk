@@ -1,7 +1,7 @@
 
 rule reformat_vep_split:
     input:
-        vep_vcf   = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz"),
+        vep_vcf   = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz",
         vep_split = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.{var_type}_vars.vep_split.txt",
     output:
         reform = "{bucket}/compare_pop/final_output/{ref}/{breed}_{sample_name}.{ref}.{var_type}_vars.vep_split.reform.tsv",
@@ -98,16 +98,16 @@ rule convert_to_excel:
 localrules: manifest_and_archive
 rule manifest_and_archive:
     input:
-        vep_vcf         = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz"),
-        vep_vcf_tbi     = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz.tbi"),
+        vep_vcf         = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz",
+        vep_vcf_tbi     = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/final_gather/{breed}_{sample_name}.{ref}.vep.vcf.gz.tbi",
         unique_vars_gz  = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.unique_vars.vcf.gz",
         unique_vars_tbi = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.unique_vars.vcf.gz.tbi",
         rare_vars_gz    = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.rare_vars.vcf.gz",
         rare_vars_tbi   = "{bucket}/compare_pop/select_vars_to_table/{ref}/{breed}_{sample_name}.{ref}.rare_vars.vcf.gz.tbi",
         excel_sheet     = "{bucket}/compare_pop/final_output/{ref}/{breed}_{sample_name}.{ref}.tables.xlsx",
     output:
-        manifest     = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/{breed}_{sample_name}.{ref}.manifest.txt"),
-        money_tar_gz = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/money/{breed}_{sample_name}.{ref}.K9MM.tar.gz"),
+        manifest     = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/{breed}_{sample_name}.{ref}.manifest.txt",
+        money_tar_gz = "{bucket}/wgs/{breed}/{sample_name}/{ref}/money/{breed}_{sample_name}.{ref}.K9MM.tar.gz",
     params:
         staging_dir = "staging_tarball"
     threads: 1

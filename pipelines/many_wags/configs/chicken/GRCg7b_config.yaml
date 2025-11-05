@@ -26,6 +26,8 @@ batch_size : 50
 ref_fasta : /home/refgen/chicken/GRCg7b/GCF_016699485.2_GRCg7b_genomic_nice.fa
 ref_dict  : /home/refgen/chicken/GRCg7b/GCF_016699485.2_GRCg7b_genomic_nice.dict
 ref_gtf   : /home/refgen/chicken/GRCg7b/MISSING.gtf
+map_gaps : /path/to/map_gas.csv
+var_deserts : /path/to/var_deserts.csv
 
 # TMP DIRS
 tmp_dir :

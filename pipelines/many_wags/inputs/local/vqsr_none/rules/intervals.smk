@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import glob
 
+localrules: intergenic_bed
 rule intergenic_bed:
     output:
         genome    = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/beds/genome.txt",
@@ -23,15 +24,13 @@ rule intergenic_bed:
 
             # check and uncompress if gtf gzipped
             if file {params.ref_gtf} | grep -q gzip; then
-                echo HELLO
                 gunzip -c {params.ref_gtf} > {output.ref_gtf}
             else
                 cp {params.ref_gtf} {output.ref_gtf}
-                echo NOWAY
             fi
 
             # bedops to convert gtf to 
-            gtf2bed < {output.ref_gtf} > {output.ref_bed}
+            awk '$3 == "gene"' {output.ref_gtf} | gtf2bed > {output.ref_bed}
 
             # sort bed by chromosome and start position
             sortBed -i {output.ref_bed} -g {output.genome} > {output.sort_bed}
@@ -43,6 +42,7 @@ rule intergenic_bed:
             complementBed -i {output.merge_bed} -g {output.genome} > {output.inter_bed}
         '''
 
+localrules: intergenic_midpoints
 rule intergenic_midpoints:
     input:
         inter_bed = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/beds/intergenic.bed",
@@ -60,6 +60,7 @@ rule intergenic_midpoints:
 
 # NOTE - NEED TO MAKE THE DROPPING ON UNPLACED CONTIGS FLEXIBLE FOR OTHER
 # SPECIES
+localrules: bed_to_interval_list
 rule bed_to_interval_list:
     input:
         "{bucket}/wgs/pipeline/{ref}/{date}/intervals/beds/intergenic_midp.bed"
@@ -83,6 +84,7 @@ rule bed_to_interval_list:
 
 # chromosome-length intervals - again excluding chrUn WHICH needs to be
 # adjustable in the config
+localrules: chrom_intervals
 if "chroms" in config['anchor_type']:
     rule chrom_intervals:
         output:
@@ -133,6 +135,96 @@ if "nruns" in config['anchor_type']:
                 # dump chrun
                 sed -i '/^chrUn/d' {output}
             '''
+# intervals based on mapping gaps (MAPQ<1), variation deserts (positions with 
+# no small variants within <15kb), and patched with intergenic midpoints
+localrules: desert_and_patch
+rule desert_and_patch:
+    input:
+        intergen_mids = rules.intergenic_midpoints.output.midp_bed
+    output:
+        anchors = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/anchors.deserts_patched.tsv",
+        bed     = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/beds/anchors.deserts_patched.bed"
+    params:
+        ref_dict    = config['ref_dict'],
+        map_gaps    = config['map_gaps'],
+        var_deserts = config['var_deserts']
+    run:
+        spacing = 5000000
+        priority = {"gap": 0, "desert": 1, "midpoint": 2}
+
+        # load and label sources
+        # midpoints of map gaps (regions with MAPQ<1)
+        map_gaps = pd.read_csv(params.map_gaps)
+        map_gaps["anchor"] = (map_gaps["start"] + map_gaps["end"]) // 2
+        map_gaps["source"] = "gap"
+        # midpoints of variant deserts (no small variatns <15kb)
+        deserts = pd.read_csv(params.var_deserts)
+        deserts["anchor"] = deserts["start"] + (deserts["length"] // 2)
+        deserts["source"] = "desert"
+        # intergenic midpoints
+        mids = pd.read_csv(input.intergen_mids, sep="\t", header=None, names=["chrom", "start", "end"])
+        mids["anchor"] = mids["end"]
+        mids["source"] = "midpoint"
+
+        all_anchors = pd.concat([
+            map_gaps[["chrom", "anchor", "source"]],
+            deserts[["chrom", "anchor", "source"]],
+            mids[["chrom", "anchor", "source"]],
+        ], ignore_index=True)
+
+        all_anchors = all_anchors.drop_duplicates(subset=["chrom", "anchor"])
+        all_anchors["priority"] = all_anchors["source"].map(priority)
+        all_anchors = all_anchors.sort_values(["chrom", "anchor", "priority"])
+
+        selected = []
+
+        for chrom, chrom_df in all_anchors.groupby("chrom"):
+            chrom_df = chrom_df.sort_values(["anchor", "priority"])
+            max_anchor = chrom_df["anchor"].max()
+
+            current_pos = 0
+            while current_pos <= max_anchor:
+                # get all candidates >= current_pos
+                candidates = chrom_df[chrom_df["anchor"] >= current_pos]
+                if candidates.empty:
+                    break
+
+                # pick the best anchor - first by position, then by priority
+                best_anchor = candidates.groupby("anchor").first().reset_index().sort_values(["anchor", "priority"]).iloc[0]
+                selected.append(best_anchor)
+
+                # move to next 5mb step from current_pos, not from the anchor
+                current_pos += spacing
+
+        # read genome dict
+        chrom_lengths = read_genome_dict(params.ref_dict)
+
+        # write to outputs
+        selected_df = pd.DataFrame(selected)
+        selected_df = selected_df.drop_duplicates(subset=["chrom", "anchor"])
+        selected_df = selected_df.sort_values(["chrom", "anchor"])
+        selected_df.to_csv(output.anchors, sep="\t", index=False, header=False)
+        create_bed_from_anchors(selected_df, chrom_lengths, output.bed)
+
+rule desert_bed_to_interval_list:
+    input:
+        rules.desert_and_patch.output.bed
+    output:
+        desert_filt = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/beds/desert_patched.filt.bed",
+        ival_list   = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/desert_patched.interval_list"
+    params:
+        ref_dict = config['ref_dict']
+    shell:
+        '''
+            # only keep chroms (drop haplotypes and unassigned)
+            grep -P '^chr[0-9XYM]+\t' {input} > {output.desert_filt}
+
+            java -jar /opt/wags/src/picard.jar \
+                BedToIntervalList \
+                I={output.desert_filt} \
+                O={output.ival_list} \
+                SD={params.ref_dict}
+        '''
 
 def get_interval_type(wc):
     if "nruns" in config['anchor_type']:
@@ -141,14 +233,15 @@ def get_interval_type(wc):
         return "{bucket}/wgs/pipeline/{ref}/{date}/intervals/acgt.chrom.interval_list"
     elif "intergenic" in config['anchor_type']:
         return "{bucket}/wgs/pipeline/{ref}/{date}/intervals/intergenic_midp.interval_list"
+    elif "patched" in config['anchor_type']:
+        return "{bucket}/wgs/pipeline/{ref}/{date}/intervals/desert_patched.interval_list"
     else:
-        print("Check config file for correct anchor type: nruns, chroms, intergenic")
+        print("Check config file for correct anchor type: nruns, chroms, intergenic, or patched")
 
+localrules: generate_intervals
 checkpoint generate_intervals:
     input:
         ival_list = get_interval_type
-       #ival_list = "{bucket}/wgs/pipeline/{ref}/{date}/intervals/acgt.N50.interval_list"
-       #    if "nruns" in config['anchor_type'] else "{bucket}/wgs/pipeline/{ref}/{date}/intervals/intergenic_midp.interval_list"
     output:
         directory("{bucket}/wgs/pipeline/{ref}/{date}/intervals/import"),
     params:

@@ -246,6 +246,16 @@
     },
     "select_variants_to_table" :
     {
+        "output" : ".logs/{rule}/{wildcards.ref}/{wildcards.split}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.ref}/{wildcards.split}/%j.{rule}.err"
+    },
+    "merge_uniq_vcfs" :
+    {
+        "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
+    },
+    "merge_rare_vcfs" :
+    {
         "output" : ".logs/{rule}/{wildcards.ref}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.ref}/%j.{rule}.err"
     },
@@ -369,4 +379,9 @@
         "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
         "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
     },
+    "desert_bed_to_interval_list" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    }
 }

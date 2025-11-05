@@ -26,6 +26,8 @@ batch_size : 50
 ref_fasta : /home/refgen/goat/ARS1.2/GCF_001704415.2_ARS1.2_genomic.nice.fna
 ref_dict  : /home/refgen/goat/ARS1.2/GCF_001704415.2_ARS1.2_genomic.nice.dict
 ref_gtf   : /home/refgen/goat/ARS1.2/GCF_001704415.2_ARS1.2_genomic.sorted.nice.gtf.gz
+map_gaps : /path/to/map_gas.csv
+var_deserts : /path/to/var_deserts.csv
 
 # TMP DIRS
 tmp_dir :
