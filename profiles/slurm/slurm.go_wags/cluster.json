@@ -384,4 +384,98 @@
         "output" : ".logs/{rule}/%j.{rule}.out",
         "error"  : ".logs/{rule}/%j.{rule}.err"
     }
-}
+    "delly_merge" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    },
+    "smoove_merge" :
+    {    
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    },
+    "manta_inv" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
+    "make_manta_list" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
+    "manta_svimmer" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    },
+    "manta_join" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    },
+    "gridss_filter" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
+    "gridss_anno" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
+    "make_gridss_list" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
+    "gridss_svimmer" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    },
+    "gridss_join" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    },
+    "copy_vcfs" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    },
+    "survivor" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    },
+    "filer_survivor" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    },
+    "bgzip_vcf" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    },
+    "graphtyper" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
+    "graph_merge" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
+    "graph_filter" :
+    {
+        "output" : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/{wildcards.sample_name}/%j.{rule}.err"
+    },
+    "graph_vep" :
+    {
+        "output" : ".logs/{rule}/%j.{rule}.out",
+        "error"  : ".logs/{rule}/%j.{rule}.err"
+    }
