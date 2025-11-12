@@ -44,3 +44,6 @@ conda_envs :
   gridss : gridss
   smoove : smoove
   manta  : manta
+
+# CANFAM4/UU_CFAM PHYLOP ANNOTATION
+phylop: /home/refgen/dog/UU_Cfam_GSD_1.0_ROSY/resources/canfam4.phylop_241_mammals.bed.gz
