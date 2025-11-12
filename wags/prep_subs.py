@@ -29,9 +29,9 @@ class RawFile(object):
                 self.handle = gzip.open(filename, 'rt')
             else:
                 self.handle = open(filename,'r')
-        elif filename.endswith('bz2'):
+        elif filename.endswith('.bz2'):
             self.handle = bz2.open(filename,'rt')
-        elif filename.endswith('xz'):
+        elif filename.endswith('.xz'):
             self.handle = lzma.open(filenaem,'rt')
         else:
             self.handle = open(filename,'r')
@@ -297,32 +297,42 @@ def main():
        
         # input templates
         pipeline  = "one_wag"
-        rules     = "rules"
         snake_n   = "one_wag.smk"
         config_n  = f"{ref}_config.yaml"
         profile_n = f"{profile}.go_wags"
-        # switch to money templates if true - NEEDS TO BE UPDATED STILL
+        # switch to only_wag templates when --money used
         if money:
             pipeline  = "only_wag"
-            rules     = "rules"
             snake_n   = "only_wag.smk"
             config_n  = f"{ref}_only_wag.yaml"
- 
-        smk = os.path.join(
-           #str(Path(prep_dir).parents[0]),
-            str(prep_dir),
-            "pipelines",
-            pipeline,
-            snake_n
+
+        # choose correct snakefile location
+        smk_top = os.path.join(str(prep_dir), "pipelines", pipeline, snake_n)
+        smk_inputs = os.path.join(
+            str(prep_dir), "pipelines", pipeline, "inputs", remote, bqsr, snake_n
+        )
+        smk = smk_top if os.path.isfile(smk_top) else smk_inputs
+
+        # rules always under inputs/{remote}/{bqsr}/rules
+        rules = os.path.join(
+            str(prep_dir), "pipelines", pipeline, "inputs", remote, bqsr, "rules"
         )
 
-        rules = os.path.join(
-            str(prep_dir),
-            "pipelines",
-            pipeline,
-            f"inputs/{remote}/{bqsr}",
-            rules
-        )
+       #smk = os.path.join(
+       #   #str(Path(prep_dir).parents[0]),
+       #    str(prep_dir),
+       #    "pipelines",
+       #    pipeline,
+       #    snake_n
+       #)
+
+       #rules = os.path.join(
+       #    str(prep_dir),
+       #    "pipelines",
+       #    pipeline,
+       #    f"inputs/{remote}/{bqsr}",
+       #    rules
+       #)
  
         # selected reference not in container, presumed prep_custom_ref.py already
         # executed
