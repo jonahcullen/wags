@@ -142,7 +142,7 @@ rule manifest_and_archive:
             with open(manifest_path, "w") as manifest:
                 manifest.write("Manifest for {}_{}.{} money (tar)ball\n\n".format(
                     wildcards.breed, wildcards.sample_name, wildcards.ref
-                )
+                ))
                 manifest.write("Included files:\n")
                 for file, description in file_map.items():
                     manifest.write("{}: {}\n".format(os.path.basename(file), description))
