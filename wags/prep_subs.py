@@ -456,7 +456,33 @@ def main():
                                 line = line.replace("DUMMY_PAR",partition)
                                 line = line.replace("DUMMY_ACC",account)
                                 print(line,end='')
-                    
+        
+        # validate mutually exclusive flags
+        if bam_only and cram_only:
+            raise ValueError("Cannot use both --bam-only and --cram-only flags")
+
+        # determine target rule
+        if bam_only:
+            # bqsr is a string and left_align is boolean
+            if left_align:
+                until_flag = "--until left_align_bam"
+            elif bqsr == "bqsr":
+                until_flag = "--until gather_bams"
+            else: # bqsr == "no_bqsr"
+                until_flag = "--until sort_fix_and_tag"
+        elif cram_only:
+            until_flag = "--until bam_to_cram"
+        else:
+            until_flag = ""
+
+        # handle line continuation for snakemake command
+        if until_flag:
+            rerun_line = "--rerun-incomplete \\"
+            until_line = until_flag
+        else:
+            rerun_line = "--rerun-incomplete"
+            until_line = ""
+
         # submission destination
         job_name = snake_n.split('.')[0]
         submiss = os.path.join(v['work_dir'],f"{breed}_{sample_name}.{job_name}.{profile}")
@@ -567,7 +593,8 @@ def main():
                             --profile {profile_n} \\
                             --configfile {config_n} \\
                             --keep-going \\
-                            --rerun-incomplete
+                            {rerun_line}
+                            {until_line}
                         """
                     ), file=f
                 ) 
@@ -581,7 +608,8 @@ def main():
                             --profile {profile_n} \\
                             --configfile {config_n} \\
                             --keep-going \\
-                            --rerun-incomplete
+                            {rerun_line}
+                            {until_line}
                         """
                     ), file=f
                 )   
@@ -754,6 +782,24 @@ if __name__ == '__main__':
         ''')
     )
     optional.add_argument(
+        "--bam-only",
+        action='store_true',
+        help=textwrap.dedent('''\
+            stop pipeline after generating final BAM
+            (does not produce CRAM or GVCF)
+            [default: False]
+        ''')
+    )
+    optional.add_argument(
+        "--cram-only",
+        action='store_true',
+        help=textwrap.dedent('''\
+            stop pipeline after generating final CRAM
+            (does not produce GVCF)
+            [default: False]
+        ''')
+    )
+    optional.add_argument(
         "--ref-dir",
         default=os.path.join(os.path.expanduser("~"),".wags/"),
         help=textwrap.dedent('''\
@@ -853,6 +899,8 @@ if __name__ == '__main__':
     email       = args.email
     account     = args.account
     walltime    = args.walltime
+    bam_only    = args.bam_only
+    cram_only   = args.cram_only
     sif         = args.sif
     ref         = args.ref
     ref_dir     = os.path.realpath(os.path.expanduser(args.ref_dir))
@@ -868,10 +916,6 @@ if __name__ == '__main__':
     left_align  = args.left_align
     sv_call     = args.sv
     gtf         = args.gtf
-
-    # QUICK FIX FOR goldenPath - NEED TO ADJUST CONTAINER TO BE horse/goldenpath
-   #if "golden" in ref:
-   #    ref = "goldenPath"
 
     if ref not in config_d and ref_dir == "~/.wags/":  
         avail_refs = sorted(config_d.keys())
