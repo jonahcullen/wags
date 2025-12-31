@@ -467,7 +467,7 @@ def main():
             if left_align:
                 until_flag = "--until left_align_bam"
             elif bqsr == "bqsr":
-                until_flag = "--until gather_bams"
+                until_flag = "--until gather_bam_files"
             else: # bqsr == "no_bqsr"
                 until_flag = "--until sort_fix_and_tag"
         elif cram_only:
