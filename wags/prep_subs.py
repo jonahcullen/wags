@@ -388,13 +388,15 @@ def main():
         fasta    = doc['ref_fasta']
  
         # update sif and other cli args
-        doc['profile'] = profile
-        doc['sif']     = sif
-        doc['alias']   = alias
-        doc['bucket']  = bucket
+        doc['profile']    = profile
+        doc['sif']        = sif
+        doc['alias']      = alias
+        doc['bucket']     = bucket
         doc['left_align'] = left_align
-        doc['sv_call'] = sv_call
-        doc['remote'] = remote
+        doc['sv_call']    = sv_call
+        doc['bam_only']   = bool(bam_only)
+        doc['cram_only']  = bool(cram_only)
+        doc['remote']     = remote
         doc['tmp_dir']['sort_tmp']  = os.path.join(
             outdir,".sort",breed,sample_name,".tmp"
         )
@@ -457,32 +459,6 @@ def main():
                                 line = line.replace("DUMMY_ACC",account)
                                 print(line,end='')
         
-        # validate mutually exclusive flags
-        if bam_only and cram_only:
-            raise ValueError("Cannot use both --bam-only and --cram-only flags")
-
-        # determine target rule
-        if bam_only:
-            # bqsr is a string and left_align is boolean
-            if left_align:
-                until_flag = "--until left_align_bam"
-            elif bqsr == "bqsr":
-                until_flag = "--until gather_bam_files"
-            else: # bqsr == "no_bqsr"
-                until_flag = "--until sort_fix_and_tag"
-        elif cram_only:
-            until_flag = "--until bam_to_cram"
-        else:
-            until_flag = ""
-
-        # handle line continuation for snakemake command
-        if until_flag:
-            rerun_line = "--rerun-incomplete \\"
-            until_line = until_flag
-        else:
-            rerun_line = "--rerun-incomplete"
-            until_line = ""
-
         # submission destination
         job_name = snake_n.split('.')[0]
         submiss = os.path.join(v['work_dir'],f"{breed}_{sample_name}.{job_name}.{profile}")
@@ -593,8 +569,7 @@ def main():
                             --profile {profile_n} \\
                             --configfile {config_n} \\
                             --keep-going \\
-                            {rerun_line}
-                            {until_line}
+                            --rerun-incomplete
                         """
                     ), file=f
                 ) 
@@ -608,8 +583,7 @@ def main():
                             --profile {profile_n} \\
                             --configfile {config_n} \\
                             --keep-going \\
-                            {rerun_line}
-                            {until_line}
+                            --rerun-incomplete
                         """
                     ), file=f
                 )   

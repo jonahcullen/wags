@@ -7,13 +7,15 @@ import pandas as pd
 #######################################
 
 # check if sv calling
-sv_enabled = config.get("sv_call", False)
+sv_enabled = config.get('sv_call', False)
 
 # check if using s3
 using_s3 = config.get('remote', 'local').lower() == 's3'
 
 # local rules
-localrules: multiqc, sv_done, upload_fastqs, upload_pipe_and_logs
+localrules: multiqc, upload_fastqs, upload_pipe_and_logs
+if sv_enabled:
+    localrules: sv_done
 
 singularity: config['sif']
 include: "src/utils.py"
@@ -52,8 +54,27 @@ if using_s3:
 units = pd.read_table(config['units'],dtype=str).set_index('readgroup_name',drop=False)
 
 # get breed and sample name from units
+bucket = config['bucket']
+ref = config['ref']
 breed = units['breed'].values[0]
 sample_name = units['sample_name'].values[0]
+
+left_align = config.get('left_align', False)
+
+# outputs for bam/cram only if set
+bam_path = (
+    f"{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bam"
+    if left_align else
+    f"{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.bam"
+)
+
+cram_path = (
+    f"{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.left_aligned.cram"
+    if left_align else
+    f"{bucket}/wgs/{breed}/{sample_name}/{ref}/cram/{sample_name}.{ref}.cram"
+)
+
+multiqc_path = f"{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report.html"
 
 # get sequence group intervals with unmapped and hc caller intervals
 sequence_grouping(config['bucket'],config['ref_dict'])
@@ -121,8 +142,20 @@ all_targets.extend(sv_targets)
 for target in upload_targets:
     all_targets.extend(target)
 
+# check if bam/cram only
+bam_only = config.get('bam_only', False)
+cram_only = config.get('cram_only', False)
+
+if bam_only and cram_only:
+    raise ValueError("bam_only and cram_only cannot both (currently) be true")
+
+def maybe_remote(path: str):
+    return S3.remote(path) if using_s3 else path
+
 rule all:
     input:
+        ([bam_path, maybe_remote(multiqc_path)]) if bam_only else
+        ([maybe_remote(cram_path), maybe_remote(multiqc_path)]) if cram_only else
         all_targets
 
 # rules to include based on user setup
