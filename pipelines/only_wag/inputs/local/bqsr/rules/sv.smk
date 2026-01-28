@@ -121,6 +121,8 @@ rule sv_gridss:
             source activate {params.conda_env}
             set -e
 
+            unset -f which
+
             gridss \
                 -t 8 \
                 -r {params.ref_fasta} \
