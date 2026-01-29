@@ -6,19 +6,24 @@ import pandas as pd
 # one_wag #############################
 #######################################
 
+singularity: config['sif']
+include: "src/utils.py"
+
 # check if sv calling
 sv_enabled = config.get('sv_call', False)
 
 # check if using s3
 using_s3 = config.get('remote', 'local').lower() == 's3'
 
+# execution mode
+mode = config.get('mode', 'full')
+if mode not in {'full', 'bam', 'cram'}:
+    raise ValueError(f"Invalid mode '{mode}', Expected: full, bam, cram")
+
 # local rules
 localrules: multiqc, upload_fastqs, upload_pipe_and_logs
 if sv_enabled:
     localrules: sv_done
-
-singularity: config['sif']
-include: "src/utils.py"
 
 if using_s3:
     # check for s3 credentials
@@ -35,10 +40,9 @@ if using_s3:
             "ERROR: S3 remote storage requested (--remote s3) but AWS_SECRET_KEY variable not set. "
             "Set and export AWS_SECRET_KEY or use --remote local"
         )
-
+    
     try:
         from snakemake.remote.S3 import RemoteProvider as S3RemoteProvider
-        
         S3 = S3RemoteProvider(
             endpoint_url='https://s3.msi.umn.edu',
             access_key_id=s3_key_id,
@@ -58,10 +62,11 @@ bucket = config['bucket']
 ref = config['ref']
 breed = units['breed'].values[0]
 sample_name = units['sample_name'].values[0]
-
 left_align = config.get('left_align', False)
 
-# outputs for bam/cram only if set
+# mode (full | bam | cram)
+mode = config.get('mode', None)
+
 bam_path = (
     f"{bucket}/wgs/{breed}/{sample_name}/{ref}/bam/{sample_name}.{ref}.left_aligned.bam"
     if left_align else
@@ -85,18 +90,12 @@ core_targets = [
     # gvcf
     expand(
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/{sample_name}.{ref}.g.vcf.gz",
-        bucket=config['bucket'],
-        breed=breed,
-        sample_name=sample_name,
-        ref=config['ref'],
+        bucket=config['bucket'], breed=breed, sample_name=sample_name, ref=config['ref'],
     ),
     # multiqc
     expand(
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report.html",
-        bucket=config['bucket'],
-        breed=breed,
-        sample_name=sample_name,
-        ref=config['ref'],
+        bucket=config['bucket'], breed=breed, sample_name=sample_name, ref=config['ref'],
     )
 ]
 
@@ -105,10 +104,7 @@ sv_targets = []
 if sv_enabled:
     sv_targets = expand(
         "{bucket}/wgs/{breed}/{sample_name}/{ref}/svar/sv.done",
-        bucket=config['bucket'],
-        breed=breed,
-        sample_name=sample_name,
-        ref=config['ref'],
+        bucket=config['bucket'], breed=breed, sample_name=sample_name, ref=config['ref'],
     )
 
 # add upload targets if using s3
@@ -118,18 +114,12 @@ if using_s3:
         # upload fastqs
         expand(
             "{bucket}/fastqc/{breed}/{sample_name}/{u.readgroup_name}.upload",
-            u=units.itertuples(), 
-            bucket=config['bucket'],
-            breed=breed,
-            sample_name=sample_name,
+            u=units.itertuples(), bucket=config['bucket'], breed=breed, sample_name=sample_name,
         ),
         # upload pipeline, and logs
         expand(
             "{bucket}/{ref}/{breed}/{sample_name}/{ref}/pipe_and_logs.upload",
-            bucket=config['bucket'],
-            breed=breed,
-            sample_name=sample_name,
-            ref=config['ref'],
+            bucket=config['bucket'], breed=breed, sample_name=sample_name, ref=config['ref'],
         )
     ])
 
@@ -142,23 +132,20 @@ all_targets.extend(sv_targets)
 for target in upload_targets:
     all_targets.extend(target)
 
-# check if bam/cram only
-bam_only = config.get('bam_only', False)
-cram_only = config.get('cram_only', False)
-
-if bam_only and cram_only:
-    raise ValueError("bam_only and cram_only cannot both (currently) be true")
-
 def maybe_remote(path: str):
     return S3.remote(path) if using_s3 else path
 
+def mode_targets():
+    if mode == "bam":
+        return [bam_path, maybe_remote(multiqc_path)]
+    if mode == "cram":
+        return [maybe_remote(cram_path), maybe_remote(multiqc_path)]
+    return all_targets
+
 rule all:
     input:
-        ([bam_path, maybe_remote(multiqc_path)]) if bam_only else
-        ([maybe_remote(cram_path), maybe_remote(multiqc_path)]) if cram_only else
-        all_targets
+        (mode_targets() + upload_targets) if using_s3 else mode_targets()
 
-# rules to include based on user setup
 include: "rules/qc.smk"
 include: "rules/bam.smk"
 include: "rules/gvcf.smk"

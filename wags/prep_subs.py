@@ -317,23 +317,7 @@ def main():
         rules = os.path.join(
             str(prep_dir), "pipelines", pipeline, "inputs", remote, bqsr, "rules"
         )
-
-       #smk = os.path.join(
-       #   #str(Path(prep_dir).parents[0]),
-       #    str(prep_dir),
-       #    "pipelines",
-       #    pipeline,
-       #    snake_n
-       #)
-
-       #rules = os.path.join(
-       #    str(prep_dir),
-       #    "pipelines",
-       #    pipeline,
-       #    f"inputs/{remote}/{bqsr}",
-       #    rules
-       #)
- 
+        
         # selected reference not in container, presumed prep_custom_ref.py already
         # executed
         # NEEDS TO BE FIXED ALONG WITH prep_custom_ref.py TO FORCE THE CONFIG DIR
@@ -397,15 +381,13 @@ def main():
         doc['bam_only']   = bool(bam_only)
         doc['cram_only']  = bool(cram_only)
         doc['remote']     = remote
+        doc['mode']       = mode
         doc['tmp_dir']['sort_tmp']  = os.path.join(
             outdir,".sort",breed,sample_name,".tmp"
         )
         doc['tmp_dir']['fastq_tmp'] = os.path.join(
             outdir,".fastq",breed,sample_name,".tmp"
         )
-       #doc['tmp_dir']['general'] = os.path.join(
-       #    outdir,".tmp",breed,sample_name
-       #)
         
         # for private variant analysis, add pop.vcf and common.vcf path
         if money:
@@ -890,6 +872,16 @@ if __name__ == '__main__':
     left_align  = args.left_align
     sv_call     = args.sv
     gtf         = args.gtf
+
+    if bam_only and cram_only:
+        raise ValueError("cannot (currently) use both --bam-only and --cram-only flags")
+
+    if bam_only:
+        mode = "bam"
+    elif cram_only:
+        mode = "cram"
+    else:
+        mode = "full"
 
     if ref not in config_d and ref_dir == "~/.wags/":  
         avail_refs = sorted(config_d.keys())

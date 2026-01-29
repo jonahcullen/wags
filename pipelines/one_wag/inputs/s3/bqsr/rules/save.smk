@@ -23,8 +23,6 @@ rule upload_fastqs:
 rule upload_pipe_and_logs:
     input:
         S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/qc/multiqc_report.html"),
-        final_gvcf     = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/{sample_name}.{ref}.g.vcf.gz"),
-        final_gvcf_tbi = S3.remote("{bucket}/wgs/{breed}/{sample_name}/{ref}/gvcf/{sample_name}.{ref}.g.vcf.gz.tbi"),
     output:
         touch("{bucket}/{ref}/{breed}/{sample_name}/{ref}/pipe_and_logs.upload"),
     params:
