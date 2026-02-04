@@ -14,6 +14,7 @@ import shutil
 import string
 import textwrap
 import argparse
+import tempfile
 import fileinput
 import pandas as pd
 from pathlib import Path
@@ -430,11 +431,12 @@ def main():
                 print(f"REF_DIR={ref_dir}",end="", file=f)
             if money:
                 print(f"\nPOP_VCF={os.path.dirname(pop)}",end="", file=f)
-
+            
+            temp_dir_path = tempfile.gettempdir()
             print(
                 textwrap.dedent(
                     f"""
-                    TMP_DIR=/share/stern/mwvandew/tmp
+                    TMP_DIR={temp_dir_path}
                     FQ_DIR={fq_dir}
                     PROC_DIR={outdir} 
                     """
