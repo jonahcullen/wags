@@ -1,0 +1,48 @@
+# INPUT AND SECONDARY 
+units   : input.tsv
+species : cat
+ref     : Fca126_nice
+bucket  : wags
+alias   : s3
+profile : slurm
+
+# SINGULARITY IMAGE
+sif : /path/to/wags.sif
+
+# SORTSAM TEMP DIR
+tmp_dir :
+  sort_tmp  : /path/to/proc/dir
+  fastq_tmp : /path/to/proc/dir
+
+# LEFT ALIGN BAM
+left_align : false
+
+# INTERVAL SIZE SCATTER
+nrun_length  : 50
+scatter_size : 50
+
+# REFERENCE FILES
+ref_dict  : Fca126_mat1.0.nice.dict
+ref_fasta : /home/refgen/cat/Fca126_nice/Fca126_mat1.0.nice.fna
+ref_gtf   : /home/refgen/cat/Fca126_nice/GCF_018350175.1_F.catus_Fca126_mat1.0_genomic.nice.sorted.gtf.gz
+
+# RESOURCE FILES FOR BQSR (OPTIONAL)
+known_sites :
+  dog10k_bed : /path/to/known/sites.bed
+
+# ALLELE FREQUENCY FOR COMPARISON TO POPULATION
+allele_freq : 0.005
+
+# RESOURCE FILES (FROM CONTAINER)
+hd_axiom_vcf : /path/to/other/resource/files.txt
+coverage_sites : /path/to/coverage/sites.txt
+
+# SV CONDA ENVS
+conda_envs :
+  delly  : delly
+  gridss : gridss
+  smoove : smoove
+  manta  : manta
+
+# CANFAM4/UU_CFAM PHYLOP ANNOTATION
+phylop: /path/to/phylop/sites.bed
