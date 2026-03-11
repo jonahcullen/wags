@@ -52,7 +52,6 @@ rule bcftools_stats:
         all_stats = "{bucket}/wgs/pipeline/{ref}/{date}/final_gather/join_call.{ref}.{date}.vchk",
     params:
         ref_fasta = config['ref_fasta'],
-        conda_env = config['conda_envs']['qc']
     threads: 1
     resources:
          time   = 720,

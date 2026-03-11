@@ -589,7 +589,7 @@ def main():
                     textwrap.dedent(
                         f"""
                         singularity exec --bind $PWD {sif} \\
-                            cp /home/refgen/{species}/{ref}/{ref_dict} $PWD
+                            cp {ref_dict} $PWD
                         """
                     ), file=f
                 )
