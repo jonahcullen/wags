@@ -32,7 +32,7 @@ class RawFile(object):
         elif filename.endswith('.bz2'):
             self.handle = bz2.open(filename,'rt')
         elif filename.endswith('.xz'):
-            self.handle = lzma.open(filenaem,'rt')
+            self.handle = lzma.open(filename,'rt')
         else:
             self.handle = open(filename,'r')
 
@@ -63,18 +63,28 @@ refs = [
     "GRCg7b"
 ]
 
-# get config dir
+# get config dirs
 prep_dir = Path(__file__).resolve().parent.parent
-configs_dir = prep_dir / "pipelines" / "one_wag" / "configs"
+
 # put available configs into a dictionary
 config_d = {}
-for species_dir in configs_dir.iterdir():
-    if species_dir.is_dir():
-        for config_f in species_dir.iterdir():
-            if config_f.suffix == ".yaml":
-                species = config_f.stem.replace("_config", "")
-                config_d[species] = species_dir.name
+for configs_dir in [
+    prep_dir / "pipelines" / "one_wag" / "configs",
+    prep_dir / "pipelines" / "only_wag" / "configs",
+    prep_dir / "pipelines" / "cohort_wags" / "configs",
+    prep_dir / "pipelines" / "many_wags" / "configs",
+]:
+    if not configs_dir.exists():
+        continue
 
+    for species_dir in configs_dir.iterdir():
+        if species_dir.is_dir():
+            for config_f in species_dir.iterdir():
+                if config_f.suffix == ".yaml":
+                    stem = config_f.stem
+                    stem = stem.replace("_config", "")
+                    stem = stem.replace("_only_wag", "")
+                    config_d[stem] = species_dir.name
 
 def get_conda_source_command(conda_source_path=None):
     """ auto-detect conda installation and return source command """
@@ -118,6 +128,7 @@ def get_conda_source_command(conda_source_path=None):
         pass
     
     return None
+
 replace_map = {
     "_2.fq.gz": "_1.fq.gz",
     "_R2.fq.gz": "_R1.fq.gz",
@@ -222,6 +233,28 @@ def find_r2s(name, fq_dir):
 
     return matched
 
+def read_joint_cohort_tsv(path):
+    rows = []
+    with open(path) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            parts = re.split(r'\t+', line)
+            if len(parts) < 2:
+                raise ValueError(f'bad joint cohort line: {line}')
+            sample = parts[0]
+            gvcf = os.path.realpath(os.path.expanduser(parts[1]))
+            if not os.path.exists(gvcf):
+                raise FileNotFoundError(f'GVCF not found: {gvcf}')
+            if not os.path.exists(gvcf + '.tbi'):
+                raise FileNotFoundError(f'GVCF index not found: {gvcf}.tbi')
+            rows.append([sample, gvcf])
+
+    if not rows:
+        raise ValueError(f'no cohort entries found in {path}')
+
+    return pd.DataFrame(rows, columns=['sample_name', 'gvcf'])
 
 def main():
     global profile
@@ -233,50 +266,64 @@ def main():
             "platform_unit","flowcell","run_date",
             "platform_name","sequencing_center"]
 
-    with open(sample_meta) as ids:
-        reader = csv.reader(ids, delimiter=',')
-        next(reader, None)
-        for line in reader:
-            
-            tmp = find_r2s(line[-1], fq_dir)
-            # print the number of found fastq pairs/sample
-            pairs = "pair" if len(tmp) == 1 else "pairs"
-            print(f"found {len(tmp)} FASTQ {pairs} for {line[-1]}")
-            sample_input = []  
-            for i,v in enumerate(sorted(tmp)):
-                
-                platform_unit = extract_pu(v)
-                cdate = datetime.fromtimestamp(os.path.getctime(v)).strftime('%Y-%m-%dT%H:%M:%S')                   
-                
-                # get first read
-                v1 = None
-                for R2,R1 in replace_map.items():
-                    if R2 in os.path.basename(v):
-                        v1 = os.path.join(
-                            os.path.dirname(v),
-                            os.path.basename(v).replace(R2, R1)
-                        )
-                        break
+    if cohort_mode:
+        cohort_df = read_joint_cohort_tsv(joint_cohort)
 
-                sample_input.append(
-                    [   
-                        line[1],
-                        line[0],
-                        f"{line[0]}_{string.ascii_uppercase[i]}",
-                        v1,
-                        v,
-                        f"illumina-{line[0]}",
-                        platform_unit,
-                        platform_unit.split(".")[0],
-                        cdate,
-                        "illumina",
-                        "unknown"
-                    ]
-                )
-            
-            d[line[0]]['work_dir'] = os.path.join(outdir,line[1],line[0],ref)
-            d[line[0]]['breed']    = line[1]
-            d[line[0]]['df']       = pd.DataFrame(sample_input, columns=cols)
+        cohort_name = Path(joint_cohort).stem
+        breed = 'cohort'
+
+        work_dir = os.path.join(outdir, breed, cohort_name, ref)
+
+        d[cohort_name]['work_dir'] = work_dir
+        d[cohort_name]['breed'] = breed
+        d[cohort_name]['cohort_df'] = cohort_df
+        d[cohort_name]['cohort_tsv'] = os.path.join(work_dir, 'joint_cohort.tsv')
+
+    else:
+        with open(sample_meta) as ids:
+            reader = csv.reader(ids, delimiter=',')
+            next(reader, None)
+            for line in reader:
+                
+                tmp = find_r2s(line[-1], fq_dir)
+                # print the number of found fastq pairs/sample
+                pairs = "pair" if len(tmp) == 1 else "pairs"
+                print(f"found {len(tmp)} FASTQ {pairs} for {line[-1]}")
+                sample_input = []  
+                for i,v in enumerate(sorted(tmp)):
+                    
+                    platform_unit = extract_pu(v)
+                    cdate = datetime.fromtimestamp(os.path.getctime(v)).strftime('%Y-%m-%dT%H:%M:%S')                   
+                    
+                    # get first read
+                    v1 = None
+                    for R2,R1 in replace_map.items():
+                        if R2 in os.path.basename(v):
+                            v1 = os.path.join(
+                                os.path.dirname(v),
+                                os.path.basename(v).replace(R2, R1)
+                            )
+                            break
+
+                    sample_input.append(
+                        [   
+                            line[1],
+                            line[0],
+                            f"{line[0]}_{string.ascii_uppercase[i]}",
+                            v1,
+                            v,
+                            f"illumina-{line[0]}",
+                            platform_unit,
+                            platform_unit.split(".")[0],
+                            cdate,
+                            "illumina",
+                            "unknown"
+                        ]
+                    )
+                
+                d[line[0]]['work_dir'] = os.path.join(outdir,line[1],line[0],ref)
+                d[line[0]]['breed']    = line[1]
+                d[line[0]]['df']       = pd.DataFrame(sample_input, columns=cols)
             
     # copy pipeline input and submission file
     for k,v in d.items():
@@ -291,17 +338,25 @@ def main():
         if not os.path.exists(jobs):
             os.makedirs(jobs)
    
-        # write sample input to working directory
-        with open(os.path.join(v['work_dir'],"input.tsv"),"w") as out:
-            v['df'].to_csv(out,sep='\t',index=False)
+        # write sample/cohort input to working directory
+        if cohort_mode:
+            with open(v['cohort_tsv'], "w") as out:
+                v['cohort_df'].to_csv(out, sep='\t', index=False, header=False)
+        else:
+            with open(os.path.join(v['work_dir'],"input.tsv"),"w") as out:
+                v['df'].to_csv(out, sep='\t', index=False)
        
         # input templates
         pipeline  = "one_wag"
         snake_n   = "one_wag.smk"
         config_n  = f"{ref}_config.yaml"
         profile_n = f"{profile}.go_wags"
-        # switch to only_wag templates when --money used
-        if money:
+        # switch to only_wag / cohort templates
+        if cohort_mode:
+            pipeline = "cohort_wags"
+            snake_n  = "cohort_wags.smk"
+            config_n = f"{ref}_config.yaml"
+        elif money:
             pipeline  = "only_wag"
             snake_n   = "only_wag.smk"
             config_n  = f"{ref}_only_wag.yaml"
@@ -309,13 +364,13 @@ def main():
         # choose correct snakefile location
         smk_top = os.path.join(str(prep_dir), "pipelines", pipeline, snake_n)
         smk_inputs = os.path.join(
-            str(prep_dir), "pipelines", pipeline, "inputs", remote, bqsr, snake_n
+            str(prep_dir), "pipelines", pipeline, "inputs", remote, call_mode, snake_n
         )
         smk = smk_top if os.path.isfile(smk_top) else smk_inputs
 
         # rules always under inputs/{remote}/{bqsr}/rules
         rules = os.path.join(
-            str(prep_dir), "pipelines", pipeline, "inputs", remote, bqsr, "rules"
+            str(prep_dir), "pipelines", pipeline, "inputs", remote, call_mode, "rules"
         )
         
         # selected reference not in container, presumed prep_custom_ref.py already
@@ -376,6 +431,7 @@ def main():
         doc['sif']        = sif
         doc['alias']      = alias
         doc['bucket']     = bucket
+        doc['date']       = datetime.today().strftime('%Y%m%d')
         doc['left_align'] = left_align
         doc['sv_call']    = sv_call
         doc['bam_only']   = bool(bam_only)
@@ -390,7 +446,7 @@ def main():
         )
         
         # for private variant analysis, add pop.vcf and common.vcf path
-        if money:
+        if money or cohort_mode:
             doc['pop_vcf'] = pop
 
             #lines to find a gtf for custom ref, it could probably be made better
@@ -399,18 +455,23 @@ def main():
             else:
                 try:
                     doc['ref_gtf'] = doc['ref_gtf']
-                except Exception as ex:
+                except Exception:
                     print("Could not find gtf, if using custom ref, provide path to gtf")
                     sys.exit(1)
 
             doc['common_vcf']  = common
             doc['allele_freq'] = float(allele_freq)
+
             doc['tmp_dir']['select_variants_to_table'] = os.path.join(
                 outdir,".select",breed,sample_name,".tmp"
             )
             doc['tmp_dir']['unfilt_gather_vcf'] = os.path.join(
                 outdir,".gather",breed,sample_name,".tmp"
             )
+
+        if cohort_mode:
+            doc['joint_cohort'] = v['cohort_tsv']
+            doc['joint'] = True
 
         # interval optional updates
         doc['nrun_length']  = int(nrun_len)
@@ -498,18 +559,27 @@ def main():
 
             if ref not in refs:
                 print(f"REF_DIR={ref_dir}",end="", file=f)
-            if money:
+            if money or cohort_mode:
                 print(f"\nPOP_VCF={os.path.dirname(pop)}",end="", file=f)
 
-            print(
-                textwrap.dedent(
-                    f"""
-                    FQ_DIR={fq_dir}
-                    PROC_DIR={outdir} 
-                    """
-                ),file=f
-            )
-                   #TMP_DIR={doc['tmp_dir']['general']}
+            if cohort_mode:
+                print(
+                    textwrap.dedent(
+                        f"""
+                        PROC_DIR={outdir}
+                        """
+                    ),
+                    file=f
+                )
+            else:
+                print(
+                    textwrap.dedent(
+                        f"""
+                        FQ_DIR={fq_dir}
+                        PROC_DIR={outdir} 
+                        """
+                    ),file=f
+                )
 
             # if ref in container, extract dictionary or generate from fasta 
             # if does not exist
@@ -535,12 +605,23 @@ def main():
                         ), file=f
                     )
             # build singularity bind arguments conditionally
-            bind_args = f"$PWD,$FQ_DIR,$PROC_DIR"
-            if ref not in refs:
-                bind_args = f"$REF_DIR,{bind_args}"
-            if money:
-                bind_args = f"$POP_VCF,{bind_args}"
+            bind_parts = ["$PWD", "$PROC_DIR"]
 
+            if not cohort_mode:
+                bind_parts.insert(0, "$FQ_DIR")
+
+            if ref not in refs:
+                bind_parts.insert(0, "$REF_DIR")
+
+            if money or cohort_mode:
+                bind_parts.insert(0, "$POP_VCF")
+
+            if cohort_mode:
+                cohort_bind_dirs = sorted(set(os.path.dirname(x) for x in v['cohort_df']['gvcf'].tolist()))
+                bind_parts.extend(cohort_bind_dirs)
+
+            bind_args = ",".join(bind_parts)
+    
             if profile == "local":
                 print(
                     textwrap.dedent(
@@ -638,16 +719,14 @@ if __name__ == '__main__':
     
     required.add_argument(
         "-m", "--meta",
-        default=argparse.SUPPRESS,
+        default=None,
         metavar="\b",
-        required=True,
         help="csv of meta data to associate sample names and fastqs"
     )
     required.add_argument(
         "-f", "--fastqs",
-        default=argparse.SUPPRESS,
+        default=None,
         metavar="\b",
-        required=True,
         help="path to fastq directory"
     )
     required.add_argument(
@@ -820,6 +899,11 @@ if __name__ == '__main__':
         help="switch to setup private SNP pipeline"
     )
     optional.add_argument(
+        "--joint-cohort",
+        default=None,
+        help="TSV with 2 cols: sample and path to GVCF [default: None]"
+    )
+    optional.add_argument(
         "--pop",
         default=None,
         help="path to population variants vcf (only wags pipeline) [default: None]"
@@ -846,8 +930,8 @@ if __name__ == '__main__':
     )
 
     args = parser.parse_args()
-    sample_meta = os.path.realpath(os.path.expanduser(args.meta))
-    fq_dir      = os.path.realpath(os.path.expanduser(args.fastqs))
+   #sample_meta = os.path.realpath(os.path.expanduser(args.meta))
+   #fq_dir      = os.path.realpath(os.path.expanduser(args.fastqs))
     outdir      = os.path.realpath(os.path.expanduser(args.out))
     bucket      = args.bucket
     snake_env   = args.snake_env
@@ -883,45 +967,63 @@ if __name__ == '__main__':
     else:
         mode = "full"
 
-    if ref not in config_d and ref_dir == "~/.wags/":  
+    if ref not in config_d and ref in refs:
         avail_refs = sorted(config_d.keys())
         print(f"\nERROR: reference '{ref}' not found in available configs")
-        # get possible matches
+
         poss_matches = [i for i in avail_refs if i.startswith(ref[:3])]
-        # and handle
+
         if poss_matches:
             print(f"did you mean one of these: {', '.join(poss_matches)}")
         else:
             print("no similar ref found")
 
-        # show how to list all available configs
         print("\nto see available species and assemblies (configs), run the following command:")
         print("    python prep_subs.py --configs\n")
 
         sys.exit(1)
 
-    # get bqsq or no bqsr
-    bqsr = "bqsr"
-    if no_bqsr:
-        bqsr = "no_bqsr"
+    # abs path joint cohort
+    joint_cohort = args.joint_cohort
+    if joint_cohort is not None:
+        joint_cohort = os.path.realpath(os.path.expanduser(joint_cohort))
 
-    if money:
-       #bqsr = "recal"
-        # require path to pop
+    cohort_mode = joint_cohort is not None
+    # normal inputs unless using cohort mode
+    sample_meta = None if args.meta is None else os.path.realpath(os.path.expanduser(args.meta))
+    fq_dir      = None if args.fastqs is None else os.path.realpath(os.path.expanduser(args.fastqs))
+    
+    if not cohort_mode:
+        if sample_meta is None:
+            parser.error('--meta is required unless using --joint-cohort')
+        if fq_dir is None:
+            parser.error('--fastqs is required unless using --joint-cohort')
+
+    if money or cohort_mode:
         if pop is None:
-            parser.error("--money requires --pop")
-        else:
-            pop = os.path.realpath(os.path.expanduser(args.pop))
-            # generate path to common vars assuming pop vcf was generated by
-            # the joint pipeline
-            p = Path(pop)
-            # create directory common_vars within pop vcf directory
-            base = os.path.join(str(Path(*p.parts[:-1])),"common_vars")
-            os.makedirs(base,exist_ok=True)
-            # generate the common vcf name and set variable
-            common_name = f"{p.parts[-1].rsplit('.',2)[0]}.af_nonmajor.vcf.gz"
-            common = os.path.join(base,common_name)
-            
+            if cohort_mode:
+                parser.error('--joint-cohort requires --pop')
+            else:
+                parser.error('--money requires --pop')
+
+        pop = os.path.realpath(os.path.expanduser(args.pop))
+
+        # generate path to common vars assuming pop vcf was generated by the joint pipeline
+        p = Path(pop)
+        base = os.path.join(str(Path(*p.parts[:-1])), 'common_vars')
+        os.makedirs(base, exist_ok=True)
+        common_name = f"{p.parts[-1].rsplit('.', 2)[0]}.af_nonmajor.vcf.gz"
+        common = os.path.join(base, common_name)
+
+    if cohort_mode:
+        if not os.path.exists(joint_cohort):
+            raise FileNotFoundError(f'joint cohort TSV not found: {joint_cohort}')
+
+    # choose pipeline inputs subdirectory
+    if cohort_mode:
+        call_mode = "no_vqsr"
+    else:
+        call_mode = "no_bqsr" if no_bqsr else "bqsr"
 
     # if non default sif location
     if sif != os.path.join(os.path.expanduser("~"),".sif/wags.sif"):
