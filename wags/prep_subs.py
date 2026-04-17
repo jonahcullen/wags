@@ -58,7 +58,7 @@ refs = [
     "Fca126_nice",
     "alpaca","vicpac32",
     "ARS-UI_Ramb_v3.0",
-    "ARS1.2",
+    "ARS-UCD1.2",
     "donkey.v2",
     "GRCg7b"
 ]
