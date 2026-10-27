@@ -60,7 +60,8 @@ refs = [
     "ARS-UI_Ramb_v3.0",
     "ARS-UCD1.2",
     "donkey.v2",
-    "GRCg7b"
+    "GRCg7b",
+    "Varecia_chroms"
 ]
 
 # get config dirs
